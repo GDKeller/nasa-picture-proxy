@@ -153,26 +153,30 @@ export default {
           "/about": "Plain-text description and attribution",
         };
 
-        let apodData = {};
         try {
           const apod = await fetchApod(formatDate(new Date()), apiKey);
-          apodData = {
-            title: apod.title,
-            date: apod.date,
-            explanation: apod.explanation,
-            media_type: apod.media_type,
-            url: apod.url,
-            hdurl: apod.hdurl ?? null,
-            copyright: apod.copyright ?? null,
-          };
-        } catch {
-          apodData = { apod_error: "Unable to fetch today's APOD — NASA API may be unavailable" };
-        }
 
-        return new Response(
-          JSON.stringify({ ...apodData, endpoints }, null, 2),
-          { headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
-        );
+          return new Response(
+            JSON.stringify({
+              title: apod.title,
+              date: apod.date,
+              explanation: apod.explanation,
+              media_type: apod.media_type,
+              url: apod.url,
+              hdurl: apod.hdurl ?? null,
+              copyright: apod.copyright ?? null,
+              endpoints,
+            }, null, 2),
+            { headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unknown error";
+          const status = err instanceof NasaApiError && err.statusCode === 429 ? 429 : 502;
+          return new Response(
+            JSON.stringify({ error: message, endpoints }, null, 2),
+            { status, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+          );
+        }
       }
 
       if (pathname === "/about") {
