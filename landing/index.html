@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. Drop an image tag, get today's APOD. No API key, no JavaScript, no fuss.">
+  <meta property="og:title" content="nasapicture.com">
+  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+  <meta property="og:image" content="https://api.nasapicture.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            void: '#0a0e17',
+            'void-light': '#111827',
+            starlight: '#e8a838',
+            'starlight-dim': '#b8842a',
+            silver: '#c8ccd4',
+            'silver-dim': '#6b7280',
+            teal: '#1a3a4a',
+            'teal-light': '#234d61',
+          },
+          fontFamily: {
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            sans: ['"DM Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Starfield background */
+    .starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .starfield::before,
+    .starfield::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+
+    .starfield::before {
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 25% 65%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1.5px 1.5px at 70% 80%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1.5px 1.5px at 90% 55%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 35% 35%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 60% 15%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 5% 50%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 20% 40%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 95% 10%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1.5px 1.5px at 30% 55%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 65% 95%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 80% 45%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 12% 72%, rgba(255,255,255,0.4), transparent);
+      animation: twinkle 8s ease-in-out infinite alternate;
+    }
+
+    .starfield::after {
+      background-image:
+        radial-gradient(1px 1px at 8% 35%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1.5px 1.5px at 22% 78%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 38% 52%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 52% 18%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1.5px 1.5px at 68% 42%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 82% 88%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 92% 25%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 18% 62%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 42% 8%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 58% 75%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1.5px 1.5px at 72% 15%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 88% 58%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 3% 92%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 48% 32%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 78% 72%, rgba(255,255,255,0.4), transparent);
+      animation: twinkle 12s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    /* Staggered fade-in */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.8s ease-out forwards;
+    }
+
+    .fade-in-delay-1 { animation-delay: 0.15s; }
+    .fade-in-delay-2 { animation-delay: 0.3s; }
+    .fade-in-delay-3 { animation-delay: 0.5s; }
+    .fade-in-delay-4 { animation-delay: 0.7s; }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Hero image glow */
+    .hero-glow {
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(ellipse at center, rgba(232, 168, 56, 0.12) 0%, transparent 70%);
+      z-index: -1;
+      border-radius: 50%;
+      filter: blur(40px);
+    }
+
+    /* Endpoint card hover */
+    .endpoint-card {
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    }
+
+    .endpoint-card:hover {
+      border-color: rgba(232, 168, 56, 0.4);
+      box-shadow: 0 0 24px rgba(232, 168, 56, 0.08);
+      transform: translateY(-2px);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .starfield::before,
+      .starfield::after {
+        animation: none;
+        opacity: 0.7;
+      }
+
+      .fade-in {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .endpoint-card {
+        transition: none;
+      }
+
+      .endpoint-card:hover {
+        transform: none;
+      }
+    }
+
+    /* Image loading skeleton */
+    .img-skeleton {
+      background: linear-gradient(110deg, #111827 8%, #1a2332 18%, #111827 33%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s linear infinite;
+    }
+
+    @keyframes shimmer {
+      to { background-position: -200% 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .img-skeleton {
+        animation: none;
+        background: #111827;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-void text-silver font-sans min-h-screen relative">
+  <div class="starfield" aria-hidden="true"></div>
+
+  <div class="relative z-10">
+    <!-- Header -->
+    <header class="fade-in px-6 py-6 sm:px-8 max-w-5xl mx-auto flex items-baseline justify-between">
+      <a href="/" class="group flex items-baseline gap-2">
+        <span class="font-serif text-2xl sm:text-3xl text-white tracking-tight">nasapicture</span>
+        <span class="font-serif text-2xl sm:text-3xl text-starlight">.com</span>
+      </a>
+      <nav>
+        <a href="https://api.nasapicture.com/about"
+           class="font-mono text-sm text-silver-dim hover:text-starlight transition-colors"
+           target="_blank"
+           rel="noopener noreferrer">/about</a>
+      </nav>
+    </header>
+
+    <main class="px-6 sm:px-8 max-w-5xl mx-auto pb-20">
+      <!-- Hero -->
+      <section class="fade-in fade-in-delay-1 mb-16 sm:mb-24">
+        <div class="relative max-w-3xl mx-auto">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="relative rounded-lg overflow-hidden img-skeleton aspect-video">
+            <img
+              src="https://api.nasapicture.com/"
+              alt="NASA Astronomy Picture of the Day"
+              class="w-full h-full object-cover"
+              loading="eager"
+              onload="this.parentElement.classList.remove('img-skeleton')"
+            >
+          </div>
+          <p class="mt-4 text-center font-serif italic text-lg sm:text-xl text-silver-dim">
+            Today's Astronomy Picture of the Day
+          </p>
+        </div>
+      </section>
+
+      <!-- Explanation -->
+      <section class="fade-in fade-in-delay-2 mb-16 sm:mb-24 max-w-2xl mx-auto">
+        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-6">
+          One URL. Today's picture.
+        </h2>
+        <p class="text-lg leading-relaxed mb-4">
+          <span class="text-starlight font-medium">nasapicture.com</span> is a proxy for
+          NASA's Astronomy Picture of the Day. It gives you a stable URL that always
+          returns today's APOD image &mdash; no API key, no JavaScript, no configuration.
+        </p>
+        <p class="text-lg leading-relaxed mb-4">
+          Drop it into an <code class="font-mono text-sm bg-void-light px-1.5 py-0.5 rounded border border-teal">&lt;img&gt;</code> tag,
+          use it as a wallpaper source, or fetch the JSON metadata. Video days
+          are skipped automatically &mdash; you always get an image.
+        </p>
+        <div class="mt-8 bg-void-light border border-teal rounded-lg p-5">
+          <p class="font-mono text-sm text-silver-dim mb-2">// That's it. That's the whole integration.</p>
+          <p class="font-mono text-sm sm:text-base text-white">
+            &lt;img src="<span class="text-starlight">https://api.nasapicture.com/</span>"&gt;
+          </p>
+        </div>
+      </section>
+
+      <!-- Endpoints -->
+      <section class="fade-in fade-in-delay-3 mb-16 sm:mb-24">
+        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-3 max-w-2xl mx-auto">Endpoints</h2>
+        <p class="text-silver-dim mb-8 max-w-2xl mx-auto">
+          All routes are on <code class="font-mono text-sm text-starlight-dim">api.nasapicture.com</code>
+        </p>
+
+        <div class="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+          <a href="https://api.nasapicture.com/"
+             target="_blank" rel="noopener noreferrer"
+             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="font-mono text-base font-medium text-starlight">/</span>
+              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+            </div>
+            <p class="text-sm text-silver leading-relaxed">
+              Today's APOD in high resolution. Falls back to standard if HD isn't available.
+            </p>
+          </a>
+
+          <a href="https://api.nasapicture.com/sd"
+             target="_blank" rel="noopener noreferrer"
+             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="font-mono text-base font-medium text-starlight">/sd</span>
+              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+            </div>
+            <p class="text-sm text-silver leading-relaxed">
+              Standard resolution image. Lighter payload, same picture.
+            </p>
+          </a>
+
+          <a href="https://api.nasapicture.com/info"
+             target="_blank" rel="noopener noreferrer"
+             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="font-mono text-base font-medium text-starlight">/info</span>
+              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+            </div>
+            <p class="text-sm text-silver leading-relaxed">
+              JSON metadata &mdash; title, date, explanation, image URLs, copyright.
+            </p>
+          </a>
+
+          <a href="https://api.nasapicture.com/about"
+             target="_blank" rel="noopener noreferrer"
+             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="font-mono text-base font-medium text-starlight">/about</span>
+              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+            </div>
+            <p class="text-sm text-silver leading-relaxed">
+              Plain-text description with ASCII art. Good for terminals.
+            </p>
+          </a>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="fade-in fade-in-delay-4 max-w-2xl mx-auto">
+        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-6">How it works</h2>
+        <div class="space-y-4 text-lg leading-relaxed">
+          <p>
+            A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="text-starlight hover:underline underline-offset-4">Cloudflare Worker</a>
+            fetches today's APOD from NASA's API, then streams the image bytes
+            directly to you. The response is cached at the edge &mdash; subsequent
+            requests in the same hour are served instantly from Cloudflare's network.
+          </p>
+          <p>
+            If today's APOD is a video (it happens), the worker walks backwards up to
+            7 days to find the most recent image. You never get an error for something
+            out of your control.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-teal px-6 sm:px-8 py-8">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-silver-dim">
+        <p>
+          Built by
+          <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer"
+             class="text-silver hover:text-starlight transition-colors">Grant Keller</a>
+        </p>
+        <p>
+          Data from
+          <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer"
+             class="text-silver hover:text-starlight transition-colors">NASA APOD</a>
+        </p>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
