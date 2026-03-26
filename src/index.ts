@@ -34,6 +34,12 @@ function formatDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+class NasaApiError extends Error {
+  constructor(public statusCode: number, message: string) {
+    super(message);
+  }
+}
+
 async function fetchApod(date: string, apiKey: string): Promise<ApodResponse> {
   const url = `${NASA_APOD_URL}?api_key=${apiKey}&date=${date}`;
 
@@ -42,7 +48,11 @@ async function fetchApod(date: string, apiKey: string): Promise<ApodResponse> {
   });
 
   if (!res.ok) {
-    throw new Error(`NASA API ${res.status} for ${date}`);
+    throw new NasaApiError(res.status,
+      res.status === 429
+        ? "NASA API rate limit exceeded — try again later"
+        : `NASA API returned ${res.status}`
+    );
   }
 
   return res.json() as Promise<ApodResponse>;
@@ -57,22 +67,23 @@ async function findLatestImage(apiKey: string): Promise<ApodResponse> {
     return cachedImage.apod;
   }
 
+  let videoStreak = 0;
+
   for (let i = 0; i <= MAX_LOOKBACK_DAYS; i++) {
     const d = new Date();
     d.setUTCDate(d.getUTCDate() - i);
 
-    try {
-      const apod = await fetchApod(formatDate(d), apiKey);
-      if (apod.media_type === "image") {
-        cachedImage = { date: today, apod };
-        return apod;
-      }
-    } catch {
-      continue;
+    const apod = await fetchApod(formatDate(d), apiKey);
+    if (apod.media_type === "image") {
+      cachedImage = { date: today, apod };
+      return apod;
     }
+    videoStreak++;
   }
 
-  throw new Error("No image APOD found in the last week");
+  throw new Error(
+    `Today's APOD is a video, and the last ${videoStreak} days have been too — no image available`
+  );
 }
 
 async function fetchImageCached(url: string): Promise<Response> {
@@ -87,10 +98,16 @@ async function fetchImageCached(url: string): Promise<Response> {
   return res;
 }
 
-function corsHeaders(headers: Record<string, string> = {}): Record<string, string> {
+function baseHeaders(origin: string, headers: Record<string, string> = {}): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": "*",
     "Cache-Control": `public, max-age=${CACHE_TTL}`,
+    "Link": [
+      `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
+      `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
+      `<${origin}/info>; rel="describedby"`,
+      `<${origin}/about>; rel="about"`,
+    ].join(", "),
     ...headers,
   };
 }
@@ -123,25 +140,23 @@ export default {
         const upstream = await fetchImageCached(imageUrl);
         const contentType = upstream.headers.get("Content-Type") || "image/jpeg";
 
-        const altRoute = pathname === "/sd" ? "/" : "/sd";
-        const altLabel = pathname === "/sd" ? "High resolution" : "Standard resolution";
-
         return new Response(upstream.body, {
-          headers: corsHeaders({
-            "Content-Type": contentType,
-            "Link": [
-              `<${origin}${altRoute}>; rel="alternate"; title="${altLabel}"`,
-              `<${origin}/info>; rel="describedby"`,
-            ].join(", "),
-          }),
+          headers: baseHeaders(origin, { "Content-Type": contentType }),
         });
       }
 
       if (pathname === "/info") {
-        const apod = await fetchApod(formatDate(new Date()), apiKey);
+        const endpoints = {
+          "/": "Today's APOD image (high resolution, falls back to standard)",
+          "/sd": "Today's APOD image (standard resolution)",
+          "/info": "JSON metadata for today's APOD",
+          "/about": "Plain-text description and attribution",
+        };
 
-        return new Response(
-          JSON.stringify({
+        let apodData = {};
+        try {
+          const apod = await fetchApod(formatDate(new Date()), apiKey);
+          apodData = {
             title: apod.title,
             date: apod.date,
             explanation: apod.explanation,
@@ -149,49 +164,65 @@ export default {
             url: apod.url,
             hdurl: apod.hdurl ?? null,
             copyright: apod.copyright ?? null,
-            endpoints: {
-              "/": "Today's APOD image (high resolution, falls back to standard)",
-              "/sd": "Today's APOD image (standard resolution)",
-              "/info": "JSON metadata for today's APOD",
-              "/about": "Plain-text description and attribution",
-            },
-          }, null, 2),
-          {
-            headers: corsHeaders({
-              "Content-Type": "application/json",
-              "Link": [
-                `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
-                `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
-              ].join(", "),
-            }),
-          },
+          };
+        } catch {
+          apodData = { apod_error: "Unable to fetch today's APOD — NASA API may be unavailable" };
+        }
+
+        return new Response(
+          JSON.stringify({ ...apodData, endpoints }, null, 2),
+          { headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
         );
       }
 
       if (pathname === "/about") {
         const text = [
-          "Proxy for NASA's Astronomy Picture of the Day.",
-          "Returns today's image at a static URL, no API key required.",
-          "Video days are skipped automatically.",
-          "Useful for wallpapers, <img> sources, and other zero-JS environments.",
           "",
-          "Built by Grant Keller — https://grantkeller.dev",
+          "     .        *          .          *          .        *",
+          "   .         *                        .          .",
+          "                 _   _    _    ____    _",
+          "     *          | \\ | |  / \\  / ___|  / \\         .",
+          "        .       |  \\| | / _ \\ \\___ \\ / _ \\",
+          "           .    | |\\  |/ ___ \\ ___) / ___ \\   *",
+          "     .          |_| \\_/_/   \\_\\____/_/   \\_\\        .",
+          "  *                              .                *",
+          "        .    *        .    *          .        .",
+          "",
+          "                   ── APOD Proxy ──",
+          "",
+          "  Proxy for NASA's Astronomy Picture of the Day.",
+          "  Returns today's image at a static URL, no API key required.",
+          "  Video days are skipped automatically.",
+          "  Useful for wallpapers, <img> sources, and other zero-JS environments.",
+          "",
+          "  Usage:",
+          `    <img src="${origin}/">`,
+          "",
+          "  Routes:",
+          "    /        HD image (default)",
+          "    /sd      Standard resolution",
+          "    /info    JSON metadata",
+          "    /about   This page",
+          "",
+          "  Built by Grant Keller — https://grantkeller.dev",
+          "",
         ].join("\n");
 
         return new Response(text, {
-          headers: corsHeaders({ "Content-Type": "text/plain; charset=utf-8" }),
+          headers: baseHeaders(origin, { "Content-Type": "text/plain; charset=utf-8" }),
         });
       }
 
       return new Response(
         JSON.stringify({ error: "Not found. Routes: /, /sd, /info, /about" }),
-        { status: 404, headers: corsHeaders({ "Content-Type": "application/json" }) },
+        { status: 404, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
+      const status = err instanceof NasaApiError && err.statusCode === 429 ? 429 : 502;
       return new Response(
         JSON.stringify({ error: message }),
-        { status: 502, headers: corsHeaders({ "Content-Type": "application/json" }) },
+        { status, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
       );
     }
   },
