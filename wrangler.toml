@@ -1,3 +1,11 @@
 name = "apod-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-09-25"
+
+[[routes]]
+pattern = "api.nasapicture.com"
+custom_domain = true
+
+[[routes]]
+pattern = "get.nasapicture.com"
+custom_domain = true
