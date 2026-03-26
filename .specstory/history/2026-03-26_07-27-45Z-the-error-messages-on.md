@@ -3370,4 +3370,6753 @@ feat(landing): add nasapicture.com landing page and board tasks
 EOF
 )"
 ```
+
+```text
+[dev 1c31164] feat(landing): add nasapicture.com landing page and board tasks
+ 5 files changed, 3021 insertions(+), 1 deletion(-)
+ create mode 100644 board/tasks/TASK-0001_build-landing-page.md
+ create mode 100644 board/tasks/TASK-0002_deploy-landing-page.md
+ create mode 100644 landing/index.html
+```
 </details></tool-use>
+
+---
+
+_**User (2026-03-26 08:36:55Z)**_
+
+<command-message>impeccable:teach-impeccable</command-message>
+<command-name>/impeccable:teach-impeccable</command-name>
+
+_**User (2026-03-26 08:36:55Z)**_
+
+Base directory for this skill: /Users/grant/.claude/plugins/marketplaces/impeccable/.claude/skills/teach-impeccable
+
+Gather design context for this project, then persist it for all future sessions.
+
+## Step 1: Explore the Codebase
+
+Before asking questions, thoroughly scan the project to discover what you can:
+
+- **README and docs**: Project purpose, target audience, any stated goals
+- **Package.json / config files**: Tech stack, dependencies, existing design libraries
+- **Existing components**: Current design patterns, spacing, typography in use
+- **Brand assets**: Logos, favicons, color values already defined
+- **Design tokens / CSS variables**: Existing color palettes, font stacks, spacing scales
+- **Any style guides or brand documentation**
+
+Note what you've learned and what remains unclear.
+
+## Step 2: Ask UX-Focused Questions
+
+STOP and call the AskUserQuestionTool to clarify. Focus only on what you couldn't infer from the codebase:
+
+### Users & Purpose
+- Who uses this? What's their context when using it?
+- What job are they trying to get done?
+- What emotions should the interface evoke? (confidence, delight, calm, urgency, etc.)
+
+### Brand & Personality
+- How would you describe the brand personality in 3 words?
+- Any reference sites or apps that capture the right feel? What specifically about them?
+- What should this explicitly NOT look like? Any anti-references?
+
+### Aesthetic Preferences
+- Any strong preferences for visual direction? (minimal, bold, elegant, playful, technical, organic, etc.)
+- Light mode, dark mode, or both?
+- Any colors that must be used or avoided?
+
+### Accessibility & Inclusion
+- Specific accessibility requirements? (WCAG level, known user needs)
+- Considerations for reduced motion, color blindness, or other accommodations?
+
+Skip questions where the answer is already clear from the codebase exploration.
+
+## Step 3: Write Design Context
+
+Synthesize your findings and the user's answers into a `## Design Context` section:
+
+```markdown
+## Design Context
+
+### Users
+[Who they are, their context, the job to be done]
+
+### Brand Personality
+[Voice, tone, 3-word personality, emotional goals]
+
+### Aesthetic Direction
+[Visual tone, references, anti-references, theme]
+
+### Design Principles
+[3-5 principles derived from the conversation that should guide all design decisions]
+```
+
+Write this section to CLAUDE.md in the project root. If the file exists, append or update the Design Context section.
+
+Confirm completion and summarize the key design principles that will now guide all future work.
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 08:36:58Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 08:36:59Z)**_
+
+Let me explore the project first to gather what I can.
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:00Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./package.json`
+
+```text
+     1→{
+     2→  "name": "apod-proxy",
+     3→  "private": true,
+     4→  "scripts": {
+     5→    "dev": "wrangler dev",
+     6→    "deploy": "wrangler deploy"
+     7→  },
+     8→  "devDependencies": {
+     9→    "@cloudflare/workers-types": "^4.20241004.0",
+    10→    "typescript": "^5.6.0",
+    11→    "wrangler": "^4.77.0"
+    12→  }
+    13→}
+    14→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:00Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./README.md`
+
+```text
+     1→# NASA Picture Proxy
+     2→
+     3→A Cloudflare Worker that proxies [NASA's Astronomy Picture of the Day](https://apod.nasa.gov/apod/astropix.html) behind a fixed URL. An HTTP GET request returns today's image without needing an API key or parsing JSON.
+     4→
+     5→During a tinkering session, I wanted to set the background image of my homelab [homepage](https://github.com/gethomepage/homepage) dashboard to the APOD. I didn't want to inject additional JavaScript on the page and couldn't find an existing static URL. So, I built this proxy to share with anyone else who'd like to view the wonders of space easily, anywhere.
+     6→
+     7→
+     8→## Usage
+     9→
+    10→Embed directly as an image:
+    11→
+    12→```html
+    13→<img src="https://api.nasapicture.com/" alt="NASA Astronomy Picture of the Day" />
+    14→```
+    15→
+    16→CSS background:
+    17→
+    18→```css
+    19→body {
+    20→  background-image: url("https://api.nasapicture.com/");
+    21→  background-size: cover;
+    22→}
+    23→```
+    24→
+    25→Fetch metadata:
+    26→
+    27→```bash
+    28→curl https://api.nasapicture.com/info | jq .
+    29→```
+    30→
+    31→## Endpoints
+    32→
+    33→| Path | Response |
+    34→|------|----------|
+    35→| `/` | Today's APOD image (HD, falls back to standard) |
+    36→| `/sd` | Standard resolution image |
+    37→| `/info` | JSON metadata (title, date, explanation, copyright) |
+    38→| `/about` | Plain-text description and route listing |
+    39→
+    40→When the APOD of the day is a video, the proxy walks backwards up to 7 days to find the most recent image.
+    41→
+    42→## How it works
+    43→
+    44→Both the NASA API call and the upstream image fetch are cached at Cloudflare's edge via `cf: { cacheTtl, cacheEverything }`. Caching is purely edge-based; there's no KV, D1, or cron involved.
+    45→
+    46→When the date rolls over, `formatDate(new Date())` produces a new date string, which changes the API request URL and therefore the cache key. The response updates automatically.
+    47→
+    48→## Author
+    49→
+    50→Built by [Grant Keller](https://grantkeller.dev).
+    51→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:00Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+     7→  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. Drop an image tag, get today's APOD. No API key, no JavaScript, no fuss.">
+     8→  <meta property="og:title" content="nasapicture.com">
+     9→  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+    10→  <meta property="og:image" content="https://api.nasapicture.com/">
+    11→  <meta property="og:type" content="website">
+    12→  <meta name="twitter:card" content="summary_large_image">
+    13→  <link rel="preconnect" href="https://fonts.googleapis.com">
+    14→  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    15→  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    16→  <script src="https://cdn.tailwindcss.com"></script>
+    17→  <script>
+    18→    tailwind.config = {
+    19→      theme: {
+    20→        extend: {
+    21→          colors: {
+    22→            void: '#0a0e17',
+    23→            'void-light': '#111827',
+    24→            starlight: '#e8a838',
+    25→            'starlight-dim': '#b8842a',
+    26→            silver: '#c8ccd4',
+    27→            'silver-dim': '#6b7280',
+    28→            teal: '#1a3a4a',
+    29→            'teal-light': '#234d61',
+    30→          },
+    31→          fontFamily: {
+    32→            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+    33→            sans: ['"DM Sans"', 'sans-serif'],
+    34→            mono: ['"JetBrains Mono"', 'monospace'],
+    35→          },
+    36→        },
+    37→      },
+    38→    }
+    39→  </script>
+    40→  <style>
+    41→    /* Starfield background */
+    42→    .starfield {
+    43→      position: fixed;
+    44→      inset: 0;
+    45→      z-index: 0;
+    46→      overflow: hidden;
+    47→      pointer-events: none;
+    48→    }
+    49→
+    50→    .starfield::before,
+    51→    .starfield::after {
+    52→      content: '';
+    53→      position: absolute;
+    54→      inset: 0;
+    55→    }
+    56→
+    57→    .starfield::before {
+    58→      background-image:
+    59→        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+    60→        radial-gradient(1px 1px at 25% 65%, rgba(255,255,255,0.6), transparent),
+    61→        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.9), transparent),
+    62→        radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.5), transparent),
+    63→        radial-gradient(1.5px 1.5px at 70% 80%, rgba(255,255,255,0.7), transparent),
+    64→        radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.6), transparent),
+    65→        radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.4), transparent),
+    66→        radial-gradient(1.5px 1.5px at 90% 55%, rgba(255,255,255,0.8), transparent),
+    67→        radial-gradient(1px 1px at 35% 35%, rgba(255,255,255,0.5), transparent),
+    68→        radial-gradient(1px 1px at 60% 15%, rgba(255,255,255,0.7), transparent),
+    69→        radial-gradient(1.5px 1.5px at 5% 50%, rgba(255,255,255,0.6), transparent),
+    70→        radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,0.4), transparent),
+    71→        radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.7), transparent),
+    72→        radial-gradient(1.5px 1.5px at 20% 40%, rgba(255,255,255,0.5), transparent),
+    73→        radial-gradient(1px 1px at 95% 10%, rgba(255,255,255,0.8), transparent),
+    74→        radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.3), transparent),
+    75→        radial-gradient(1.5px 1.5px at 30% 55%, rgba(255,255,255,0.6), transparent),
+    76→        radial-gradient(1px 1px at 65% 95%, rgba(255,255,255,0.5), transparent),
+    77→        radial-gradient(1px 1px at 80% 45%, rgba(255,255,255,0.7), transparent),
+    78→        radial-gradient(1.5px 1.5px at 12% 72%, rgba(255,255,255,0.4), transparent);
+    79→      animation: twinkle 8s ease-in-out infinite alternate;
+    80→    }
+    81→
+    82→    .starfield::after {
+    83→      background-image:
+    84→        radial-gradient(1px 1px at 8% 35%, rgba(255,255,255,0.5), transparent),
+    85→        radial-gradient(1.5px 1.5px at 22% 78%, rgba(255,255,255,0.7), transparent),
+    86→        radial-gradient(1px 1px at 38% 52%, rgba(255,255,255,0.4), transparent),
+    87→        radial-gradient(1px 1px at 52% 18%, rgba(255,255,255,0.8), transparent),
+    88→        radial-gradient(1.5px 1.5px at 68% 42%, rgba(255,255,255,0.6), transparent),
+    89→        radial-gradient(1px 1px at 82% 88%, rgba(255,255,255,0.5), transparent),
+    90→        radial-gradient(1px 1px at 92% 25%, rgba(255,255,255,0.7), transparent),
+    91→        radial-gradient(1.5px 1.5px at 18% 62%, rgba(255,255,255,0.3), transparent),
+    92→        radial-gradient(1px 1px at 42% 8%, rgba(255,255,255,0.6), transparent),
+    93→        radial-gradient(1px 1px at 58% 75%, rgba(255,255,255,0.4), transparent),
+    94→        radial-gradient(1.5px 1.5px at 72% 15%, rgba(255,255,255,0.8), transparent),
+    95→        radial-gradient(1px 1px at 88% 58%, rgba(255,255,255,0.5), transparent),
+    96→        radial-gradient(1px 1px at 3% 92%, rgba(255,255,255,0.6), transparent),
+    97→        radial-gradient(1.5px 1.5px at 48% 32%, rgba(255,255,255,0.7), transparent),
+    98→        radial-gradient(1px 1px at 78% 72%, rgba(255,255,255,0.4), transparent);
+    99→      animation: twinkle 12s ease-in-out infinite alternate-reverse;
+   100→    }
+   101→
+   102→    @keyframes twinkle {
+   103→      0% { opacity: 0.5; }
+   104→      50% { opacity: 1; }
+   105→      100% { opacity: 0.6; }
+   106→    }
+   107→
+   108→    /* Staggered fade-in */
+   109→    .fade-in {
+   110→      opacity: 0;
+   111→      transform: translateY(20px);
+   112→      animation: fadeUp 0.8s ease-out forwards;
+   113→    }
+   114→
+   115→    .fade-in-delay-1 { animation-delay: 0.15s; }
+   116→    .fade-in-delay-2 { animation-delay: 0.3s; }
+   117→    .fade-in-delay-3 { animation-delay: 0.5s; }
+   118→    .fade-in-delay-4 { animation-delay: 0.7s; }
+   119→
+   120→    @keyframes fadeUp {
+   121→      to {
+   122→        opacity: 1;
+   123→        transform: translateY(0);
+   124→      }
+   125→    }
+   126→
+   127→    /* Hero image glow */
+   128→    .hero-glow {
+   129→      position: absolute;
+   130→      inset: -40px;
+   131→      background: radial-gradient(ellipse at center, rgba(232, 168, 56, 0.12) 0%, transparent 70%);
+   132→      z-index: -1;
+   133→      border-radius: 50%;
+   134→      filter: blur(40px);
+   135→    }
+   136→
+   137→    /* Endpoint card hover */
+   138→    .endpoint-card {
+   139→      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+   140→    }
+   141→
+   142→    .endpoint-card:hover {
+   143→      border-color: rgba(232, 168, 56, 0.4);
+   144→      box-shadow: 0 0 24px rgba(232, 168, 56, 0.08);
+   145→      transform: translateY(-2px);
+   146→    }
+   147→
+   148→    /* Reduced motion */
+   149→    @media (prefers-reduced-motion: reduce) {
+   150→      .starfield::before,
+   151→      .starfield::after {
+   152→        animation: none;
+   153→        opacity: 0.7;
+   154→      }
+   155→
+   156→      .fade-in {
+   157→        animation: none;
+   158→        opacity: 1;
+   159→        transform: none;
+   160→      }
+   161→
+   162→      .endpoint-card {
+   163→        transition: none;
+   164→      }
+   165→
+   166→      .endpoint-card:hover {
+   167→        transform: none;
+   168→      }
+   169→    }
+   170→
+   171→    /* Image loading skeleton */
+   172→    .img-skeleton {
+   173→      background: linear-gradient(110deg, #111827 8%, #1a2332 18%, #111827 33%);
+   174→      background-size: 200% 100%;
+   175→      animation: shimmer 1.5s linear infinite;
+   176→    }
+   177→
+   178→    @keyframes shimmer {
+   179→      to { background-position: -200% 0; }
+   180→    }
+   181→
+   182→    @media (prefers-reduced-motion: reduce) {
+   183→      .img-skeleton {
+   184→        animation: none;
+   185→        background: #111827;
+   186→      }
+   187→    }
+   188→  </style>
+   189→</head>
+   190→
+   191→<body class="bg-void text-silver font-sans min-h-screen relative">
+   192→  <div class="starfield" aria-hidden="true"></div>
+   193→
+   194→  <div class="relative z-10">
+   195→    <!-- Header -->
+   196→    <header class="fade-in px-6 py-6 sm:px-8 max-w-5xl mx-auto flex items-baseline justify-between">
+   197→      <a href="/" class="group flex items-baseline gap-2">
+   198→        <span class="font-serif text-2xl sm:text-3xl text-white tracking-tight">nasapicture</span>
+   199→        <span class="font-serif text-2xl sm:text-3xl text-starlight">.com</span>
+   200→      </a>
+   201→      <nav>
+   202→        <a href="https://api.nasapicture.com/about"
+   203→           class="font-mono text-sm text-silver-dim hover:text-starlight transition-colors"
+   204→           target="_blank"
+   205→           rel="noopener noreferrer">/about</a>
+   206→      </nav>
+   207→    </header>
+   208→
+   209→    <main class="px-6 sm:px-8 max-w-5xl mx-auto pb-20">
+   210→      <!-- Hero -->
+   211→      <section class="fade-in fade-in-delay-1 mb-16 sm:mb-24">
+   212→        <div class="relative max-w-3xl mx-auto">
+   213→          <div class="hero-glow" aria-hidden="true"></div>
+   214→          <div class="relative rounded-lg overflow-hidden img-skeleton aspect-video">
+   215→            <img
+   216→              src="https://api.nasapicture.com/"
+   217→              alt="NASA Astronomy Picture of the Day"
+   218→              class="w-full h-full object-cover"
+   219→              loading="eager"
+   220→              onload="this.parentElement.classList.remove('img-skeleton')"
+   221→            >
+   222→          </div>
+   223→          <p class="mt-4 text-center font-serif italic text-lg sm:text-xl text-silver-dim">
+   224→            Today's Astronomy Picture of the Day
+   225→          </p>
+   226→        </div>
+   227→      </section>
+   228→
+   229→      <!-- Explanation -->
+   230→      <section class="fade-in fade-in-delay-2 mb-16 sm:mb-24 max-w-2xl mx-auto">
+   231→        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-6">
+   232→          One URL. Today's picture.
+   233→        </h2>
+   234→        <p class="text-lg leading-relaxed mb-4">
+   235→          <span class="text-starlight font-medium">nasapicture.com</span> is a proxy for
+   236→          NASA's Astronomy Picture of the Day. It gives you a stable URL that always
+   237→          returns today's APOD image &mdash; no API key, no JavaScript, no configuration.
+   238→        </p>
+   239→        <p class="text-lg leading-relaxed mb-4">
+   240→          Drop it into an <code class="font-mono text-sm bg-void-light px-1.5 py-0.5 rounded border border-teal">&lt;img&gt;</code> tag,
+   241→          use it as a wallpaper source, or fetch the JSON metadata. Video days
+   242→          are skipped automatically &mdash; you always get an image.
+   243→        </p>
+   244→        <div class="mt-8 bg-void-light border border-teal rounded-lg p-5">
+   245→          <p class="font-mono text-sm text-silver-dim mb-2">// That's it. That's the whole integration.</p>
+   246→          <p class="font-mono text-sm sm:text-base text-white">
+   247→            &lt;img src="<span class="text-starlight">https://api.nasapicture.com/</span>"&gt;
+   248→          </p>
+   249→        </div>
+   250→      </section>
+   251→
+   252→      <!-- Endpoints -->
+   253→      <section class="fade-in fade-in-delay-3 mb-16 sm:mb-24">
+   254→        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-3 max-w-2xl mx-auto">Endpoints</h2>
+   255→        <p class="text-silver-dim mb-8 max-w-2xl mx-auto">
+   256→          All routes are on <code class="font-mono text-sm text-starlight-dim">api.nasapicture.com</code>
+   257→        </p>
+   258→
+   259→        <div class="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+   260→          <a href="https://api.nasapicture.com/"
+   261→             target="_blank" rel="noopener noreferrer"
+   262→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   263→            <div class="flex items-center gap-3 mb-2">
+   264→              <span class="font-mono text-base font-medium text-starlight">/</span>
+   265→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   266→            </div>
+   267→            <p class="text-sm text-silver leading-relaxed">
+   268→              Today's APOD in high resolution. Falls back to standard if HD isn't available.
+   269→            </p>
+   270→          </a>
+   271→
+   272→          <a href="https://api.nasapicture.com/sd"
+   273→             target="_blank" rel="noopener noreferrer"
+   274→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   275→            <div class="flex items-center gap-3 mb-2">
+   276→              <span class="font-mono text-base font-medium text-starlight">/sd</span>
+   277→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   278→            </div>
+   279→            <p class="text-sm text-silver leading-relaxed">
+   280→              Standard resolution image. Lighter payload, same picture.
+   281→            </p>
+   282→          </a>
+   283→
+   284→          <a href="https://api.nasapicture.com/info"
+   285→             target="_blank" rel="noopener noreferrer"
+   286→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   287→            <div class="flex items-center gap-3 mb-2">
+   288→              <span class="font-mono text-base font-medium text-starlight">/info</span>
+   289→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   290→            </div>
+   291→            <p class="text-sm text-silver leading-relaxed">
+   292→              JSON metadata &mdash; title, date, explanation, image URLs, copyright.
+   293→            </p>
+   294→          </a>
+   295→
+   296→          <a href="https://api.nasapicture.com/about"
+   297→             target="_blank" rel="noopener noreferrer"
+   298→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   299→            <div class="flex items-center gap-3 mb-2">
+   300→              <span class="font-mono text-base font-medium text-starlight">/about</span>
+   301→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   302→            </div>
+   303→            <p class="text-sm text-silver leading-relaxed">
+   304→              Plain-text description with ASCII art. Good for terminals.
+   305→            </p>
+   306→          </a>
+   307→        </div>
+   308→      </section>
+   309→
+   310→      <!-- How it works -->
+   311→      <section class="fade-in fade-in-delay-4 max-w-2xl mx-auto">
+   312→        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-6">How it works</h2>
+   313→        <div class="space-y-4 text-lg leading-relaxed">
+   314→          <p>
+   315→            A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="text-starlight hover:underline underline-offset-4">Cloudflare Worker</a>
+   316→            fetches today's APOD from NASA's API, then streams the image bytes
+   317→            directly to you. The response is cached at the edge &mdash; subsequent
+   318→            requests in the same hour are served instantly from Cloudflare's network.
+   319→          </p>
+   320→          <p>
+   321→            If today's APOD is a video (it happens), the worker walks backwards up to
+   322→            7 days to find the most recent image. You never get an error for something
+   323→            out of your control.
+   324→          </p>
+   325→        </div>
+   326→      </section>
+   327→    </main>
+   328→
+   329→    <!-- Footer -->
+   330→    <footer class="relative z-10 border-t border-teal px-6 sm:px-8 py-8">
+   331→      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-silver-dim">
+   332→        <p>
+   333→          Built by
+   334→          <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer"
+   335→             class="text-silver hover:text-starlight transition-colors">Grant Keller</a>
+   336→        </p>
+   337→        <p>
+   338→          Data from
+   339→          <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer"
+   340→             class="text-silver hover:text-starlight transition-colors">NASA APOD</a>
+   341→        </p>
+   342→      </div>
+   343→    </footer>
+   344→  </div>
+   345→</body>
+   346→</html>
+   347→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:04Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./CLAUDE.md`
+
+```text
+     1→# CLAUDE.md
+     2→
+     3→This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+     4→
+     5→## Project Overview
+     6→
+     7→APOD Proxy — a Cloudflare Worker that proxies NASA's Astronomy Picture of the Day API behind stable, fixed URLs. Serves today's APOD image (standard or HD) or JSON metadata. Falls back up to 7 days when the daily APOD is a video.
+     8→
+     9→## Commands
+    10→
+    11→```bash
+    12→npm run dev        # Local dev server at http://localhost:8787
+    13→npm run deploy     # Deploy to Cloudflare Workers
+    14→npx tsc --noEmit   # Type-check (no build artifact — Wrangler bundles directly)
+    15→```
+    16→
+    17→## Architecture
+    18→
+    19→Single-file Worker (`src/index.ts`) with four routes:
+    20→
+    21→- `GET /` — proxies today's HD APOD image (falls back to standard if unavailable)
+    22→- `GET /sd` — proxies the standard-res version
+    23→- `GET /info` — returns JSON metadata
+    24→- `GET /about` — plain-text description and attribution
+    25→
+    26→Caching is handled entirely by Cloudflare's edge cache via `cf: { cacheTtl, cacheEverything }` on fetch calls — no KV, D1, or cron. Cache key changes naturally when the date rolls over (new date string = new API URL).
+    27→
+    28→The `findLatestImage` function walks backwards from today up to `MAX_LOOKBACK_DAYS` (7) to skip video APODs.
+    29→
+    30→## Environment
+    31→
+    32→- **`NASA_API_KEY`** — optional secret; falls back to `DEMO_KEY` (30 req/hr, sufficient behind cache). Set via `npx wrangler secret put NASA_API_KEY`.
+    33→- Local secrets go in `.dev.vars` (gitignored).
+    34→
+    35→## Project Board
+    36→
+    37→This project uses a structured board system for project management.
+    38→
+    39→- **Ask before creating new board files** — don't auto-create tasks, ADRs, etc.
+    40→- Follow the board system spec for all documentation artifacts
+    41→- Use `/board:board-show` to see current board state
+    42→- Use `/board:board-add` to create new items
+    43→- Use `/board:board-update` after completing significant work to reconcile the board
+    44→- Use `/board:board-check` when starting work to find related board context
+    45→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:05Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `/Users/grant/.claude/projects/-Users-grant-code-nasa-apod/memory/user_identity.md`
+
+```text
+     1→---
+     2→name: User identity
+     3→description: User's name and personal website for attribution
+     4→type: user
+     5→---
+     6→
+     7→Grant Keller — website: https://grantkeller.dev
+     8→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:12Z)**_
+
+Here's what I've gathered from the codebase:
+
+**Already established:**
+- Dark space theme with deep navy (#0a0e17) background, amber/gold (#e8a838) accent, teal borders, silver text
+- Fonts: Instrument Serif (headings), DM Sans (body), JetBrains Mono (code)
+- Engineering-forward, personality-driven tone (the /about ASCII art, "That's it. That's the whole integration.")
+- Tailwind CSS, semantic HTML, prefers-reduced-motion support
+- Target audience: developers integrating APOD into their projects
+- Origin story: Grant built it for his homelab dashboard, shared it publicly
+
+**What I still need to clarify from you:**
+
+_**Agent (claude-opus-4-6 2026-03-26 08:37:13Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ToolSearch"><details>
+<summary>Tool use: **ToolSearch**</summary>
+
+**Input:**
+
+- max_results: `1`
+- query: `select:AskUserQuestion`
+
+**Result:**
+
+```
+
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:43:30Z)**_
+
+<tool-use data-tool-type="generic" data-tool-name="AskUserQuestion"><details>
+<summary>Tool use: **AskUserQuestion**</summary>
+**How would you describe the brand personality of nasapicture.com in 3 words?**
+
+Options:
+- **Clever, minimal, precise** - Engineering craft — says a lot with little, like the /about ASCII art
+- **Warm, curious, inviting** - Emphasizes the wonder of space, welcoming to non-technical visitors too
+- **Bold, playful, nerdy** - Leans into the fun of building things, hacker energy
+
+**Who is the primary audience for the landing page?**
+
+Options:
+- **Developers** - People integrating the API into dashboards, wallpapers, side projects
+- **Everyone** - General public who might stumble on the domain — developers and space enthusiasts alike
+- **Developers + tinkerers** - Technical people who build things for fun, homelab crowd
+
+**What emotions should visiting nasapicture.com evoke?**
+
+Options:
+- **Awe + simplicity** - Wonder at the cosmos, relief at how easy the tool is
+- **Delight + cleverness** - A smile at how well-crafted something small can be
+- **Calm + trust** - Quiet confidence — it just works, no drama
+
+**Any sites or apps that capture the right feel? Or anti-references — what should this NOT look like?**
+
+Options:
+- **stripe.com / linear.app** - Clean developer tools with strong visual identity
+- **neal.fun / poolsuite.net** - Playful, memorable, personality-driven
+- **No strong references** - Just keep the current direction — dark space theme, engineering tone
+
+
+**Answer:** Clever, minimal, precise, Everyone, Awe + simplicity, No strong references
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:43:34Z)**_
+
+Great answers. Let me write the Design Context to CLAUDE.md.
+
+_**Agent (claude-opus-4-6 2026-03-26 08:43:47Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/CLAUDE.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:43:51Z)**_
+
+Done. The **Design Context** section is now in `CLAUDE.md` and will guide all future design work. Here's the summary:
+
+**Brand**: Clever, minimal, precise
+**Emotion**: Awe + simplicity
+**5 design principles**:
+1. The image is the hero — never compete with the APOD
+2. Earn trust through restraint — fewer elements, better
+3. Craft in the details — personality in small moments, not loud choices
+4. Accessible by default — not optional
+5. One file, zero friction — mirrors the API philosophy
+
+---
+
+_**User (2026-03-26 08:46:07Z)**_
+
+<command-message>frontend-design:frontend-design</command-message>
+<command-name>/frontend-design:frontend-design</command-name>
+
+_**User (2026-03-26 08:46:07Z)**_
+
+Base directory for this skill: /Users/grant/.claude/plugins/marketplaces/claude-plugins-official/plugins/frontend-design/skills/frontend-design
+
+This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+
+The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
+
+## Design Thinking
+
+Before coding, understand the context and commit to a BOLD aesthetic direction:
+- **Purpose**: What problem does this interface solve? Who uses it?
+- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
+- **Constraints**: Technical requirements (framework, performance, accessibility).
+- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+
+**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+
+Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
+- Production-grade and functional
+- Visually striking and memorable
+- Cohesive with a clear aesthetic point-of-view
+- Meticulously refined in every detail
+
+## Frontend Aesthetics Guidelines
+
+Focus on:
+- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
+- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
+- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
+- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
+- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+
+NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+
+Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+
+**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+
+Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 08:46:27Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 08:46:29Z)**_
+
+The current landing page is solid but conventional. Let me reimagine it around the core principle: **the image is the hero**.
+
+**Concept**: The APOD image fills the entire viewport like a spacecraft window. UI elements float over it as a minimal heads-up display. Scrolling descends from the cosmos into a dark "ground control" section with technical details. The memorable moment: opening the page feels like looking out into space.
+
+_**Agent (claude-opus-4-6 2026-03-26 08:46:30Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+     7→  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. Drop an image tag, get today's APOD. No API key, no JavaScript, no fuss.">
+     8→  <meta property="og:title" content="nasapicture.com">
+     9→  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+    10→  <meta property="og:image" content="https://api.nasapicture.com/">
+    11→  <meta property="og:type" content="website">
+    12→  <meta name="twitter:card" content="summary_large_image">
+    13→  <link rel="preconnect" href="https://fonts.googleapis.com">
+    14→  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    15→  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    16→  <script src="https://cdn.tailwindcss.com"></script>
+    17→  <script>
+    18→    tailwind.config = {
+    19→      theme: {
+    20→        extend: {
+    21→          colors: {
+    22→            void: '#0a0e17',
+    23→            'void-light': '#111827',
+    24→            starlight: '#e8a838',
+    25→            'starlight-dim': '#b8842a',
+    26→            silver: '#c8ccd4',
+    27→            'silver-dim': '#6b7280',
+    28→            teal: '#1a3a4a',
+    29→            'teal-light': '#234d61',
+    30→          },
+    31→          fontFamily: {
+    32→            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+    33→            sans: ['"DM Sans"', 'sans-serif'],
+    34→            mono: ['"JetBrains Mono"', 'monospace'],
+    35→          },
+    36→        },
+    37→      },
+    38→    }
+    39→  </script>
+    40→  <style>
+    41→    /* Starfield background */
+    42→    .starfield {
+    43→      position: fixed;
+    44→      inset: 0;
+    45→      z-index: 0;
+    46→      overflow: hidden;
+    47→      pointer-events: none;
+    48→    }
+    49→
+    50→    .starfield::before,
+    51→    .starfield::after {
+    52→      content: '';
+    53→      position: absolute;
+    54→      inset: 0;
+    55→    }
+    56→
+    57→    .starfield::before {
+    58→      background-image:
+    59→        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+    60→        radial-gradient(1px 1px at 25% 65%, rgba(255,255,255,0.6), transparent),
+    61→        radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.9), transparent),
+    62→        radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.5), transparent),
+    63→        radial-gradient(1.5px 1.5px at 70% 80%, rgba(255,255,255,0.7), transparent),
+    64→        radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.6), transparent),
+    65→        radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.4), transparent),
+    66→        radial-gradient(1.5px 1.5px at 90% 55%, rgba(255,255,255,0.8), transparent),
+    67→        radial-gradient(1px 1px at 35% 35%, rgba(255,255,255,0.5), transparent),
+    68→        radial-gradient(1px 1px at 60% 15%, rgba(255,255,255,0.7), transparent),
+    69→        radial-gradient(1.5px 1.5px at 5% 50%, rgba(255,255,255,0.6), transparent),
+    70→        radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,0.4), transparent),
+    71→        radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.7), transparent),
+    72→        radial-gradient(1.5px 1.5px at 20% 40%, rgba(255,255,255,0.5), transparent),
+    73→        radial-gradient(1px 1px at 95% 10%, rgba(255,255,255,0.8), transparent),
+    74→        radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.3), transparent),
+    75→        radial-gradient(1.5px 1.5px at 30% 55%, rgba(255,255,255,0.6), transparent),
+    76→        radial-gradient(1px 1px at 65% 95%, rgba(255,255,255,0.5), transparent),
+    77→        radial-gradient(1px 1px at 80% 45%, rgba(255,255,255,0.7), transparent),
+    78→        radial-gradient(1.5px 1.5px at 12% 72%, rgba(255,255,255,0.4), transparent);
+    79→      animation: twinkle 8s ease-in-out infinite alternate;
+    80→    }
+    81→
+    82→    .starfield::after {
+    83→      background-image:
+    84→        radial-gradient(1px 1px at 8% 35%, rgba(255,255,255,0.5), transparent),
+    85→        radial-gradient(1.5px 1.5px at 22% 78%, rgba(255,255,255,0.7), transparent),
+    86→        radial-gradient(1px 1px at 38% 52%, rgba(255,255,255,0.4), transparent),
+    87→        radial-gradient(1px 1px at 52% 18%, rgba(255,255,255,0.8), transparent),
+    88→        radial-gradient(1.5px 1.5px at 68% 42%, rgba(255,255,255,0.6), transparent),
+    89→        radial-gradient(1px 1px at 82% 88%, rgba(255,255,255,0.5), transparent),
+    90→        radial-gradient(1px 1px at 92% 25%, rgba(255,255,255,0.7), transparent),
+    91→        radial-gradient(1.5px 1.5px at 18% 62%, rgba(255,255,255,0.3), transparent),
+    92→        radial-gradient(1px 1px at 42% 8%, rgba(255,255,255,0.6), transparent),
+    93→        radial-gradient(1px 1px at 58% 75%, rgba(255,255,255,0.4), transparent),
+    94→        radial-gradient(1.5px 1.5px at 72% 15%, rgba(255,255,255,0.8), transparent),
+    95→        radial-gradient(1px 1px at 88% 58%, rgba(255,255,255,0.5), transparent),
+    96→        radial-gradient(1px 1px at 3% 92%, rgba(255,255,255,0.6), transparent),
+    97→        radial-gradient(1.5px 1.5px at 48% 32%, rgba(255,255,255,0.7), transparent),
+    98→        radial-gradient(1px 1px at 78% 72%, rgba(255,255,255,0.4), transparent);
+    99→      animation: twinkle 12s ease-in-out infinite alternate-reverse;
+   100→    }
+   101→
+   102→    @keyframes twinkle {
+   103→      0% { opacity: 0.5; }
+   104→      50% { opacity: 1; }
+   105→      100% { opacity: 0.6; }
+   106→    }
+   107→
+   108→    /* Staggered fade-in */
+   109→    .fade-in {
+   110→      opacity: 0;
+   111→      transform: translateY(20px);
+   112→      animation: fadeUp 0.8s ease-out forwards;
+   113→    }
+   114→
+   115→    .fade-in-delay-1 { animation-delay: 0.15s; }
+   116→    .fade-in-delay-2 { animation-delay: 0.3s; }
+   117→    .fade-in-delay-3 { animation-delay: 0.5s; }
+   118→    .fade-in-delay-4 { animation-delay: 0.7s; }
+   119→
+   120→    @keyframes fadeUp {
+   121→      to {
+   122→        opacity: 1;
+   123→        transform: translateY(0);
+   124→      }
+   125→    }
+   126→
+   127→    /* Hero image glow */
+   128→    .hero-glow {
+   129→      position: absolute;
+   130→      inset: -40px;
+   131→      background: radial-gradient(ellipse at center, rgba(232, 168, 56, 0.12) 0%, transparent 70%);
+   132→      z-index: -1;
+   133→      border-radius: 50%;
+   134→      filter: blur(40px);
+   135→    }
+   136→
+   137→    /* Endpoint card hover */
+   138→    .endpoint-card {
+   139→      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+   140→    }
+   141→
+   142→    .endpoint-card:hover {
+   143→      border-color: rgba(232, 168, 56, 0.4);
+   144→      box-shadow: 0 0 24px rgba(232, 168, 56, 0.08);
+   145→      transform: translateY(-2px);
+   146→    }
+   147→
+   148→    /* Reduced motion */
+   149→    @media (prefers-reduced-motion: reduce) {
+   150→      .starfield::before,
+   151→      .starfield::after {
+   152→        animation: none;
+   153→        opacity: 0.7;
+   154→      }
+   155→
+   156→      .fade-in {
+   157→        animation: none;
+   158→        opacity: 1;
+   159→        transform: none;
+   160→      }
+   161→
+   162→      .endpoint-card {
+   163→        transition: none;
+   164→      }
+   165→
+   166→      .endpoint-card:hover {
+   167→        transform: none;
+   168→      }
+   169→    }
+   170→
+   171→    /* Image loading skeleton */
+   172→    .img-skeleton {
+   173→      background: linear-gradient(110deg, #111827 8%, #1a2332 18%, #111827 33%);
+   174→      background-size: 200% 100%;
+   175→      animation: shimmer 1.5s linear infinite;
+   176→    }
+   177→
+   178→    @keyframes shimmer {
+   179→      to { background-position: -200% 0; }
+   180→    }
+   181→
+   182→    @media (prefers-reduced-motion: reduce) {
+   183→      .img-skeleton {
+   184→        animation: none;
+   185→        background: #111827;
+   186→      }
+   187→    }
+   188→  </style>
+   189→</head>
+   190→
+   191→<body class="bg-void text-silver font-sans min-h-screen relative">
+   192→  <div class="starfield" aria-hidden="true"></div>
+   193→
+   194→  <div class="relative z-10">
+   195→    <!-- Header -->
+   196→    <header class="fade-in px-6 py-6 sm:px-8 max-w-5xl mx-auto flex items-baseline justify-between">
+   197→      <a href="/" class="group flex items-baseline gap-2">
+   198→        <span class="font-serif text-2xl sm:text-3xl text-white tracking-tight">nasapicture</span>
+   199→        <span class="font-serif text-2xl sm:text-3xl text-starlight">.com</span>
+   200→      </a>
+   201→      <nav>
+   202→        <a href="https://api.nasapicture.com/about"
+   203→           class="font-mono text-sm text-silver-dim hover:text-starlight transition-colors"
+   204→           target="_blank"
+   205→           rel="noopener noreferrer">/about</a>
+   206→      </nav>
+   207→    </header>
+   208→
+   209→    <main class="px-6 sm:px-8 max-w-5xl mx-auto pb-20">
+   210→      <!-- Hero -->
+   211→      <section class="fade-in fade-in-delay-1 mb-16 sm:mb-24">
+   212→        <div class="relative max-w-3xl mx-auto">
+   213→          <div class="hero-glow" aria-hidden="true"></div>
+   214→          <div class="relative rounded-lg overflow-hidden img-skeleton aspect-video">
+   215→            <img
+   216→              src="https://api.nasapicture.com/"
+   217→              alt="NASA Astronomy Picture of the Day"
+   218→              class="w-full h-full object-cover"
+   219→              loading="eager"
+   220→              onload="this.parentElement.classList.remove('img-skeleton')"
+   221→            >
+   222→          </div>
+   223→          <p class="mt-4 text-center font-serif italic text-lg sm:text-xl text-silver-dim">
+   224→            Today's Astronomy Picture of the Day
+   225→          </p>
+   226→        </div>
+   227→      </section>
+   228→
+   229→      <!-- Explanation -->
+   230→      <section class="fade-in fade-in-delay-2 mb-16 sm:mb-24 max-w-2xl mx-auto">
+   231→        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-6">
+   232→          One URL. Today's picture.
+   233→        </h2>
+   234→        <p class="text-lg leading-relaxed mb-4">
+   235→          <span class="text-starlight font-medium">nasapicture.com</span> is a proxy for
+   236→          NASA's Astronomy Picture of the Day. It gives you a stable URL that always
+   237→          returns today's APOD image &mdash; no API key, no JavaScript, no configuration.
+   238→        </p>
+   239→        <p class="text-lg leading-relaxed mb-4">
+   240→          Drop it into an <code class="font-mono text-sm bg-void-light px-1.5 py-0.5 rounded border border-teal">&lt;img&gt;</code> tag,
+   241→          use it as a wallpaper source, or fetch the JSON metadata. Video days
+   242→          are skipped automatically &mdash; you always get an image.
+   243→        </p>
+   244→        <div class="mt-8 bg-void-light border border-teal rounded-lg p-5">
+   245→          <p class="font-mono text-sm text-silver-dim mb-2">// That's it. That's the whole integration.</p>
+   246→          <p class="font-mono text-sm sm:text-base text-white">
+   247→            &lt;img src="<span class="text-starlight">https://api.nasapicture.com/</span>"&gt;
+   248→          </p>
+   249→        </div>
+   250→      </section>
+   251→
+   252→      <!-- Endpoints -->
+   253→      <section class="fade-in fade-in-delay-3 mb-16 sm:mb-24">
+   254→        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-3 max-w-2xl mx-auto">Endpoints</h2>
+   255→        <p class="text-silver-dim mb-8 max-w-2xl mx-auto">
+   256→          All routes are on <code class="font-mono text-sm text-starlight-dim">api.nasapicture.com</code>
+   257→        </p>
+   258→
+   259→        <div class="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+   260→          <a href="https://api.nasapicture.com/"
+   261→             target="_blank" rel="noopener noreferrer"
+   262→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   263→            <div class="flex items-center gap-3 mb-2">
+   264→              <span class="font-mono text-base font-medium text-starlight">/</span>
+   265→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   266→            </div>
+   267→            <p class="text-sm text-silver leading-relaxed">
+   268→              Today's APOD in high resolution. Falls back to standard if HD isn't available.
+   269→            </p>
+   270→          </a>
+   271→
+   272→          <a href="https://api.nasapicture.com/sd"
+   273→             target="_blank" rel="noopener noreferrer"
+   274→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   275→            <div class="flex items-center gap-3 mb-2">
+   276→              <span class="font-mono text-base font-medium text-starlight">/sd</span>
+   277→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   278→            </div>
+   279→            <p class="text-sm text-silver leading-relaxed">
+   280→              Standard resolution image. Lighter payload, same picture.
+   281→            </p>
+   282→          </a>
+   283→
+   284→          <a href="https://api.nasapicture.com/info"
+   285→             target="_blank" rel="noopener noreferrer"
+   286→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   287→            <div class="flex items-center gap-3 mb-2">
+   288→              <span class="font-mono text-base font-medium text-starlight">/info</span>
+   289→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   290→            </div>
+   291→            <p class="text-sm text-silver leading-relaxed">
+   292→              JSON metadata &mdash; title, date, explanation, image URLs, copyright.
+   293→            </p>
+   294→          </a>
+   295→
+   296→          <a href="https://api.nasapicture.com/about"
+   297→             target="_blank" rel="noopener noreferrer"
+   298→             class="endpoint-card block bg-void-light border border-teal rounded-lg p-5">
+   299→            <div class="flex items-center gap-3 mb-2">
+   300→              <span class="font-mono text-base font-medium text-starlight">/about</span>
+   301→              <span class="text-xs font-mono text-silver-dim uppercase tracking-wider">get</span>
+   302→            </div>
+   303→            <p class="text-sm text-silver leading-relaxed">
+   304→              Plain-text description with ASCII art. Good for terminals.
+   305→            </p>
+   306→          </a>
+   307→        </div>
+   308→      </section>
+   309→
+   310→      <!-- How it works -->
+   311→      <section class="fade-in fade-in-delay-4 max-w-2xl mx-auto">
+   312→        <h2 class="font-serif text-3xl sm:text-4xl text-white mb-6">How it works</h2>
+   313→        <div class="space-y-4 text-lg leading-relaxed">
+   314→          <p>
+   315→            A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="text-starlight hover:underline underline-offset-4">Cloudflare Worker</a>
+   316→            fetches today's APOD from NASA's API, then streams the image bytes
+   317→            directly to you. The response is cached at the edge &mdash; subsequent
+   318→            requests in the same hour are served instantly from Cloudflare's network.
+   319→          </p>
+   320→          <p>
+   321→            If today's APOD is a video (it happens), the worker walks backwards up to
+   322→            7 days to find the most recent image. You never get an error for something
+   323→            out of your control.
+   324→          </p>
+   325→        </div>
+   326→      </section>
+   327→    </main>
+   328→
+   329→    <!-- Footer -->
+   330→    <footer class="relative z-10 border-t border-teal px-6 sm:px-8 py-8">
+   331→      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-silver-dim">
+   332→        <p>
+   333→          Built by
+   334→          <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer"
+   335→             class="text-silver hover:text-starlight transition-colors">Grant Keller</a>
+   336→        </p>
+   337→        <p>
+   338→          Data from
+   339→          <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer"
+   340→             class="text-silver hover:text-starlight transition-colors">NASA APOD</a>
+   341→        </p>
+   342→      </div>
+   343→    </footer>
+   344→  </div>
+   345→</body>
+   346→</html>
+   347→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:46:33Z)**_
+
+Now let me redesign this with conviction.
+
+_**Agent (claude-opus-4-6 2026-03-26 08:47:43Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. Drop an image tag, get today's APOD. No API key, no JavaScript, no fuss.">
+  <meta property="og:title" content="nasapicture.com">
+  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+  <meta property="og:image" content="https://api.nasapicture.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #06080d;
+      --void-up: #0c1018;
+      --amber: #d4a04a;
+      --amber-dim: #8b6a30;
+      --amber-glow: rgba(212, 160, 74, 0.08);
+      --silver: #b8bcc6;
+      --silver-dim: #5a5f6b;
+      --white: #e8eaed;
+      --border: rgba(212, 160, 74, 0.12);
+      --border-hover: rgba(212, 160, 74, 0.3);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      color: var(--silver);
+      background: var(--void);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── VIEWPORT HERO ── */
+    .hero {
+      position: relative;
+      height: 100svh;
+      min-height: 500px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-image-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-image-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(6,8,13,0.15) 0%, rgba(6,8,13,0) 30%, rgba(6,8,13,0) 50%, rgba(6,8,13,0.7) 85%, rgba(6,8,13,1) 100%),
+        linear-gradient(to right, rgba(6,8,13,0.3) 0%, rgba(6,8,13,0) 20%, rgba(6,8,13,0) 80%, rgba(6,8,13,0.3) 100%);
+      z-index: 1;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+
+    .hero-img.loaded { opacity: 1; }
+
+    .hero-skeleton {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0c1018 0%, #111620 50%, #0c1018 100%);
+      background-size: 400% 400%;
+      animation: skeleton-drift 3s ease-in-out infinite;
+    }
+
+    .hero-skeleton.hidden { display: none; }
+
+    @keyframes skeleton-drift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* hero header */
+    .hero-header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1.5rem 2rem;
+    }
+
+    .logo {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      text-decoration: none;
+      opacity: 0;
+      animation: fade-in 1s ease 0.3s forwards;
+    }
+
+    .logo span { color: var(--amber); }
+
+    .hero-nav {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      opacity: 0;
+      animation: fade-in 1s ease 0.5s forwards;
+    }
+
+    .hero-nav a {
+      color: var(--silver-dim);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .hero-nav a:hover { color: var(--amber); }
+
+    /* hero bottom overlay */
+    .hero-bottom {
+      position: relative;
+      z-index: 2;
+      margin-top: auto;
+      padding: 0 2rem 3rem;
+      max-width: 42rem;
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 300;
+      line-height: 1.05;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      opacity: 0;
+      animation: fade-up 1s ease 0.6s forwards;
+    }
+
+    .hero-subtitle {
+      margin-top: 1rem;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--silver);
+      max-width: 32rem;
+      opacity: 0;
+      animation: fade-up 1s ease 0.8s forwards;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 2rem;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--silver-dim);
+      opacity: 0;
+      animation: fade-in 1s ease 1.2s forwards;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 24px;
+      background: var(--silver-dim);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--amber);
+      animation: scroll-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scroll-pulse {
+      0% { top: -100%; }
+      50% { top: 100%; }
+      100% { top: 100%; }
+    }
+
+    /* ── CONTENT SECTIONS ── */
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      padding: 5rem 2rem;
+    }
+
+    .section-inner {
+      max-width: 38rem;
+      margin: 0 auto;
+    }
+
+    .section-wide {
+      max-width: 48rem;
+      margin: 0 auto;
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+
+    p { line-height: 1.7; }
+
+    p + p { margin-top: 1rem; }
+
+    a.inline {
+      color: var(--amber);
+      text-decoration: none;
+      text-underline-offset: 3px;
+    }
+
+    a.inline:hover { text-decoration: underline; }
+
+    /* code snippet block */
+    .code-block {
+      margin-top: 2rem;
+      background: var(--void-up);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .code-comment { color: var(--silver-dim); }
+    .code-string { color: var(--amber); }
+    .code-tag { color: var(--white); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      max-width: 38rem;
+      margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+
+    /* ── ENDPOINT GRID ── */
+    .endpoint-grid {
+      display: grid;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 2rem;
+    }
+
+    @media (min-width: 640px) {
+      .endpoint-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .endpoint {
+      display: block;
+      background: var(--void-up);
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .endpoint:hover {
+      background: #0f1420;
+      box-shadow: inset 0 0 30px var(--amber-glow);
+    }
+
+    .endpoint-route {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--amber);
+    }
+
+    .endpoint-method {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--silver-dim);
+      margin-left: 0.75rem;
+    }
+
+    .endpoint-desc {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--silver);
+      line-height: 1.5;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .mechanism {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .mechanism + .mechanism { margin-top: 1.75rem; }
+
+    .mechanism-icon {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--amber-dim);
+      margin-top: 0.15rem;
+    }
+
+    .mechanism p {
+      font-size: 0.95rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+    }
+
+    .footer-inner {
+      max-width: 48rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: var(--silver-dim);
+    }
+
+    footer a {
+      color: var(--silver);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover { color: var(--amber); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fade-in {
+      to { opacity: 1; }
+    }
+
+    @keyframes fade-up {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    .fade-up.visible {
+      animation: fade-up 0.7s ease forwards;
+    }
+
+    /* stagger children */
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .hero-img { opacity: 1; }
+      .logo, .hero-nav, .hero-title, .hero-subtitle,
+      .scroll-hint, .fade-up { opacity: 1; transform: none; }
+
+      .hero-skeleton { animation: none; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 639px) {
+      .hero-header { padding: 1.25rem 1.25rem; }
+      .hero-bottom { padding: 0 1.25rem 2.5rem; }
+      section { padding: 3.5rem 1.25rem; }
+      .scroll-hint { display: none; }
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ── HERO: The image IS the experience ── -->
+  <section class="hero" aria-label="Today's Astronomy Picture of the Day">
+    <div class="hero-image-wrap">
+      <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+      <img
+        src="https://api.nasapicture.com/"
+        alt="NASA Astronomy Picture of the Day"
+        class="hero-img"
+        id="hero-img"
+        loading="eager"
+        fetchpriority="high"
+      >
+    </div>
+
+    <header class="hero-header">
+      <a href="/" class="logo" aria-label="nasapicture.com home">
+        nasapicture<span>.com</span>
+      </a>
+      <nav class="hero-nav" aria-label="Site navigation">
+        <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+      </nav>
+    </header>
+
+    <div class="hero-bottom">
+      <h1 class="hero-title">Today's picture<br>of the cosmos.</h1>
+      <p class="hero-subtitle">
+        A stable URL that always returns NASA's Astronomy Picture of the Day.
+        No API key. No JavaScript. Just an image tag.
+      </p>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ── CONTENT ── -->
+  <div class="content">
+
+    <!-- Usage -->
+    <section>
+      <div class="section-inner">
+        <h2 class="fade-up">One line of HTML.</h2>
+        <p class="fade-up stagger-1">
+          <strong style="color: var(--white); font-weight: 400;">nasapicture.com</strong> proxies
+          NASA's APOD behind a fixed URL. Drop it into an
+          <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--amber);">&lt;img&gt;</code>
+          tag, set it as a wallpaper source, or fetch the JSON. Video days
+          are skipped automatically &mdash; you always get an image.
+        </p>
+        <div class="code-block fade-up stagger-2">
+          <div class="code-comment">// That's it. That's the whole integration.</div>
+          <div><span class="code-tag">&lt;img</span> src="<span class="code-string">https://api.nasapicture.com/</span>"<span class="code-tag">&gt;</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Endpoints -->
+    <section>
+      <div class="section-wide">
+        <div class="section-inner">
+          <h2 class="fade-up">Endpoints</h2>
+          <p class="fade-up stagger-1" style="color: var(--silver-dim);">
+            All routes on
+            <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--amber-dim);">api.nasapicture.com</code>
+          </p>
+        </div>
+
+        <div class="endpoint-grid fade-up stagger-2">
+          <a href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">Today's APOD in high resolution. Falls back to standard if HD isn't available.</p>
+          </a>
+          <a href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/sd</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">Standard resolution. Lighter payload, same picture.</p>
+          </a>
+          <a href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/info</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">JSON metadata &mdash; title, date, explanation, image URLs, copyright.</p>
+          </a>
+          <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/about</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">Plain-text description with ASCII art. Good for terminals.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- How it works -->
+    <section>
+      <div class="section-inner">
+        <h2 class="fade-up">How it works</h2>
+
+        <div class="fade-up stagger-1">
+          <div class="mechanism">
+            <div class="mechanism-icon" aria-hidden="true">1</div>
+            <p>
+              A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="inline">Cloudflare Worker</a>
+              fetches today's APOD from NASA's API and streams the image bytes directly to you.
+            </p>
+          </div>
+
+          <div class="mechanism">
+            <div class="mechanism-icon" aria-hidden="true">2</div>
+            <p>
+              The response is cached at the edge. Subsequent requests in the same hour are served
+              instantly from Cloudflare's network &mdash; no origin roundtrip.
+            </p>
+          </div>
+
+          <div class="mechanism">
+            <div class="mechanism-icon" aria-hidden="true">3</div>
+            <p>
+              If today's APOD is a video, the worker walks backwards up to 7 days to find
+              the most recent image. You never get an error for something out of your control.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-inner">
+        <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+        <p>Data from <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Astronomy Picture of the Day</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Image load handler
+    const img = document.getElementById('hero-img');
+    const skeleton = document.getElementById('hero-skeleton');
+
+    function onImageReady() {
+      img.classList.add('loaded');
+      skeleton.classList.add('hidden');
+    }
+
+    if (img.complete && img.naturalWidth > 0) {
+      onImageReady();
+    } else {
+      img.addEventListener('load', onImageReady);
+      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+    }
+
+    // Scroll-triggered fade-in
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+```
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:48:27Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Open redesigned landing page in browser
+
+`open /Users/grant/code/nasa-apod/landing/index.html`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:48:38Z)**_
+
+Opened in your browser. Here's what changed:
+
+**The big move**: The APOD image now fills the entire viewport — edge to edge, 100svh. The UI floats over it. You're looking *through* a window into space, not at a card containing a picture.
+
+**Key design choices**:
+- **Cormorant Garamond** for headings — a high-contrast serif that reads like an observatory plaque, not a SaaS landing page
+- **Outfit** for body — geometric, light (weight 300), disappears in the best way
+- **No Tailwind CDN** — pure CSS, smaller payload, faster load, zero runtime
+- **Viewport hero** with gradient vignette that fades the image into the void at bottom/edges
+- **1px-gap endpoint grid** instead of cards with borders — cleaner, more intentional
+- **Numbered mechanism steps** for "How it works" — scannable without being loud
+- **Scroll-triggered fade-ups** via IntersectionObserver, plus a subtle animated scroll indicator
+- **Skeleton** is a slow color drift instead of a shimmer stripe
+
+Everything that was there before is still there — same content, same endpoints, same credits. Just recomposed so the cosmos comes first.
+
+---
+
+_**User (2026-03-26 08:49:23Z)**_
+
+the image fetching doesn't work on local so for now add in the actual image https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 08:49:27Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:49:44Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Refresh landing page in browser
+
+`open /Users/grant/code/nasa-apod/landing/index.html`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:49:47Z)**_
+
+Swapped to the direct NASA image URL. We'll switch it back to `api.nasapicture.com` before deploying.
+
+---
+
+_**User (2026-03-26 08:51:06Z)**_
+
+sometimes the images aren't beautiful space scenes, like today. its a bit hard to make out [Image #1]
+
+_**User (2026-03-26 08:51:06Z)**_
+
+[Image: source: /Users/grant/.claude/image-cache/6cef7dcf-a006-46d6-95ed-b844224d2cf4/1.png]
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 08:51:13Z)**_
+
+
+
+Good point — the full-bleed hero only works when the APOD is a gorgeous nebula. With a data visualization like today's, the text is unreadable and the layout fights the image.
+
+I'll rethink the hero so it works with *any* APOD — contain the image rather than bleeding it edge-to-edge, and keep the text on a solid dark background so it's always legible.
+
+_**Agent (claude-opus-4-6 2026-03-26 08:51:15Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+     7→  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. Drop an image tag, get today's APOD. No API key, no JavaScript, no fuss.">
+     8→  <meta property="og:title" content="nasapicture.com">
+     9→  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+    10→  <meta property="og:image" content="https://api.nasapicture.com/">
+    11→  <meta property="og:type" content="website">
+    12→  <meta name="twitter:card" content="summary_large_image">
+    13→  <link rel="preconnect" href="https://fonts.googleapis.com">
+    14→  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    15→  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    16→  <style>
+    17→    :root {
+    18→      --void: #06080d;
+    19→      --void-up: #0c1018;
+    20→      --amber: #d4a04a;
+    21→      --amber-dim: #8b6a30;
+    22→      --amber-glow: rgba(212, 160, 74, 0.08);
+    23→      --silver: #b8bcc6;
+    24→      --silver-dim: #5a5f6b;
+    25→      --white: #e8eaed;
+    26→      --border: rgba(212, 160, 74, 0.12);
+    27→      --border-hover: rgba(212, 160, 74, 0.3);
+    28→      --font-serif: 'Cormorant Garamond', Georgia, serif;
+    29→      --font-sans: 'Outfit', sans-serif;
+    30→      --font-mono: 'JetBrains Mono', monospace;
+    31→    }
+    32→
+    33→    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    34→
+    35→    html { scroll-behavior: smooth; }
+    36→
+    37→    body {
+    38→      font-family: var(--font-sans);
+    39→      font-weight: 300;
+    40→      color: var(--silver);
+    41→      background: var(--void);
+    42→      -webkit-font-smoothing: antialiased;
+    43→    }
+    44→
+    45→    /* ── VIEWPORT HERO ── */
+    46→    .hero {
+    47→      position: relative;
+    48→      height: 100svh;
+    49→      min-height: 500px;
+    50→      overflow: hidden;
+    51→      display: flex;
+    52→      flex-direction: column;
+    53→    }
+    54→
+    55→    .hero-image-wrap {
+    56→      position: absolute;
+    57→      inset: 0;
+    58→      z-index: 0;
+    59→    }
+    60→
+    61→    .hero-image-wrap::after {
+    62→      content: '';
+    63→      position: absolute;
+    64→      inset: 0;
+    65→      background:
+    66→        linear-gradient(to bottom, rgba(6,8,13,0.15) 0%, rgba(6,8,13,0) 30%, rgba(6,8,13,0) 50%, rgba(6,8,13,0.7) 85%, rgba(6,8,13,1) 100%),
+    67→        linear-gradient(to right, rgba(6,8,13,0.3) 0%, rgba(6,8,13,0) 20%, rgba(6,8,13,0) 80%, rgba(6,8,13,0.3) 100%);
+    68→      z-index: 1;
+    69→    }
+    70→
+    71→    .hero-img {
+    72→      width: 100%;
+    73→      height: 100%;
+    74→      object-fit: cover;
+    75→      opacity: 0;
+    76→      transition: opacity 1.2s ease;
+    77→    }
+    78→
+    79→    .hero-img.loaded { opacity: 1; }
+    80→
+    81→    .hero-skeleton {
+    82→      position: absolute;
+    83→      inset: 0;
+    84→      background: linear-gradient(135deg, #0c1018 0%, #111620 50%, #0c1018 100%);
+    85→      background-size: 400% 400%;
+    86→      animation: skeleton-drift 3s ease-in-out infinite;
+    87→    }
+    88→
+    89→    .hero-skeleton.hidden { display: none; }
+    90→
+    91→    @keyframes skeleton-drift {
+    92→      0%, 100% { background-position: 0% 50%; }
+    93→      50% { background-position: 100% 50%; }
+    94→    }
+    95→
+    96→    /* hero header */
+    97→    .hero-header {
+    98→      position: relative;
+    99→      z-index: 2;
+   100→      display: flex;
+   101→      justify-content: space-between;
+   102→      align-items: baseline;
+   103→      padding: 1.5rem 2rem;
+   104→    }
+   105→
+   106→    .logo {
+   107→      font-family: var(--font-serif);
+   108→      font-size: 1.5rem;
+   109→      font-weight: 300;
+   110→      letter-spacing: -0.02em;
+   111→      color: var(--white);
+   112→      text-decoration: none;
+   113→      opacity: 0;
+   114→      animation: fade-in 1s ease 0.3s forwards;
+   115→    }
+   116→
+   117→    .logo span { color: var(--amber); }
+   118→
+   119→    .hero-nav {
+   120→      font-family: var(--font-mono);
+   121→      font-size: 0.75rem;
+   122→      opacity: 0;
+   123→      animation: fade-in 1s ease 0.5s forwards;
+   124→    }
+   125→
+   126→    .hero-nav a {
+   127→      color: var(--silver-dim);
+   128→      text-decoration: none;
+   129→      transition: color 0.3s;
+   130→    }
+   131→
+   132→    .hero-nav a:hover { color: var(--amber); }
+   133→
+   134→    /* hero bottom overlay */
+   135→    .hero-bottom {
+   136→      position: relative;
+   137→      z-index: 2;
+   138→      margin-top: auto;
+   139→      padding: 0 2rem 3rem;
+   140→      max-width: 42rem;
+   141→    }
+   142→
+   143→    .hero-title {
+   144→      font-family: var(--font-serif);
+   145→      font-size: clamp(2.5rem, 6vw, 4.5rem);
+   146→      font-weight: 300;
+   147→      line-height: 1.05;
+   148→      color: var(--white);
+   149→      letter-spacing: -0.03em;
+   150→      opacity: 0;
+   151→      animation: fade-up 1s ease 0.6s forwards;
+   152→    }
+   153→
+   154→    .hero-subtitle {
+   155→      margin-top: 1rem;
+   156→      font-size: 1.05rem;
+   157→      line-height: 1.6;
+   158→      color: var(--silver);
+   159→      max-width: 32rem;
+   160→      opacity: 0;
+   161→      animation: fade-up 1s ease 0.8s forwards;
+   162→    }
+   163→
+   164→    .scroll-hint {
+   165→      position: absolute;
+   166→      bottom: 1.5rem;
+   167→      right: 2rem;
+   168→      z-index: 2;
+   169→      display: flex;
+   170→      align-items: center;
+   171→      gap: 0.5rem;
+   172→      font-family: var(--font-mono);
+   173→      font-size: 0.65rem;
+   174→      letter-spacing: 0.1em;
+   175→      text-transform: uppercase;
+   176→      color: var(--silver-dim);
+   177→      opacity: 0;
+   178→      animation: fade-in 1s ease 1.2s forwards;
+   179→    }
+   180→
+   181→    .scroll-line {
+   182→      width: 1px;
+   183→      height: 24px;
+   184→      background: var(--silver-dim);
+   185→      position: relative;
+   186→      overflow: hidden;
+   187→    }
+   188→
+   189→    .scroll-line::after {
+   190→      content: '';
+   191→      position: absolute;
+   192→      top: -100%;
+   193→      left: 0;
+   194→      width: 100%;
+   195→      height: 100%;
+   196→      background: var(--amber);
+   197→      animation: scroll-pulse 2s ease-in-out infinite;
+   198→    }
+   199→
+   200→    @keyframes scroll-pulse {
+   201→      0% { top: -100%; }
+   202→      50% { top: 100%; }
+   203→      100% { top: 100%; }
+   204→    }
+   205→
+   206→    /* ── CONTENT SECTIONS ── */
+   207→    .content {
+   208→      position: relative;
+   209→      z-index: 1;
+   210→    }
+   211→
+   212→    section {
+   213→      padding: 5rem 2rem;
+   214→    }
+   215→
+   216→    .section-inner {
+   217→      max-width: 38rem;
+   218→      margin: 0 auto;
+   219→    }
+   220→
+   221→    .section-wide {
+   222→      max-width: 48rem;
+   223→      margin: 0 auto;
+   224→    }
+   225→
+   226→    h2 {
+   227→      font-family: var(--font-serif);
+   228→      font-size: clamp(2rem, 4vw, 3rem);
+   229→      font-weight: 300;
+   230→      color: var(--white);
+   231→      letter-spacing: -0.02em;
+   232→      line-height: 1.15;
+   233→      margin-bottom: 1.5rem;
+   234→    }
+   235→
+   236→    p { line-height: 1.7; }
+   237→
+   238→    p + p { margin-top: 1rem; }
+   239→
+   240→    a.inline {
+   241→      color: var(--amber);
+   242→      text-decoration: none;
+   243→      text-underline-offset: 3px;
+   244→    }
+   245→
+   246→    a.inline:hover { text-decoration: underline; }
+   247→
+   248→    /* code snippet block */
+   249→    .code-block {
+   250→      margin-top: 2rem;
+   251→      background: var(--void-up);
+   252→      border: 1px solid var(--border);
+   253→      border-radius: 8px;
+   254→      padding: 1.25rem 1.5rem;
+   255→      font-family: var(--font-mono);
+   256→      font-size: 0.85rem;
+   257→      line-height: 1.7;
+   258→      overflow-x: auto;
+   259→    }
+   260→
+   261→    .code-comment { color: var(--silver-dim); }
+   262→    .code-string { color: var(--amber); }
+   263→    .code-tag { color: var(--white); }
+   264→
+   265→    /* ── DIVIDER ── */
+   266→    .divider {
+   267→      max-width: 38rem;
+   268→      margin: 0 auto;
+   269→      height: 1px;
+   270→      background: linear-gradient(to right, transparent, var(--border), transparent);
+   271→    }
+   272→
+   273→    /* ── ENDPOINT GRID ── */
+   274→    .endpoint-grid {
+   275→      display: grid;
+   276→      gap: 1px;
+   277→      background: var(--border);
+   278→      border: 1px solid var(--border);
+   279→      border-radius: 8px;
+   280→      overflow: hidden;
+   281→      margin-top: 2rem;
+   282→    }
+   283→
+   284→    @media (min-width: 640px) {
+   285→      .endpoint-grid { grid-template-columns: 1fr 1fr; }
+   286→    }
+   287→
+   288→    .endpoint {
+   289→      display: block;
+   290→      background: var(--void-up);
+   291→      padding: 1.5rem;
+   292→      text-decoration: none;
+   293→      color: inherit;
+   294→      transition: background 0.3s, box-shadow 0.3s;
+   295→    }
+   296→
+   297→    .endpoint:hover {
+   298→      background: #0f1420;
+   299→      box-shadow: inset 0 0 30px var(--amber-glow);
+   300→    }
+   301→
+   302→    .endpoint-route {
+   303→      font-family: var(--font-mono);
+   304→      font-size: 0.9rem;
+   305→      font-weight: 500;
+   306→      color: var(--amber);
+   307→    }
+   308→
+   309→    .endpoint-method {
+   310→      font-family: var(--font-mono);
+   311→      font-size: 0.6rem;
+   312→      letter-spacing: 0.12em;
+   313→      text-transform: uppercase;
+   314→      color: var(--silver-dim);
+   315→      margin-left: 0.75rem;
+   316→    }
+   317→
+   318→    .endpoint-desc {
+   319→      margin-top: 0.5rem;
+   320→      font-size: 0.875rem;
+   321→      color: var(--silver);
+   322→      line-height: 1.5;
+   323→    }
+   324→
+   325→    /* ── HOW IT WORKS ── */
+   326→    .mechanism {
+   327→      display: flex;
+   328→      gap: 1.25rem;
+   329→      align-items: flex-start;
+   330→    }
+   331→
+   332→    .mechanism + .mechanism { margin-top: 1.75rem; }
+   333→
+   334→    .mechanism-icon {
+   335→      flex-shrink: 0;
+   336→      width: 2rem;
+   337→      height: 2rem;
+   338→      border-radius: 50%;
+   339→      border: 1px solid var(--border);
+   340→      display: flex;
+   341→      align-items: center;
+   342→      justify-content: center;
+   343→      font-family: var(--font-mono);
+   344→      font-size: 0.7rem;
+   345→      color: var(--amber-dim);
+   346→      margin-top: 0.15rem;
+   347→    }
+   348→
+   349→    .mechanism p {
+   350→      font-size: 0.95rem;
+   351→    }
+   352→
+   353→    /* ── FOOTER ── */
+   354→    footer {
+   355→      border-top: 1px solid var(--border);
+   356→      padding: 2rem;
+   357→    }
+   358→
+   359→    .footer-inner {
+   360→      max-width: 48rem;
+   361→      margin: 0 auto;
+   362→      display: flex;
+   363→      justify-content: space-between;
+   364→      align-items: center;
+   365→      flex-wrap: wrap;
+   366→      gap: 1rem;
+   367→      font-size: 0.8rem;
+   368→      color: var(--silver-dim);
+   369→    }
+   370→
+   371→    footer a {
+   372→      color: var(--silver);
+   373→      text-decoration: none;
+   374→      transition: color 0.3s;
+   375→    }
+   376→
+   377→    footer a:hover { color: var(--amber); }
+   378→
+   379→    /* ── ANIMATIONS ── */
+   380→    @keyframes fade-in {
+   381→      to { opacity: 1; }
+   382→    }
+   383→
+   384→    @keyframes fade-up {
+   385→      to { opacity: 1; transform: translateY(0); }
+   386→    }
+   387→
+   388→    .fade-up {
+   389→      opacity: 0;
+   390→      transform: translateY(16px);
+   391→    }
+   392→
+   393→    .fade-up.visible {
+   394→      animation: fade-up 0.7s ease forwards;
+   395→    }
+   396→
+   397→    /* stagger children */
+   398→    .stagger-1 { animation-delay: 0.1s; }
+   399→    .stagger-2 { animation-delay: 0.2s; }
+   400→
+   401→    /* ── REDUCED MOTION ── */
+   402→    @media (prefers-reduced-motion: reduce) {
+   403→      *, *::before, *::after {
+   404→        animation-duration: 0.01ms !important;
+   405→        animation-delay: 0ms !important;
+   406→        transition-duration: 0.01ms !important;
+   407→      }
+   408→
+   409→      .hero-img { opacity: 1; }
+   410→      .logo, .hero-nav, .hero-title, .hero-subtitle,
+   411→      .scroll-hint, .fade-up { opacity: 1; transform: none; }
+   412→
+   413→      .hero-skeleton { animation: none; }
+   414→    }
+   415→
+   416→    /* ── RESPONSIVE ── */
+   417→    @media (max-width: 639px) {
+   418→      .hero-header { padding: 1.25rem 1.25rem; }
+   419→      .hero-bottom { padding: 0 1.25rem 2.5rem; }
+   420→      section { padding: 3.5rem 1.25rem; }
+   421→      .scroll-hint { display: none; }
+   422→      .footer-inner { flex-direction: column; text-align: center; }
+   423→    }
+   424→  </style>
+   425→</head>
+   426→
+   427→<body>
+   428→  <!-- ── HERO: The image IS the experience ── -->
+   429→  <section class="hero" aria-label="Today's Astronomy Picture of the Day">
+   430→    <div class="hero-image-wrap">
+   431→      <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+   432→      <img
+   433→        src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+   434→        alt="NASA Astronomy Picture of the Day"
+   435→        class="hero-img"
+   436→        id="hero-img"
+   437→        loading="eager"
+   438→        fetchpriority="high"
+   439→      >
+   440→    </div>
+   441→
+   442→    <header class="hero-header">
+   443→      <a href="/" class="logo" aria-label="nasapicture.com home">
+   444→        nasapicture<span>.com</span>
+   445→      </a>
+   446→      <nav class="hero-nav" aria-label="Site navigation">
+   447→        <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+   448→      </nav>
+   449→    </header>
+   450→
+   451→    <div class="hero-bottom">
+   452→      <h1 class="hero-title">Today's picture<br>of the cosmos.</h1>
+   453→      <p class="hero-subtitle">
+   454→        A stable URL that always returns NASA's Astronomy Picture of the Day.
+   455→        No API key. No JavaScript. Just an image tag.
+   456→      </p>
+   457→    </div>
+   458→
+   459→    <div class="scroll-hint" aria-hidden="true">
+   460→      <div class="scroll-line"></div>
+   461→    </div>
+   462→  </section>
+   463→
+   464→  <!-- ── CONTENT ── -->
+   465→  <div class="content">
+   466→
+   467→    <!-- Usage -->
+   468→    <section>
+   469→      <div class="section-inner">
+   470→        <h2 class="fade-up">One line of HTML.</h2>
+   471→        <p class="fade-up stagger-1">
+   472→          <strong style="color: var(--white); font-weight: 400;">nasapicture.com</strong> proxies
+   473→          NASA's APOD behind a fixed URL. Drop it into an
+   474→          <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--amber);">&lt;img&gt;</code>
+   475→          tag, set it as a wallpaper source, or fetch the JSON. Video days
+   476→          are skipped automatically &mdash; you always get an image.
+   477→        </p>
+   478→        <div class="code-block fade-up stagger-2">
+   479→          <div class="code-comment">// That's it. That's the whole integration.</div>
+   480→          <div><span class="code-tag">&lt;img</span> src="<span class="code-string">https://api.nasapicture.com/</span>"<span class="code-tag">&gt;</span></div>
+   481→        </div>
+   482→      </div>
+   483→    </section>
+   484→
+   485→    <div class="divider"></div>
+   486→
+   487→    <!-- Endpoints -->
+   488→    <section>
+   489→      <div class="section-wide">
+   490→        <div class="section-inner">
+   491→          <h2 class="fade-up">Endpoints</h2>
+   492→          <p class="fade-up stagger-1" style="color: var(--silver-dim);">
+   493→            All routes on
+   494→            <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--amber-dim);">api.nasapicture.com</code>
+   495→          </p>
+   496→        </div>
+   497→
+   498→        <div class="endpoint-grid fade-up stagger-2">
+   499→          <a href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer" class="endpoint">
+   500→            <div>
+   501→              <span class="endpoint-route">/</span>
+   502→              <span class="endpoint-method">get</span>
+   503→            </div>
+   504→            <p class="endpoint-desc">Today's APOD in high resolution. Falls back to standard if HD isn't available.</p>
+   505→          </a>
+   506→          <a href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer" class="endpoint">
+   507→            <div>
+   508→              <span class="endpoint-route">/sd</span>
+   509→              <span class="endpoint-method">get</span>
+   510→            </div>
+   511→            <p class="endpoint-desc">Standard resolution. Lighter payload, same picture.</p>
+   512→          </a>
+   513→          <a href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer" class="endpoint">
+   514→            <div>
+   515→              <span class="endpoint-route">/info</span>
+   516→              <span class="endpoint-method">get</span>
+   517→            </div>
+   518→            <p class="endpoint-desc">JSON metadata &mdash; title, date, explanation, image URLs, copyright.</p>
+   519→          </a>
+   520→          <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer" class="endpoint">
+   521→            <div>
+   522→              <span class="endpoint-route">/about</span>
+   523→              <span class="endpoint-method">get</span>
+   524→            </div>
+   525→            <p class="endpoint-desc">Plain-text description with ASCII art. Good for terminals.</p>
+   526→          </a>
+   527→        </div>
+   528→      </div>
+   529→    </section>
+   530→
+   531→    <div class="divider"></div>
+   532→
+   533→    <!-- How it works -->
+   534→    <section>
+   535→      <div class="section-inner">
+   536→        <h2 class="fade-up">How it works</h2>
+   537→
+   538→        <div class="fade-up stagger-1">
+   539→          <div class="mechanism">
+   540→            <div class="mechanism-icon" aria-hidden="true">1</div>
+   541→            <p>
+   542→              A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="inline">Cloudflare Worker</a>
+   543→              fetches today's APOD from NASA's API and streams the image bytes directly to you.
+   544→            </p>
+   545→          </div>
+   546→
+   547→          <div class="mechanism">
+   548→            <div class="mechanism-icon" aria-hidden="true">2</div>
+   549→            <p>
+   550→              The response is cached at the edge. Subsequent requests in the same hour are served
+   551→              instantly from Cloudflare's network &mdash; no origin roundtrip.
+   552→            </p>
+   553→          </div>
+   554→
+   555→          <div class="mechanism">
+   556→            <div class="mechanism-icon" aria-hidden="true">3</div>
+   557→            <p>
+   558→              If today's APOD is a video, the worker walks backwards up to 7 days to find
+   559→              the most recent image. You never get an error for something out of your control.
+   560→            </p>
+   561→          </div>
+   562→        </div>
+   563→      </div>
+   564→    </section>
+   565→
+   566→    <!-- Footer -->
+   567→    <footer>
+   568→      <div class="footer-inner">
+   569→        <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+   570→        <p>Data from <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Astronomy Picture of the Day</a></p>
+   571→      </div>
+   572→    </footer>
+   573→  </div>
+   574→
+   575→  <script>
+   576→    // Image load handler
+   577→    const img = document.getElementById('hero-img');
+   578→    const skeleton = document.getElementById('hero-skeleton');
+   579→
+   580→    function onImageReady() {
+   581→      img.classList.add('loaded');
+   582→      skeleton.classList.add('hidden');
+   583→    }
+   584→
+   585→    if (img.complete && img.naturalWidth > 0) {
+   586→      onImageReady();
+   587→    } else {
+   588→      img.addEventListener('load', onImageReady);
+   589→      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+   590→    }
+   591→
+   592→    // Scroll-triggered fade-in
+   593→    const observer = new IntersectionObserver((entries) => {
+   594→      entries.forEach(entry => {
+   595→        if (entry.isIntersecting) {
+   596→          entry.target.classList.add('visible');
+   597→          observer.unobserve(entry.target);
+   598→        }
+   599→      });
+   600→    }, { threshold: 0.15 });
+   601→
+   602→    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+   603→  </script>
+   604→</body>
+   605→</html>
+   606→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:52:13Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. Drop an image tag, get today's APOD. No API key, no JavaScript, no fuss.">
+  <meta property="og:title" content="nasapicture.com">
+  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+  <meta property="og:image" content="https://api.nasapicture.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #06080d;
+      --void-up: #0c1018;
+      --amber: #d4a04a;
+      --amber-dim: #8b6a30;
+      --amber-glow: rgba(212, 160, 74, 0.08);
+      --silver: #b8bcc6;
+      --silver-dim: #5a5f6b;
+      --white: #e8eaed;
+      --border: rgba(212, 160, 74, 0.12);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      color: var(--silver);
+      background: var(--void);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1.5rem 2rem;
+      max-width: 64rem;
+      margin: 0 auto;
+      opacity: 0;
+      animation: fade-in 1s ease 0.2s forwards;
+    }
+
+    .logo {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .logo span { color: var(--amber); }
+
+    .site-nav {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    .site-nav a {
+      color: var(--silver-dim);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .site-nav a:hover { color: var(--amber); }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 1rem 2rem 0;
+      display: grid;
+      gap: 2.5rem;
+      opacity: 0;
+      animation: fade-up 1s ease 0.4s forwards;
+    }
+
+    @media (min-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        padding: 3rem 2rem 0;
+        gap: 3.5rem;
+      }
+    }
+
+    .hero-text {
+      order: 2;
+    }
+
+    @media (min-width: 768px) {
+      .hero-text { order: 1; }
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 300;
+      line-height: 1.08;
+      color: var(--white);
+      letter-spacing: -0.03em;
+    }
+
+    .hero-subtitle {
+      margin-top: 1.25rem;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: var(--silver);
+      max-width: 28rem;
+    }
+
+    .hero-image-wrap {
+      order: 1;
+      position: relative;
+    }
+
+    @media (min-width: 768px) {
+      .hero-image-wrap { order: 2; }
+    }
+
+    .hero-frame {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--void-up);
+      aspect-ratio: 4 / 3;
+    }
+
+    .hero-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      pointer-events: none;
+    }
+
+    .hero-glow {
+      position: absolute;
+      inset: -30%;
+      background: radial-gradient(ellipse at center, rgba(212, 160, 74, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .hero-img.loaded { opacity: 1; }
+
+    .hero-skeleton {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0c1018 0%, #111620 50%, #0c1018 100%);
+      background-size: 400% 400%;
+      animation: skeleton-drift 3s ease-in-out infinite;
+    }
+
+    .hero-skeleton.hidden { display: none; }
+
+    @keyframes skeleton-drift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero-caption {
+      margin-top: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--silver-dim);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── CONTENT SECTIONS ── */
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      padding: 5rem 2rem;
+    }
+
+    .section-inner {
+      max-width: 38rem;
+      margin: 0 auto;
+    }
+
+    .section-wide {
+      max-width: 48rem;
+      margin: 0 auto;
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+
+    p { line-height: 1.7; }
+    p + p { margin-top: 1rem; }
+
+    a.inline {
+      color: var(--amber);
+      text-decoration: none;
+      text-underline-offset: 3px;
+    }
+
+    a.inline:hover { text-decoration: underline; }
+
+    /* code snippet block */
+    .code-block {
+      margin-top: 2rem;
+      background: var(--void-up);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .code-comment { color: var(--silver-dim); }
+    .code-string { color: var(--amber); }
+    .code-tag { color: var(--white); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      max-width: 38rem;
+      margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+
+    /* ── ENDPOINT GRID ── */
+    .endpoint-grid {
+      display: grid;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 2rem;
+    }
+
+    @media (min-width: 640px) {
+      .endpoint-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .endpoint {
+      display: block;
+      background: var(--void-up);
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .endpoint:hover {
+      background: #0f1420;
+      box-shadow: inset 0 0 30px var(--amber-glow);
+    }
+
+    .endpoint-route {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--amber);
+    }
+
+    .endpoint-method {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--silver-dim);
+      margin-left: 0.75rem;
+    }
+
+    .endpoint-desc {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--silver);
+      line-height: 1.5;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .mechanism {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .mechanism + .mechanism { margin-top: 1.75rem; }
+
+    .mechanism-icon {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--amber-dim);
+      margin-top: 0.15rem;
+    }
+
+    .mechanism p { font-size: 0.95rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+    }
+
+    .footer-inner {
+      max-width: 48rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: var(--silver-dim);
+    }
+
+    footer a {
+      color: var(--silver);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover { color: var(--amber); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fade-in {
+      to { opacity: 1; }
+    }
+
+    @keyframes fade-up {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    .fade-up.visible {
+      animation: fade-up 0.7s ease forwards;
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .hero-img { opacity: 1; }
+      .site-header, .hero, .fade-up { opacity: 1; transform: none; }
+      .hero-skeleton { animation: none; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 639px) {
+      .site-header { padding: 1.25rem 1.25rem; }
+      .hero { padding: 0.5rem 1.25rem 0; }
+      section { padding: 3.5rem 1.25rem; }
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <a href="/" class="logo" aria-label="nasapicture.com home">
+      nasapicture<span>.com</span>
+    </a>
+    <nav class="site-nav" aria-label="Site navigation">
+      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+    </nav>
+  </header>
+
+  <!-- ── HERO: image contained, text always legible ── -->
+  <section class="hero" aria-label="Today's Astronomy Picture of the Day">
+    <div class="hero-text">
+      <h1 class="hero-title">Today's picture<br>of the cosmos.</h1>
+      <p class="hero-subtitle">
+        A stable URL that always returns NASA's Astronomy Picture of the Day.
+        No API key. No JavaScript. Just an image tag.
+      </p>
+    </div>
+
+    <div class="hero-image-wrap">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-frame">
+        <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+        <img
+          src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+          alt="NASA Astronomy Picture of the Day"
+          class="hero-img"
+          id="hero-img"
+          loading="eager"
+          fetchpriority="high"
+        >
+      </div>
+      <p class="hero-caption">Updated daily from api.nasapicture.com</p>
+    </div>
+  </section>
+
+  <!-- ── CONTENT ── -->
+  <div class="content">
+
+    <!-- Usage -->
+    <section>
+      <div class="section-inner">
+        <h2 class="fade-up">One line of HTML.</h2>
+        <p class="fade-up stagger-1">
+          <strong style="color: var(--white); font-weight: 400;">nasapicture.com</strong> proxies
+          NASA's APOD behind a fixed URL. Drop it into an
+          <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--amber);">&lt;img&gt;</code>
+          tag, set it as a wallpaper source, or fetch the JSON. Video days
+          are skipped automatically &mdash; you always get an image.
+        </p>
+        <div class="code-block fade-up stagger-2">
+          <div class="code-comment">// That's it. That's the whole integration.</div>
+          <div><span class="code-tag">&lt;img</span> src="<span class="code-string">https://api.nasapicture.com/</span>"<span class="code-tag">&gt;</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Endpoints -->
+    <section>
+      <div class="section-wide">
+        <div class="section-inner">
+          <h2 class="fade-up">Endpoints</h2>
+          <p class="fade-up stagger-1" style="color: var(--silver-dim);">
+            All routes on
+            <code style="font-family: var(--font-mono); font-size: 0.85em; color: var(--amber-dim);">api.nasapicture.com</code>
+          </p>
+        </div>
+
+        <div class="endpoint-grid fade-up stagger-2">
+          <a href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">Today's APOD in high resolution. Falls back to standard if HD isn't available.</p>
+          </a>
+          <a href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/sd</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">Standard resolution. Lighter payload, same picture.</p>
+          </a>
+          <a href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/info</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">JSON metadata &mdash; title, date, explanation, image URLs, copyright.</p>
+          </a>
+          <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer" class="endpoint">
+            <div>
+              <span class="endpoint-route">/about</span>
+              <span class="endpoint-method">get</span>
+            </div>
+            <p class="endpoint-desc">Plain-text description with ASCII art. Good for terminals.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- How it works -->
+    <section>
+      <div class="section-inner">
+        <h2 class="fade-up">How it works</h2>
+
+        <div class="fade-up stagger-1">
+          <div class="mechanism">
+            <div class="mechanism-icon" aria-hidden="true">1</div>
+            <p>
+              A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="inline">Cloudflare Worker</a>
+              fetches today's APOD from NASA's API and streams the image bytes directly to you.
+            </p>
+          </div>
+
+          <div class="mechanism">
+            <div class="mechanism-icon" aria-hidden="true">2</div>
+            <p>
+              The response is cached at the edge. Subsequent requests in the same hour are served
+              instantly from Cloudflare's network &mdash; no origin roundtrip.
+            </p>
+          </div>
+
+          <div class="mechanism">
+            <div class="mechanism-icon" aria-hidden="true">3</div>
+            <p>
+              If today's APOD is a video, the worker walks backwards up to 7 days to find
+              the most recent image. You never get an error for something out of your control.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-inner">
+        <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+        <p>Data from <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Astronomy Picture of the Day</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const img = document.getElementById('hero-img');
+    const skeleton = document.getElementById('hero-skeleton');
+
+    function onImageReady() {
+      img.classList.add('loaded');
+      skeleton.classList.add('hidden');
+    }
+
+    if (img.complete && img.naturalWidth > 0) {
+      onImageReady();
+    } else {
+      img.addEventListener('load', onImageReady);
+      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+```
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:54:23Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Open redesigned landing page
+
+`open /Users/grant/code/nasa-apod/landing/index.html`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:54:30Z)**_
+
+Redesigned the hero. The image is no longer full-bleed — it's now **contained in a frame** alongside the text in a side-by-side layout:
+
+- **Left**: title + subtitle on the solid dark background (always legible regardless of image)
+- **Right**: APOD image in a 4:3 frame with a subtle amber glow and border
+- **Mobile**: stacks vertically, image on top
+
+This works whether the APOD is a stunning nebula or a data visualization chart. The text never competes with the image for readability.
+
+---
+
+_**User (2026-03-26 08:57:00Z)**_
+
+ehh now the image is quite small. the image should be very large. i think we can cut down on our content, it doesn't need to really be "selling" itself. it just is what it is. minimal, showing how to use it. also, I found NASA brand guidelines https://www.nasa.gov/nasa-brand-center/brand-guidelines/ their colorss are blue: #0032A0 and red: #e4002b also there's a reference there about the Data Insignia which is interesting, looks like we can use it https://www.nasa.gov/nasa-data-insignia/
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 08:57:06Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 08:57:07Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ToolSearch"><details>
+<summary>Tool use: **ToolSearch**</summary>
+
+**Input:**
+
+- max_results: `1`
+- query: `select:WebFetch`
+
+**Result:**
+
+```
+
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:57:36Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="WebFetch"><details>
+<summary>Tool use: **WebFetch**</summary>
+ `https://www.nasa.gov/nasa-data-insignia/`
+
+```text
+# NASA Data Insignia Overview
+
+## What It Is
+The NASA Data Insignia is a visual badge for organizations that incorporate publicly available NASA data into their products, services, or research. It communicates credibility and transparency while acknowledging NASA's contribution to the work.
+
+## Appearance
+The insignia consists of "the NASA Insignia displayed above the clarifying descriptor 'DATA AT WORK'." It's available in full color or black and white formats, with clear space requirements of one "N" width on all boundaries.
+
+## Image URLs
+The page references a visual showing color variations:
+- `https://www.nasa.gov/wp-content/uploads/2025/11/dataatworkbwandcolor.png?w=1424`
+
+However, the document does not provide direct download links for SVG or PNG files. Instead, it states: "Approved users will receive access to official NASA Data Insignia files, layout templates, and implementation guidance directly from NASA upon approval."
+
+## Key Usage Guidelines
+
+**Eligibility:** Only for platforms/products using publicly available NASA data, models, algorithms, APIs, or tools.
+
+**Requirements:**
+- Prior approval via centralized review process
+- Disclaimer statement required for press materials and exhibits: *"This material includes data, models, or resources provided by the National Aeronautics and Space Administration (NASA)..."*
+- Must maintain insignia integrity—no alterations or distortion allowed
+
+**Prohibited Uses:** Commercial advertising, fundraising, lobbying, political messaging, and implying NASA sponsorship or partnership.
+
+**Contact:** Email `agency-brand@mail.nasa.gov` for approval requests or questions.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 08:57:41Z)**_
+
+Interesting — the Data Insignia requires approval from NASA before use. We could apply for it, but we can't use it yet. Worth noting for later.
+
+Let me rethink the page: big image, minimal content, NASA brand colors.
+
+_**Agent (claude-opus-4-6 2026-03-26 08:58:28Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta property="og:title" content="nasapicture.com">
+  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+  <meta property="og:image" content="https://api.nasapicture.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #05070c;
+      --void-up: #0b0f18;
+      --nasa-blue: #0032A0;
+      --nasa-red: #e4002b;
+      --blue-dim: rgba(0, 50, 160, 0.25);
+      --red-dim: rgba(228, 0, 43, 0.15);
+      --silver: #b8bcc6;
+      --silver-dim: #5a5f6b;
+      --white: #e8eaed;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-bright: rgba(255, 255, 255, 0.12);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      color: var(--silver);
+      background: var(--void);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1.25rem 1.5rem;
+      opacity: 0;
+      animation: fade-in 0.8s ease 0.3s forwards;
+    }
+
+    @media (min-width: 640px) {
+      .site-header { padding: 1.5rem 2rem; }
+    }
+
+    .logo {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 300;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .logo-dot { color: var(--nasa-red); }
+
+    .site-nav {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    .site-nav a {
+      color: var(--silver-dim);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .site-nav a:hover { color: var(--white); }
+
+    /* ── HERO: image dominates ── */
+    .hero {
+      position: relative;
+      width: 100%;
+      min-height: 70svh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-image-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .hero-image-area { padding: 5rem 2.5rem 2rem; }
+    }
+
+    .hero-frame {
+      position: relative;
+      width: 100%;
+      max-width: 56rem;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--void-up);
+      opacity: 0;
+      animation: fade-up 1s ease 0.5s forwards;
+    }
+
+    .hero-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      border: 1px solid var(--border-bright);
+      pointer-events: none;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .hero-img.loaded { opacity: 1; }
+
+    .hero-skeleton {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--void-up) 0%, #111620 50%, var(--void-up) 100%);
+      background-size: 400% 400%;
+      animation: skeleton-drift 3s ease-in-out infinite;
+    }
+
+    .hero-skeleton.hidden { display: none; }
+
+    @keyframes skeleton-drift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* ambient glow behind image */
+    .hero-glow {
+      position: absolute;
+      width: 80%;
+      height: 80%;
+      top: 10%;
+      left: 10%;
+      background: radial-gradient(ellipse at center, var(--blue-dim) 0%, transparent 70%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* ── USAGE STRIP ── */
+    .usage {
+      padding: 2.5rem 1.5rem 3rem;
+      text-align: center;
+      opacity: 0;
+      animation: fade-in 0.8s ease 0.8s forwards;
+    }
+
+    @media (min-width: 640px) {
+      .usage { padding: 2.5rem 2.5rem 3.5rem; }
+    }
+
+    .usage-code {
+      font-family: var(--font-mono);
+      font-size: clamp(0.75rem, 2vw, 0.9rem);
+      color: var(--silver-dim);
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .usage-tag { color: var(--silver); }
+    .usage-url { color: var(--nasa-blue); filter: brightness(1.8); }
+    .usage-comment {
+      display: block;
+      width: 100%;
+      color: var(--silver-dim);
+      margin-bottom: 0.35rem;
+      font-size: 0.8em;
+    }
+
+    /* ── CONTENT ── */
+    .info {
+      max-width: 48rem;
+      margin: 0 auto;
+      padding: 0 1.5rem 5rem;
+    }
+
+    @media (min-width: 640px) {
+      .info { padding: 0 2.5rem 5rem; }
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+      margin-bottom: 3.5rem;
+    }
+
+    .info h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .info p { line-height: 1.7; }
+
+    /* ── ENDPOINT TABLE ── */
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.25rem;
+      font-size: 0.875rem;
+    }
+
+    .endpoint-table td {
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: baseline;
+    }
+
+    .endpoint-table tr:last-child td { border-bottom: none; }
+
+    .endpoint-table a {
+      text-decoration: none;
+      color: inherit;
+      display: contents;
+    }
+
+    .endpoint-route {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--white);
+      white-space: nowrap;
+      width: 5rem;
+    }
+
+    .endpoint-desc { color: var(--silver-dim); }
+
+    /* ── HOW IT WORKS ── */
+    .how-section { margin-top: 3.5rem; }
+
+    .how-section p {
+      font-size: 0.95rem;
+      color: var(--silver);
+    }
+
+    .how-section p + p { margin-top: 0.75rem; }
+
+    .how-section a {
+      color: var(--white);
+      text-decoration: none;
+      text-underline-offset: 3px;
+    }
+
+    .how-section a:hover { text-decoration: underline; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.75rem 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      footer { padding: 1.75rem 2.5rem; }
+    }
+
+    .footer-inner {
+      max-width: 48rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--silver-dim);
+    }
+
+    footer a {
+      color: var(--silver);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover { color: var(--white); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fade-in { to { opacity: 1; } }
+    @keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    .fade-up.visible {
+      animation: fade-up 0.6s ease forwards;
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .hero-img { opacity: 1; }
+      .site-header, .hero-frame, .usage, .fade-up {
+        opacity: 1;
+        transform: none;
+      }
+      .hero-skeleton { animation: none; }
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 639px) {
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <a href="/" class="logo">nasapicture<span class="logo-dot">.</span>com</a>
+    <nav class="site-nav" aria-label="Site navigation">
+      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-image-area">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-frame">
+        <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+        <img
+          src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+          alt="NASA Astronomy Picture of the Day"
+          class="hero-img"
+          id="hero-img"
+          loading="eager"
+          fetchpriority="high"
+        >
+      </div>
+    </div>
+
+    <div class="usage">
+      <div class="usage-code">
+        <span class="usage-comment">// today's image, every day, forever</span>
+        <span class="usage-tag">&lt;img src="</span><span class="usage-url">https://api.nasapicture.com/</span><span class="usage-tag">"&gt;</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="info">
+    <div class="divider"></div>
+
+    <div class="fade-up">
+      <h2>Endpoints</h2>
+      <table class="endpoint-table" role="list">
+        <tr>
+          <td class="endpoint-route"><a href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">/</a></td>
+          <td class="endpoint-desc">HD image (falls back to standard)</td>
+        </tr>
+        <tr>
+          <td class="endpoint-route"><a href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">/sd</a></td>
+          <td class="endpoint-desc">Standard resolution</td>
+        </tr>
+        <tr>
+          <td class="endpoint-route"><a href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer">/info</a></td>
+          <td class="endpoint-desc">JSON metadata</td>
+        </tr>
+        <tr>
+          <td class="endpoint-route"><a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a></td>
+          <td class="endpoint-desc">Plain text</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="how-section fade-up">
+      <h2>How it works</h2>
+      <p>
+        A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare Worker</a>
+        fetches today's APOD from NASA's API, streams the image to you,
+        and caches it at the edge. Video days are skipped automatically.
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+      <p>Data from <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a></p>
+    </div>
+  </footer>
+
+  <script>
+    const img = document.getElementById('hero-img');
+    const skeleton = document.getElementById('hero-skeleton');
+
+    function onImageReady() {
+      img.classList.add('loaded');
+      skeleton.classList.add('hidden');
+    }
+
+    if (img.complete && img.naturalWidth > 0) {
+      onImageReady();
+    } else {
+      img.addEventListener('load', onImageReady);
+      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+```
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:00:54Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Open redesigned landing page
+
+`open /Users/grant/code/nasa-apod/landing/index.html`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:01:06Z)**_
+
+Major rethink. Here's what changed:
+
+**Content cut way down** — removed the "One line of HTML" explanation section, the 3-step "how it works" mechanisms, and all the sales copy. What remains:
+- Giant image (fills most of the viewport, natural aspect ratio, max-width 56rem)
+- One-line code snippet directly below: `<img src="https://api.nasapicture.com/">`
+- Compact endpoint table (not cards — just route + one-line description)
+- Single paragraph "how it works"
+- Footer
+
+**NASA brand colors**:
+- Blue (#0032A0, brightened for dark bg) used for the URL in the code snippet and the ambient glow behind the image
+- Red (#e4002b) on the dot in "nasapicture.com" — small but sharp
+
+**Re: the Data Insignia** — it requires formal approval from NASA (`agency-brand@mail.nasa.gov`). Could be worth applying for since we use their public API. Want me to note that on the board?
+
+---
+
+_**User (2026-03-26 09:02:45Z)**_
+
+looks much better. yes note that on the board.
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:02:49Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/.doc-ids`
+
+```text
+     1→TASK=0002
+     2→EPIC=0000
+     3→ADR=0000
+     4→REFE=0000
+     5→RESO=0000
+     6→NOTE=0002
+     7→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:02:57Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: task
+status: todo
+created: 2026-03-26
+---
+
+# Apply for NASA Data Insignia
+
+The NASA Data Insignia is a badge for products that use publicly available NASA data. We qualify since we proxy the APOD API.
+
+- Email `agency-brand@mail.nasa.gov` to request approval
+- Details: https://www.nasa.gov/nasa-data-insignia/
+- Upon approval, NASA provides official insignia files, layout templates, and implementation guidance
+- Add insignia to landing page footer once approved
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/tasks/TASK-0003_nasa-data-insignia.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:02:58Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/.doc-ids has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:03:03Z)**_
+
+Added `TASK-0003` — apply for the NASA Data Insignia. Once approved, we'd add it to the landing page footer.
+
+---
+
+_**User (2026-03-26 09:05:20Z)**_
+
+<command-message>impeccable:critique</command-message>
+<command-name>/impeccable:critique</command-name>
+
+_**User (2026-03-26 09:05:20Z)**_
+
+Base directory for this skill: /Users/grant/.claude/plugins/marketplaces/impeccable/.claude/skills/critique
+
+Conduct a holistic design critique, evaluating whether the interface actually works—not just technically, but as a designed experience. Think like a design director giving feedback.
+
+**First**: Use the frontend-design skill for design principles and anti-patterns.
+
+## Design Critique
+
+Evaluate the interface across these dimensions:
+
+### 1. AI Slop Detection (CRITICAL)
+
+**This is the most important check.** Does this look like every other AI-generated interface from 2024-2025?
+
+Review the design against ALL the **DON'T** guidelines in the frontend-design skill—they are the fingerprints of AI-generated work. Check for the AI color palette, gradient text, dark mode with glowing accents, glassmorphism, hero metric layouts, identical card grids, generic fonts, and all other tells.
+
+**The test**: If you showed this to someone and said "AI made this," would they believe you immediately? If yes, that's the problem.
+
+### 2. Visual Hierarchy
+- Does the eye flow to the most important element first?
+- Is there a clear primary action? Can you spot it in 2 seconds?
+- Do size, color, and position communicate importance correctly?
+- Is there visual competition between elements that should have different weights?
+
+### 3. Information Architecture
+- Is the structure intuitive? Would a new user understand the organization?
+- Is related content grouped logically?
+- Are there too many choices at once? (cognitive overload)
+- Is the navigation clear and predictable?
+
+### 4. Emotional Resonance
+- What emotion does this interface evoke? Is that intentional?
+- Does it match the brand personality?
+- Does it feel trustworthy, approachable, premium, playful—whatever it should feel?
+- Would the target user feel "this is for me"?
+
+### 5. Discoverability & Affordance
+- Are interactive elements obviously interactive?
+- Would a user know what to do without instructions?
+- Are hover/focus states providing useful feedback?
+- Are there hidden features that should be more visible?
+
+### 6. Composition & Balance
+- Does the layout feel balanced or uncomfortably weighted?
+- Is whitespace used intentionally or just leftover?
+- Is there visual rhythm in spacing and repetition?
+- Does asymmetry feel designed or accidental?
+
+### 7. Typography as Communication
+- Does the type hierarchy clearly signal what to read first, second, third?
+- Is body text comfortable to read? (line length, spacing, size)
+- Do font choices reinforce the brand/tone?
+- Is there enough contrast between heading levels?
+
+### 8. Color with Purpose
+- Is color used to communicate, not just decorate?
+- Does the palette feel cohesive?
+- Are accent colors drawing attention to the right things?
+- Does it work for colorblind users? (not just technically—does meaning still come through?)
+
+### 9. States & Edge Cases
+- Empty states: Do they guide users toward action, or just say "nothing here"?
+- Loading states: Do they reduce perceived wait time?
+- Error states: Are they helpful and non-blaming?
+- Success states: Do they confirm and guide next steps?
+
+### 10. Microcopy & Voice
+- Is the writing clear and concise?
+- Does it sound like a human (the right human for this brand)?
+- Are labels and buttons unambiguous?
+- Does error copy help users fix the problem?
+
+## Generate Critique Report
+
+Structure your feedback as a design director would:
+
+### Anti-Patterns Verdict
+**Start here.** Pass/fail: Does this look AI-generated? List specific tells from the skill's Anti-Patterns section. Be brutally honest.
+
+### Overall Impression
+A brief gut reaction—what works, what doesn't, and the single biggest opportunity.
+
+### What's Working
+Highlight 2-3 things done well. Be specific about why they work.
+
+### Priority Issues
+The 3-5 most impactful design problems, ordered by importance:
+
+For each issue:
+- **What**: Name the problem clearly
+- **Why it matters**: How this hurts users or undermines goals
+- **Fix**: What to do about it (be concrete)
+- **Command**: Which command to use (prefer: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /critique, /colorize — or other installed skills you're sure exist)
+
+### Minor Observations
+Quick notes on smaller issues worth addressing.
+
+### Questions to Consider
+Provocative questions that might unlock better solutions:
+- "What if the primary action were more prominent?"
+- "Does this need to feel this complex?"
+- "What would a confident version of this look like?"
+
+**Remember**:
+- Be direct—vague feedback wastes everyone's time
+- Be specific—"the submit button" not "some elements"
+- Say what's wrong AND why it matters to users
+- Give concrete suggestions, not just "consider exploring..."
+- Prioritize ruthlessly—if everything is important, nothing is
+- Don't soften criticism—developers need honest feedback to ship great design
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:05:25Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 09:05:25Z)**_
+
+Let me take a close look at the current page.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:05:25Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+     7→  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+     8→  <meta property="og:title" content="nasapicture.com">
+     9→  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+    10→  <meta property="og:image" content="https://api.nasapicture.com/">
+    11→  <meta property="og:type" content="website">
+    12→  <meta name="twitter:card" content="summary_large_image">
+    13→  <link rel="preconnect" href="https://fonts.googleapis.com">
+    14→  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    15→  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    16→  <style>
+    17→    :root {
+    18→      --void: #05070c;
+    19→      --void-up: #0b0f18;
+    20→      --nasa-blue: #0032A0;
+    21→      --nasa-red: #e4002b;
+    22→      --blue-dim: rgba(0, 50, 160, 0.25);
+    23→      --red-dim: rgba(228, 0, 43, 0.15);
+    24→      --silver: #b8bcc6;
+    25→      --silver-dim: #5a5f6b;
+    26→      --white: #e8eaed;
+    27→      --border: rgba(255, 255, 255, 0.06);
+    28→      --border-bright: rgba(255, 255, 255, 0.12);
+    29→      --font-serif: 'Cormorant Garamond', Georgia, serif;
+    30→      --font-sans: 'Outfit', sans-serif;
+    31→      --font-mono: 'JetBrains Mono', monospace;
+    32→    }
+    33→
+    34→    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    35→    html { scroll-behavior: smooth; }
+    36→
+    37→    body {
+    38→      font-family: var(--font-sans);
+    39→      font-weight: 300;
+    40→      color: var(--silver);
+    41→      background: var(--void);
+    42→      -webkit-font-smoothing: antialiased;
+    43→    }
+    44→
+    45→    /* ── HEADER ── */
+    46→    .site-header {
+    47→      position: absolute;
+    48→      top: 0;
+    49→      left: 0;
+    50→      right: 0;
+    51→      z-index: 10;
+    52→      display: flex;
+    53→      justify-content: space-between;
+    54→      align-items: baseline;
+    55→      padding: 1.25rem 1.5rem;
+    56→      opacity: 0;
+    57→      animation: fade-in 0.8s ease 0.3s forwards;
+    58→    }
+    59→
+    60→    @media (min-width: 640px) {
+    61→      .site-header { padding: 1.5rem 2rem; }
+    62→    }
+    63→
+    64→    .logo {
+    65→      font-family: var(--font-serif);
+    66→      font-size: 1.35rem;
+    67→      font-weight: 300;
+    68→      color: var(--white);
+    69→      text-decoration: none;
+    70→      letter-spacing: -0.01em;
+    71→    }
+    72→
+    73→    .logo-dot { color: var(--nasa-red); }
+    74→
+    75→    .site-nav {
+    76→      font-family: var(--font-mono);
+    77→      font-size: 0.7rem;
+    78→    }
+    79→
+    80→    .site-nav a {
+    81→      color: var(--silver-dim);
+    82→      text-decoration: none;
+    83→      transition: color 0.3s;
+    84→    }
+    85→
+    86→    .site-nav a:hover { color: var(--white); }
+    87→
+    88→    /* ── HERO: image dominates ── */
+    89→    .hero {
+    90→      position: relative;
+    91→      width: 100%;
+    92→      min-height: 70svh;
+    93→      display: flex;
+    94→      flex-direction: column;
+    95→    }
+    96→
+    97→    .hero-image-area {
+    98→      flex: 1;
+    99→      position: relative;
+   100→      overflow: hidden;
+   101→      display: flex;
+   102→      align-items: center;
+   103→      justify-content: center;
+   104→      padding: 4rem 1.5rem 1.5rem;
+   105→    }
+   106→
+   107→    @media (min-width: 640px) {
+   108→      .hero-image-area { padding: 5rem 2.5rem 2rem; }
+   109→    }
+   110→
+   111→    .hero-frame {
+   112→      position: relative;
+   113→      width: 100%;
+   114→      max-width: 56rem;
+   115→      border-radius: 6px;
+   116→      overflow: hidden;
+   117→      background: var(--void-up);
+   118→      opacity: 0;
+   119→      animation: fade-up 1s ease 0.5s forwards;
+   120→    }
+   121→
+   122→    .hero-frame::after {
+   123→      content: '';
+   124→      position: absolute;
+   125→      inset: 0;
+   126→      border-radius: 6px;
+   127→      border: 1px solid var(--border-bright);
+   128→      pointer-events: none;
+   129→    }
+   130→
+   131→    .hero-img {
+   132→      width: 100%;
+   133→      height: auto;
+   134→      display: block;
+   135→      opacity: 0;
+   136→      transition: opacity 0.8s ease;
+   137→    }
+   138→
+   139→    .hero-img.loaded { opacity: 1; }
+   140→
+   141→    .hero-skeleton {
+   142→      position: absolute;
+   143→      inset: 0;
+   144→      background: linear-gradient(135deg, var(--void-up) 0%, #111620 50%, var(--void-up) 100%);
+   145→      background-size: 400% 400%;
+   146→      animation: skeleton-drift 3s ease-in-out infinite;
+   147→    }
+   148→
+   149→    .hero-skeleton.hidden { display: none; }
+   150→
+   151→    @keyframes skeleton-drift {
+   152→      0%, 100% { background-position: 0% 50%; }
+   153→      50% { background-position: 100% 50%; }
+   154→    }
+   155→
+   156→    /* ambient glow behind image */
+   157→    .hero-glow {
+   158→      position: absolute;
+   159→      width: 80%;
+   160→      height: 80%;
+   161→      top: 10%;
+   162→      left: 10%;
+   163→      background: radial-gradient(ellipse at center, var(--blue-dim) 0%, transparent 70%);
+   164→      filter: blur(60px);
+   165→      pointer-events: none;
+   166→      z-index: -1;
+   167→    }
+   168→
+   169→    /* ── USAGE STRIP ── */
+   170→    .usage {
+   171→      padding: 2.5rem 1.5rem 3rem;
+   172→      text-align: center;
+   173→      opacity: 0;
+   174→      animation: fade-in 0.8s ease 0.8s forwards;
+   175→    }
+   176→
+   177→    @media (min-width: 640px) {
+   178→      .usage { padding: 2.5rem 2.5rem 3.5rem; }
+   179→    }
+   180→
+   181→    .usage-code {
+   182→      font-family: var(--font-mono);
+   183→      font-size: clamp(0.75rem, 2vw, 0.9rem);
+   184→      color: var(--silver-dim);
+   185→      display: inline-flex;
+   186→      align-items: baseline;
+   187→      gap: 0;
+   188→      flex-wrap: wrap;
+   189→      justify-content: center;
+   190→    }
+   191→
+   192→    .usage-tag { color: var(--silver); }
+   193→    .usage-url { color: var(--nasa-blue); filter: brightness(1.8); }
+   194→    .usage-comment {
+   195→      display: block;
+   196→      width: 100%;
+   197→      color: var(--silver-dim);
+   198→      margin-bottom: 0.35rem;
+   199→      font-size: 0.8em;
+   200→    }
+   201→
+   202→    /* ── CONTENT ── */
+   203→    .info {
+   204→      max-width: 48rem;
+   205→      margin: 0 auto;
+   206→      padding: 0 1.5rem 5rem;
+   207→    }
+   208→
+   209→    @media (min-width: 640px) {
+   210→      .info { padding: 0 2.5rem 5rem; }
+   211→    }
+   212→
+   213→    .divider {
+   214→      height: 1px;
+   215→      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+   216→      margin-bottom: 3.5rem;
+   217→    }
+   218→
+   219→    .info h2 {
+   220→      font-family: var(--font-serif);
+   221→      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+   222→      font-weight: 300;
+   223→      color: var(--white);
+   224→      letter-spacing: -0.02em;
+   225→      margin-bottom: 1.5rem;
+   226→    }
+   227→
+   228→    .info p { line-height: 1.7; }
+   229→
+   230→    /* ── ENDPOINT TABLE ── */
+   231→    .endpoint-table {
+   232→      width: 100%;
+   233→      border-collapse: collapse;
+   234→      margin-top: 1.25rem;
+   235→      font-size: 0.875rem;
+   236→    }
+   237→
+   238→    .endpoint-table td {
+   239→      padding: 0.85rem 0;
+   240→      border-bottom: 1px solid var(--border);
+   241→      vertical-align: baseline;
+   242→    }
+   243→
+   244→    .endpoint-table tr:last-child td { border-bottom: none; }
+   245→
+   246→    .endpoint-table a {
+   247→      text-decoration: none;
+   248→      color: inherit;
+   249→      display: contents;
+   250→    }
+   251→
+   252→    .endpoint-route {
+   253→      font-family: var(--font-mono);
+   254→      font-weight: 500;
+   255→      color: var(--white);
+   256→      white-space: nowrap;
+   257→      width: 5rem;
+   258→    }
+   259→
+   260→    .endpoint-desc { color: var(--silver-dim); }
+   261→
+   262→    /* ── HOW IT WORKS ── */
+   263→    .how-section { margin-top: 3.5rem; }
+   264→
+   265→    .how-section p {
+   266→      font-size: 0.95rem;
+   267→      color: var(--silver);
+   268→    }
+   269→
+   270→    .how-section p + p { margin-top: 0.75rem; }
+   271→
+   272→    .how-section a {
+   273→      color: var(--white);
+   274→      text-decoration: none;
+   275→      text-underline-offset: 3px;
+   276→    }
+   277→
+   278→    .how-section a:hover { text-decoration: underline; }
+   279→
+   280→    /* ── FOOTER ── */
+   281→    footer {
+   282→      border-top: 1px solid var(--border);
+   283→      padding: 1.75rem 1.5rem;
+   284→    }
+   285→
+   286→    @media (min-width: 640px) {
+   287→      footer { padding: 1.75rem 2.5rem; }
+   288→    }
+   289→
+   290→    .footer-inner {
+   291→      max-width: 48rem;
+   292→      margin: 0 auto;
+   293→      display: flex;
+   294→      justify-content: space-between;
+   295→      align-items: center;
+   296→      flex-wrap: wrap;
+   297→      gap: 0.75rem;
+   298→      font-size: 0.75rem;
+   299→      color: var(--silver-dim);
+   300→    }
+   301→
+   302→    footer a {
+   303→      color: var(--silver);
+   304→      text-decoration: none;
+   305→      transition: color 0.3s;
+   306→    }
+   307→
+   308→    footer a:hover { color: var(--white); }
+   309→
+   310→    /* ── ANIMATIONS ── */
+   311→    @keyframes fade-in { to { opacity: 1; } }
+   312→    @keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
+   313→
+   314→    .fade-up {
+   315→      opacity: 0;
+   316→      transform: translateY(14px);
+   317→    }
+   318→
+   319→    .fade-up.visible {
+   320→      animation: fade-up 0.6s ease forwards;
+   321→    }
+   322→
+   323→    /* ── REDUCED MOTION ── */
+   324→    @media (prefers-reduced-motion: reduce) {
+   325→      *, *::before, *::after {
+   326→        animation-duration: 0.01ms !important;
+   327→        animation-delay: 0ms !important;
+   328→        transition-duration: 0.01ms !important;
+   329→      }
+   330→      .hero-img { opacity: 1; }
+   331→      .site-header, .hero-frame, .usage, .fade-up {
+   332→        opacity: 1;
+   333→        transform: none;
+   334→      }
+   335→      .hero-skeleton { animation: none; }
+   336→    }
+   337→
+   338→    /* ── MOBILE ── */
+   339→    @media (max-width: 639px) {
+   340→      .footer-inner { flex-direction: column; text-align: center; }
+   341→    }
+   342→  </style>
+   343→</head>
+   344→
+   345→<body>
+   346→  <header class="site-header">
+   347→    <a href="/" class="logo">nasapicture<span class="logo-dot">.</span>com</a>
+   348→    <nav class="site-nav" aria-label="Site navigation">
+   349→      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+   350→    </nav>
+   351→  </header>
+   352→
+   353→  <section class="hero">
+   354→    <div class="hero-image-area">
+   355→      <div class="hero-glow" aria-hidden="true"></div>
+   356→      <div class="hero-frame">
+   357→        <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+   358→        <img
+   359→          src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+   360→          alt="NASA Astronomy Picture of the Day"
+   361→          class="hero-img"
+   362→          id="hero-img"
+   363→          loading="eager"
+   364→          fetchpriority="high"
+   365→        >
+   366→      </div>
+   367→    </div>
+   368→
+   369→    <div class="usage">
+   370→      <div class="usage-code">
+   371→        <span class="usage-comment">// today's image, every day, forever</span>
+   372→        <span class="usage-tag">&lt;img src="</span><span class="usage-url">https://api.nasapicture.com/</span><span class="usage-tag">"&gt;</span>
+   373→      </div>
+   374→    </div>
+   375→  </section>
+   376→
+   377→  <div class="info">
+   378→    <div class="divider"></div>
+   379→
+   380→    <div class="fade-up">
+   381→      <h2>Endpoints</h2>
+   382→      <table class="endpoint-table" role="list">
+   383→        <tr>
+   384→          <td class="endpoint-route"><a href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">/</a></td>
+   385→          <td class="endpoint-desc">HD image (falls back to standard)</td>
+   386→        </tr>
+   387→        <tr>
+   388→          <td class="endpoint-route"><a href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">/sd</a></td>
+   389→          <td class="endpoint-desc">Standard resolution</td>
+   390→        </tr>
+   391→        <tr>
+   392→          <td class="endpoint-route"><a href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer">/info</a></td>
+   393→          <td class="endpoint-desc">JSON metadata</td>
+   394→        </tr>
+   395→        <tr>
+   396→          <td class="endpoint-route"><a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a></td>
+   397→          <td class="endpoint-desc">Plain text</td>
+   398→        </tr>
+   399→      </table>
+   400→    </div>
+   401→
+   402→    <div class="how-section fade-up">
+   403→      <h2>How it works</h2>
+   404→      <p>
+   405→        A <a href="https://workers.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare Worker</a>
+   406→        fetches today's APOD from NASA's API, streams the image to you,
+   407→        and caches it at the edge. Video days are skipped automatically.
+   408→      </p>
+   409→    </div>
+   410→  </div>
+   411→
+   412→  <footer>
+   413→    <div class="footer-inner">
+   414→      <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+   415→      <p>Data from <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a></p>
+   416→    </div>
+   417→  </footer>
+   418→
+   419→  <script>
+   420→    const img = document.getElementById('hero-img');
+   421→    const skeleton = document.getElementById('hero-skeleton');
+   422→
+   423→    function onImageReady() {
+   424→      img.classList.add('loaded');
+   425→      skeleton.classList.add('hidden');
+   426→    }
+   427→
+   428→    if (img.complete && img.naturalWidth > 0) {
+   429→      onImageReady();
+   430→    } else {
+   431→      img.addEventListener('load', onImageReady);
+   432→      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+   433→    }
+   434→
+   435→    const observer = new IntersectionObserver((entries) => {
+   436→      entries.forEach(entry => {
+   437→        if (entry.isIntersecting) {
+   438→          entry.target.classList.add('visible');
+   439→          observer.unobserve(entry.target);
+   440→        }
+   441→      });
+   442→    }, { threshold: 0.15 });
+   443→
+   444→    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+   445→  </script>
+   446→</body>
+   447→</html>
+   448→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:06:12Z)**_
+
+---
+
+## Design Critique: nasapicture.com landing page
+
+### AI Slop Verdict: **Pass (mostly)**
+
+This doesn't read as AI-generated. The restraint is real — it's not trying to sell you something with gradient text and glowing cards. The NASA brand colors are used with discipline, not as decoration. Cormorant Garamond is a genuinely distinctive choice. The single red dot in the logo is a nice detail.
+
+**One tell**: the blue glow behind the image (`.hero-glow`) is the "dark mode with ambient glow" pattern that's become an AI fingerprint. It's subtle here, but on images that already have blue tones it'll look like a filter artifact rather than an intentional design choice. Consider removing it — the image doesn't need atmosphere added to it.
+
+### Overall Impression
+
+The direction is right: big image, minimal text, get out of the way. But right now it feels **incomplete** rather than **minimal**. The difference is intention — a minimal page should feel like nothing was left out. This feels like there used to be more content and it got deleted (which is literally what happened). The below-fold content is just floating in a lot of empty space without enough structure to feel designed.
+
+### What's Working
+
+1. **The code snippet as hero caption** — `// today's image, every day, forever` directly below the image is the single best design decision. It communicates what this is, how to use it, and the personality of the project in one line. That's doing real work.
+
+2. **The endpoint table** — switching from cards to a simple table was the right call. Routes are data, not features. A table respects that.
+
+3. **The red dot** — `nasapicture.com` with the red period is a small, sharp brand moment. It's the kind of detail that makes a page feel designed by a person.
+
+### Priority Issues
+
+**1. The below-fold content feels orphaned**
+
+The hero section (image + code snippet) has strong presence. Then you scroll into a thin divider and two small sections floating in a sea of dark. There's no visual connection between the hero and the info — they feel like two different pages stitched together. The `max-width: 48rem` content block is noticeably narrower than the `56rem` image above it, which creates an awkward asymmetry.
+
+- **Why it matters**: Visitors who scroll will feel like they've left the "designed" part of the page
+- **Fix**: Either bring the content width closer to the image width, or give the info section a subtle background shift (e.g., slightly lighter `--void-up`) to make it feel like a distinct, intentional zone rather than leftover space
+- **Command**: `/impeccable:polish`
+
+**2. Endpoint links have no interactive affordance**
+
+The endpoint routes (`/`, `/sd`, `/info`, `/about`) are links but look like plain text. There's no hover state, no underline, no cursor change — `display: contents` strips the anchor of its styling. A developer scanning this will try to click `/info` and get no feedback that it's interactive.
+
+- **Why it matters**: The endpoints are the most useful thing on the page for the target audience. They should be obviously clickable.
+- **Fix**: Add a hover state to endpoint routes — even just `color: var(--nasa-red)` on hover, or an underline. Drop the `display: contents` and style the `<a>` directly, or wrap entire table rows.
+- **Command**: `/impeccable:delight`
+
+**3. No heading or context above the fold**
+
+The page opens with: logo, image, code snippet. There's no `<h1>` visible, no tagline, no "what is this" for someone who lands here from a search result or shared link. The code snippet explains the API but not the *page*. A non-developer visitor sees a random image and `<img src=...>` and has no idea what they're looking at.
+
+- **Why it matters**: Your audience is "everyone," not just developers. A first-time visitor needs a single sentence of context.
+- **Fix**: Add a brief heading or tagline between the header and the image. Could be as simple as "Today's Astronomy Picture of the Day" in the serif font. Doesn't need to be big — just present.
+- **Command**: `/impeccable:clarify`
+
+**4. The "How it works" section is vestigial**
+
+One sentence about Cloudflare Workers isn't enough to justify its own section with an `<h2>`. It reads like a leftover from the fuller version. Either expand it to be worth the heading, or fold it into the footer or a tooltip on the code snippet.
+
+- **Why it matters**: It breaks the minimal discipline. If you're going to be minimal, be minimal — don't have sections that don't earn their space.
+- **Fix**: Remove the "How it works" heading and fold the sentence into a small note near the endpoint table, or into the footer attribution. Something like: "Powered by a Cloudflare Worker. Data from NASA APOD."
+- **Command**: `/impeccable:distill`
+
+### Minor Observations
+
+- **`filter: brightness(1.8)` on the blue URL** — this is a hack that produces unpredictable color. Use a pre-computed lighter blue (`#4d7fd9` or similar) in a CSS variable instead. The actual rendered color won't match NASA blue anymore.
+- **`role="list"` on a `<table>`** — semantically incorrect. It's a table, let it be a table. Remove the role attribute.
+- **No favicon** — the tab shows a generic icon. Even a simple colored circle or the red dot from the logo would help.
+- **The footer says "NASA APOD"** — should say "NASA Astronomy Picture of the Day" for non-technical visitors, or link text could just be "NASA" since the URL leads to the APOD site.
+
+### Questions to Consider
+
+- What if the code snippet were copyable with a click? That single interaction would make the page genuinely useful, not just informational.
+- Does "How it works" belong on a landing page at all? The `/about` endpoint already covers this in detail. The landing page could just link there.
+- What if the image had a subtle caption showing today's APOD title (fetched from `/info`)? It would make the page feel alive and give non-developers a reason to come back.
+
+---
+
+_**User (2026-03-26 09:14:54Z)**_
+
+responses to questions: RE: code snippet copyable - yes I like this idea. RE: "how it works" you're right that it's not important. its really for other developers. perhaps just a link to the github repo (subtle) would suffice? RE: caption - yes I like this idea. also showing the data is good too to anchor that "this image is from this day".
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:15:02Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 09:15:03Z)**_
+
+Good calls. Let me implement all three plus the critique fixes.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:15:59Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta property="og:title" content="nasapicture.com">
+  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+  <meta property="og:image" content="https://api.nasapicture.com/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #05070c;
+      --void-up: #0b0f18;
+      --nasa-blue: #0032A0;
+      --nasa-blue-light: #4d7fd9;
+      --nasa-red: #e4002b;
+      --silver: #b8bcc6;
+      --silver-dim: #5a5f6b;
+      --white: #e8eaed;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-bright: rgba(255, 255, 255, 0.12);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      color: var(--silver);
+      background: var(--void);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1.25rem 1.5rem;
+      opacity: 0;
+      animation: fade-in 0.8s ease 0.3s forwards;
+    }
+
+    @media (min-width: 640px) {
+      .site-header { padding: 1.5rem 2rem; }
+    }
+
+    .logo {
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      font-weight: 300;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .logo-dot { color: var(--nasa-red); }
+
+    .site-nav {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      display: flex;
+      gap: 1.25rem;
+    }
+
+    .site-nav a {
+      color: var(--silver-dim);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .site-nav a:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-image-area {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4.5rem 1.5rem 0;
+    }
+
+    @media (min-width: 640px) {
+      .hero-image-area { padding: 5.5rem 2.5rem 0; }
+    }
+
+    .hero-tagline {
+      font-family: var(--font-serif);
+      font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+      font-weight: 300;
+      color: var(--silver);
+      letter-spacing: -0.01em;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      opacity: 0;
+      animation: fade-in 0.8s ease 0.4s forwards;
+    }
+
+    .hero-frame {
+      position: relative;
+      width: 100%;
+      max-width: 56rem;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--void-up);
+      opacity: 0;
+      animation: fade-up 1s ease 0.5s forwards;
+    }
+
+    .hero-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      border: 1px solid var(--border-bright);
+      pointer-events: none;
+    }
+
+    .hero-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .hero-img.loaded { opacity: 1; }
+
+    .hero-skeleton {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--void-up) 0%, #111620 50%, var(--void-up) 100%);
+      background-size: 400% 400%;
+      animation: skeleton-drift 3s ease-in-out infinite;
+    }
+
+    .hero-skeleton.hidden { display: none; }
+
+    @keyframes skeleton-drift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* image caption — populated by JS from /info */
+    .hero-caption {
+      width: 100%;
+      max-width: 56rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.6rem 0.25rem;
+      font-size: 0.75rem;
+      color: var(--silver-dim);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .hero-caption.visible { opacity: 1; }
+
+    .hero-caption-title {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      color: var(--silver);
+    }
+
+    .hero-caption-date {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    /* ── USAGE STRIP ── */
+    .usage {
+      padding: 2rem 1.5rem 2.5rem;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      animation: fade-in 0.8s ease 0.8s forwards;
+    }
+
+    @media (min-width: 640px) {
+      .usage { padding: 2rem 2.5rem 3rem; }
+    }
+
+    .usage-snippet {
+      position: relative;
+      background: var(--void-up);
+      border: 1px solid var(--border-bright);
+      border-radius: 6px;
+      padding: 1rem 3rem 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: clamp(0.72rem, 1.8vw, 0.85rem);
+      line-height: 1.6;
+      cursor: pointer;
+      transition: border-color 0.3s;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .usage-snippet:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .usage-snippet-comment {
+      color: var(--silver-dim);
+      display: block;
+    }
+
+    .usage-snippet-tag { color: var(--silver); }
+    .usage-snippet-url { color: var(--nasa-blue-light); }
+
+    .usage-copy-btn {
+      position: absolute;
+      top: 50%;
+      right: 0.75rem;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--silver-dim);
+      cursor: pointer;
+      padding: 0.25rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+
+    .usage-copy-btn:hover { color: var(--white); }
+
+    .usage-copy-btn svg { width: 14px; height: 14px; }
+
+    .usage-copy-btn .check { display: none; }
+    .usage-copy-btn.copied .copy { display: none; }
+    .usage-copy-btn.copied .check { display: block; color: var(--nasa-blue-light); }
+
+    /* ── CONTENT ── */
+    .info {
+      max-width: 56rem;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    @media (min-width: 640px) {
+      .info { padding: 0 2.5rem 4rem; }
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+      margin-bottom: 3rem;
+    }
+
+    .info h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+    }
+
+    .info p { line-height: 1.7; }
+
+    /* ── ENDPOINT TABLE ── */
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .endpoint-table td {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: baseline;
+    }
+
+    .endpoint-table tr:last-child td { border-bottom: none; }
+
+    .endpoint-table tr {
+      transition: background 0.2s;
+    }
+
+    .endpoint-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .endpoint-route-cell {
+      width: 5rem;
+    }
+
+    .endpoint-route-link {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .endpoint-route-link:hover {
+      color: var(--nasa-blue-light);
+    }
+
+    .endpoint-desc { color: var(--silver-dim); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.75rem 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      footer { padding: 1.75rem 2.5rem; }
+    }
+
+    .footer-inner {
+      max-width: 56rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--silver-dim);
+    }
+
+    footer a {
+      color: var(--silver);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover { color: var(--white); }
+
+    .footer-sep {
+      color: var(--border-bright);
+      margin: 0 0.25rem;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fade-in { to { opacity: 1; } }
+    @keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    .fade-up.visible {
+      animation: fade-up 0.6s ease forwards;
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms;
+        animation-delay: 0ms;
+        transition-duration: 0.01ms;
+      }
+      .hero-img { opacity: 1; }
+      .site-header, .hero-frame, .hero-tagline, .usage,
+      .hero-caption, .fade-up {
+        opacity: 1;
+        transform: none;
+      }
+      .hero-skeleton { animation: none; }
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 639px) {
+      .footer-inner { flex-direction: column; text-align: center; }
+      .hero-caption { flex-direction: column; gap: 0.15rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <a href="/" class="logo">nasapicture<span class="logo-dot">.</span>com</a>
+    <nav class="site-nav" aria-label="Site navigation">
+      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-image-area">
+      <h1 class="hero-tagline">Today's Astronomy Picture of the Day</h1>
+      <div class="hero-frame">
+        <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+        <img
+          src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+          alt="NASA Astronomy Picture of the Day"
+          class="hero-img"
+          id="hero-img"
+          loading="eager"
+          fetchpriority="high"
+        >
+      </div>
+      <div class="hero-caption" id="hero-caption">
+        <span class="hero-caption-title" id="caption-title"></span>
+        <span class="hero-caption-date" id="caption-date"></span>
+      </div>
+    </div>
+
+    <div class="usage">
+      <div class="usage-snippet" id="usage-snippet" role="button" tabindex="0" aria-label="Copy code snippet">
+        <span class="usage-snippet-comment">// today's image, every day, forever</span>
+        <span><span class="usage-snippet-tag">&lt;img src="</span><span class="usage-snippet-url">https://api.nasapicture.com/</span><span class="usage-snippet-tag">"&gt;</span></span>
+        <button class="usage-copy-btn" id="copy-btn" aria-label="Copy to clipboard">
+          <svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="info">
+    <div class="divider"></div>
+
+    <div class="fade-up">
+      <h2>Endpoints</h2>
+      <table class="endpoint-table">
+        <tr>
+          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">/</a></td>
+          <td class="endpoint-desc">HD image (falls back to standard)</td>
+        </tr>
+        <tr>
+          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">/sd</a></td>
+          <td class="endpoint-desc">Standard resolution</td>
+        </tr>
+        <tr>
+          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer">/info</a></td>
+          <td class="endpoint-desc">JSON metadata</td>
+        </tr>
+        <tr>
+          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a></td>
+          <td class="endpoint-desc">Plain text</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+      <p>
+        <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a>
+        <span class="footer-sep">/</span>
+        <a href="https://github.com/grantkeller/nasa-apod" target="_blank" rel="noopener noreferrer">Source</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Image load
+    const img = document.getElementById('hero-img');
+    const skeleton = document.getElementById('hero-skeleton');
+
+    function onImageReady() {
+      img.classList.add('loaded');
+      skeleton.classList.add('hidden');
+    }
+
+    if (img.complete && img.naturalWidth > 0) {
+      onImageReady();
+    } else {
+      img.addEventListener('load', onImageReady);
+      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+    }
+
+    // Fetch APOD metadata for caption
+    fetch('https://api.nasapicture.com/info')
+      .then(r => r.json())
+      .then(data => {
+        if (data.title) {
+          document.getElementById('caption-title').textContent = data.title;
+          document.getElementById('caption-date').textContent = data.date;
+          document.getElementById('hero-caption').classList.add('visible');
+        }
+      })
+      .catch(() => {});
+
+    // Copy snippet
+    const snippet = document.getElementById('usage-snippet');
+    const copyBtn = document.getElementById('copy-btn');
+    const copyText = '<img src="https://api.nasapicture.com/">';
+
+    function doCopy() {
+      navigator.clipboard.writeText(copyText).then(() => {
+        copyBtn.classList.add('copied');
+        setTimeout(() => copyBtn.classList.remove('copied'), 2000);
+      });
+    }
+
+    snippet.addEventListener('click', doCopy);
+    snippet.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doCopy(); }
+    });
+
+    // Scroll fade-in
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+```
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:16:15Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Open updated landing page
+
+`open /Users/grant/code/nasa-apod/landing/index.html`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:16:30Z)**_
+
+Here's what changed:
+
+**New features:**
+- **Copyable code snippet** — click anywhere on the code block to copy `<img src="https://api.nasapicture.com/">`. Shows a checkmark on success.
+- **Live caption** — fetches `/info` and displays the APOD title + date directly below the image. Anchors "this image is from this day."
+- **h1 tagline** — "Today's Astronomy Picture of the Day" above the image, so non-developers know what they're looking at.
+
+**Critique fixes:**
+- Removed the blue glow (AI tell)
+- Removed "How it works" section entirely
+- Added GitHub repo link in the footer (`Source`) — subtle, for developers who want to dig in
+- Endpoint routes now have hover states (turn blue, row highlights)
+- Fixed `display: contents` on links — proper `<a>` styling now
+- Removed `role="list"` from table
+- Replaced `filter: brightness(1.8)` with a pre-computed `--nasa-blue-light: #4d7fd9`
+- Content width matches image width (both 56rem now)
+- Removed `!important` from reduced-motion rules
+
+Note: the caption fetch will fail locally (CORS) but will work in production on `nasapicture.com` hitting `api.nasapicture.com`. It gracefully hides if the fetch fails.
+
+---
+
+_**User (2026-03-26 09:17:50Z)**_
+
+hardcode the caption & date for now
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:17:56Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:18:02Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:18:07Z)**_
+
+Done — caption and date are hardcoded and visible. The JS fetch will overwrite them in production when it works.
+
+---
+
+_**User (2026-03-26 09:19:57Z)**_
+
+[Image #2] I feel like the H1 should be at the top (so it looks inline with the header) so we can maximize the image size. also it still doesn't feel very clear as to what a user is looking at. they'll just go "oh nice, the space image for today" and not put together that you can *do* something with it
+
+_**User (2026-03-26 09:19:57Z)**_
+
+[Image: source: /Users/grant/.claude/image-cache/6cef7dcf-a006-46d6-95ed-b844224d2cf4/2.png]
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:11Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:12Z)**_
+
+Good feedback. Two problems: the H1 wastes vertical space, and there's no bridge between "pretty picture" and "tool you can use." Let me fix both.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:17Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:24Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:29Z)**_
+
+Now move the H1 into the header and add a bridge line above the code snippet.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:32Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:38Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:43Z)**_
+
+Now add a bridge line and adjust the usage section styling.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:47Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:53Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:20:58Z)**_
+
+Now reduce the top padding since the H1 is in the header row.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:21:00Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:22:06Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Open updated landing page
+
+`open /Users/grant/code/nasa-apod/landing/index.html`
+
+```text
+The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.
+
+Note: The user's next message may contain a correction or preference. Pay close attention — if they explain what went wrong or how they'd prefer you to work, consider saving that to memory for future sessions.
+```
+</details></tool-use>
+
+---
+
+_**User (2026-03-26 09:22:06Z)**_
+
+[Request interrupted by user for tool use]
+
+_**User (2026-03-26 09:22:28Z)**_
+
+I have the site always open i can reload it. I liked it being full width, i think that's the way to go. utilize the entire window space
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:22:38Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+name: No browser open commands
+description: User keeps the site open and reloads manually — don't run open commands
+type: feedback
+---
+
+Don't run `open` commands to preview the landing page. The user already has it open in the browser and reloads it themselves.
+
+**Why:** User interrupted to say they always have the site open.
+**How to apply:** After editing landing page files, just say what changed — skip the `open` command.
+
+```
+
+```text
+File created successfully at: /Users/grant/.claude/projects/-Users-grant-code-nasa-apod/memory/feedback_no_open_browser.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:22:45Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:22:50Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `/Users/grant/.claude/projects/-Users-grant-code-nasa-apod/memory/MEMORY.md`
+
+```text
+     1→- [User identity](user_identity.md) — Grant Keller, grantkeller.dev
+     2→- [Domain strategy](project_domain_strategy.md) — nasapicture.com: landing page + api./get. subdomains for Worker
+     3→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:22:56Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/.claude/projects/-Users-grant-code-nasa-apod/memory/MEMORY.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:02Z)**_
+
+Got it — no more `open` commands. Now let me make this full-width: header spans the whole window, image goes edge-to-edge (with just a bit of breathing room), remove the max-width constraints.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:02Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+     7→  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+     8→  <meta property="og:title" content="nasapicture.com">
+     9→  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+    10→  <meta property="og:image" content="https://api.nasapicture.com/">
+    11→  <meta property="og:type" content="website">
+    12→  <meta name="twitter:card" content="summary_large_image">
+    13→  <link rel="preconnect" href="https://fonts.googleapis.com">
+    14→  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    15→  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    16→  <style>
+    17→    :root {
+    18→      --void: #05070c;
+    19→      --void-up: #0b0f18;
+    20→      --nasa-blue: #0032A0;
+    21→      --nasa-blue-light: #4d7fd9;
+    22→      --nasa-red: #e4002b;
+    23→      --silver: #b8bcc6;
+    24→      --silver-dim: #5a5f6b;
+    25→      --white: #e8eaed;
+    26→      --border: rgba(255, 255, 255, 0.06);
+    27→      --border-bright: rgba(255, 255, 255, 0.12);
+    28→      --font-serif: 'Cormorant Garamond', Georgia, serif;
+    29→      --font-sans: 'Outfit', sans-serif;
+    30→      --font-mono: 'JetBrains Mono', monospace;
+    31→    }
+    32→
+    33→    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    34→    html { scroll-behavior: smooth; }
+    35→
+    36→    body {
+    37→      font-family: var(--font-sans);
+    38→      font-weight: 300;
+    39→      color: var(--silver);
+    40→      background: var(--void);
+    41→      -webkit-font-smoothing: antialiased;
+    42→    }
+    43→
+    44→    /* ── HEADER ── */
+    45→    .site-header {
+    46→      position: absolute;
+    47→      top: 0;
+    48→      left: 0;
+    49→      right: 0;
+    50→      z-index: 10;
+    51→      display: flex;
+    52→      justify-content: space-between;
+    53→      align-items: baseline;
+    54→      padding: 1.25rem 1.5rem;
+    55→      max-width: calc(56rem + 3rem);
+    56→      margin: 0 auto;
+    57→      opacity: 0;
+    58→      animation: fade-in 0.8s ease 0.3s forwards;
+    59→    }
+    60→
+    61→    @media (min-width: 640px) {
+    62→      .site-header {
+    63→        padding: 1.5rem 2rem;
+    64→        max-width: calc(56rem + 5rem);
+    65→      }
+    66→    }
+    67→
+    68→    .logo {
+    69→      font-family: var(--font-serif);
+    70→      font-size: 1.35rem;
+    71→      font-weight: 300;
+    72→      color: var(--white);
+    73→      text-decoration: none;
+    74→      letter-spacing: -0.01em;
+    75→    }
+    76→
+    77→    .logo-dot { color: var(--nasa-red); }
+    78→
+    79→    .site-nav {
+    80→      font-family: var(--font-mono);
+    81→      font-size: 0.7rem;
+    82→      display: flex;
+    83→      gap: 1.25rem;
+    84→    }
+    85→
+    86→    .site-nav a {
+    87→      color: var(--silver-dim);
+    88→      text-decoration: none;
+    89→      transition: color 0.3s;
+    90→    }
+    91→
+    92→    .site-nav a:hover { color: var(--white); }
+    93→
+    94→    /* ── HERO ── */
+    95→    .hero {
+    96→      position: relative;
+    97→      width: 100%;
+    98→      display: flex;
+    99→      flex-direction: column;
+   100→    }
+   101→
+   102→    .hero-image-area {
+   103→      position: relative;
+   104→      overflow: hidden;
+   105→      display: flex;
+   106→      flex-direction: column;
+   107→      align-items: center;
+   108→      padding: 3.75rem 1.5rem 0;
+   109→    }
+   110→
+   111→    @media (min-width: 640px) {
+   112→      .hero-image-area { padding: 4.25rem 2.5rem 0; }
+   113→    }
+   114→
+   115→    .hero-tagline {
+   116→      font-family: var(--font-serif);
+   117→      font-size: 1rem;
+   118→      font-weight: 300;
+   119→      color: var(--silver-dim);
+   120→      letter-spacing: -0.01em;
+   121→      opacity: 0;
+   122→      animation: fade-in 0.8s ease 0.3s forwards;
+   123→    }
+   124→
+   125→    .hero-frame {
+   126→      position: relative;
+   127→      width: 100%;
+   128→      max-width: 56rem;
+   129→      border-radius: 6px;
+   130→      overflow: hidden;
+   131→      background: var(--void-up);
+   132→      opacity: 0;
+   133→      animation: fade-up 1s ease 0.5s forwards;
+   134→    }
+   135→
+   136→    .hero-frame::after {
+   137→      content: '';
+   138→      position: absolute;
+   139→      inset: 0;
+   140→      border-radius: 6px;
+   141→      border: 1px solid var(--border-bright);
+   142→      pointer-events: none;
+   143→    }
+   144→
+   145→    .hero-img {
+   146→      width: 100%;
+   147→      height: auto;
+   148→      display: block;
+   149→      opacity: 0;
+   150→      transition: opacity 0.8s ease;
+   151→    }
+   152→
+   153→    .hero-img.loaded { opacity: 1; }
+   154→
+   155→    .hero-skeleton {
+   156→      position: absolute;
+   157→      inset: 0;
+   158→      background: linear-gradient(135deg, var(--void-up) 0%, #111620 50%, var(--void-up) 100%);
+   159→      background-size: 400% 400%;
+   160→      animation: skeleton-drift 3s ease-in-out infinite;
+   161→    }
+   162→
+   163→    .hero-skeleton.hidden { display: none; }
+   164→
+   165→    @keyframes skeleton-drift {
+   166→      0%, 100% { background-position: 0% 50%; }
+   167→      50% { background-position: 100% 50%; }
+   168→    }
+   169→
+   170→    /* image caption — populated by JS from /info */
+   171→    .hero-caption {
+   172→      width: 100%;
+   173→      max-width: 56rem;
+   174→      display: flex;
+   175→      justify-content: space-between;
+   176→      align-items: baseline;
+   177→      padding: 0.6rem 0.25rem;
+   178→      font-size: 0.75rem;
+   179→      color: var(--silver-dim);
+   180→      opacity: 0;
+   181→      transition: opacity 0.5s ease;
+   182→    }
+   183→
+   184→    .hero-caption.visible { opacity: 1; }
+   185→
+   186→    .hero-caption-title {
+   187→      font-family: var(--font-sans);
+   188→      font-weight: 400;
+   189→      color: var(--silver);
+   190→    }
+   191→
+   192→    .hero-caption-date {
+   193→      font-family: var(--font-mono);
+   194→      font-size: 0.7rem;
+   195→    }
+   196→
+   197→    /* ── USAGE STRIP ── */
+   198→    .usage {
+   199→      padding: 1.5rem 1.5rem 2.5rem;
+   200→      display: flex;
+   201→      flex-direction: column;
+   202→      align-items: center;
+   203→      gap: 0.75rem;
+   204→      opacity: 0;
+   205→      animation: fade-in 0.8s ease 0.8s forwards;
+   206→    }
+   207→
+   208→    @media (min-width: 640px) {
+   209→      .usage { padding: 1.5rem 2.5rem 3rem; }
+   210→    }
+   211→
+   212→    .usage-bridge {
+   213→      font-size: 0.9rem;
+   214→      color: var(--silver);
+   215→      text-align: center;
+   216→    }
+   217→
+   218→    .usage-snippet {
+   219→      position: relative;
+   220→      background: var(--void-up);
+   221→      border: 1px solid var(--border-bright);
+   222→      border-radius: 6px;
+   223→      padding: 1rem 3rem 1rem 1.25rem;
+   224→      font-family: var(--font-mono);
+   225→      font-size: clamp(0.72rem, 1.8vw, 0.85rem);
+   226→      line-height: 1.6;
+   227→      cursor: pointer;
+   228→      transition: border-color 0.3s;
+   229→      max-width: 100%;
+   230→      overflow-x: auto;
+   231→    }
+   232→
+   233→    .usage-snippet:hover {
+   234→      border-color: rgba(255, 255, 255, 0.2);
+   235→    }
+   236→
+   237→    .usage-snippet-comment {
+   238→      color: var(--silver-dim);
+   239→      display: block;
+   240→    }
+   241→
+   242→    .usage-snippet-tag { color: var(--silver); }
+   243→    .usage-snippet-url { color: var(--nasa-blue-light); }
+   244→
+   245→    .usage-copy-btn {
+   246→      position: absolute;
+   247→      top: 50%;
+   248→      right: 0.75rem;
+   249→      transform: translateY(-50%);
+   250→      background: none;
+   251→      border: none;
+   252→      color: var(--silver-dim);
+   253→      cursor: pointer;
+   254→      padding: 0.25rem;
+   255→      transition: color 0.2s;
+   256→      display: flex;
+   257→      align-items: center;
+   258→    }
+   259→
+   260→    .usage-copy-btn:hover { color: var(--white); }
+   261→
+   262→    .usage-copy-btn svg { width: 14px; height: 14px; }
+   263→
+   264→    .usage-copy-btn .check { display: none; }
+   265→    .usage-copy-btn.copied .copy { display: none; }
+   266→    .usage-copy-btn.copied .check { display: block; color: var(--nasa-blue-light); }
+   267→
+   268→    /* ── CONTENT ── */
+   269→    .info {
+   270→      max-width: 56rem;
+   271→      margin: 0 auto;
+   272→      padding: 0 1.5rem 4rem;
+   273→    }
+   274→
+   275→    @media (min-width: 640px) {
+   276→      .info { padding: 0 2.5rem 4rem; }
+   277→    }
+   278→
+   279→    .divider {
+   280→      height: 1px;
+   281→      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+   282→      margin-bottom: 3rem;
+   283→    }
+   284→
+   285→    .info h2 {
+   286→      font-family: var(--font-serif);
+   287→      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+   288→      font-weight: 300;
+   289→      color: var(--white);
+   290→      letter-spacing: -0.02em;
+   291→      margin-bottom: 1.25rem;
+   292→    }
+   293→
+   294→    .info p { line-height: 1.7; }
+   295→
+   296→    /* ── ENDPOINT TABLE ── */
+   297→    .endpoint-table {
+   298→      width: 100%;
+   299→      border-collapse: collapse;
+   300→      font-size: 0.875rem;
+   301→    }
+   302→
+   303→    .endpoint-table td {
+   304→      padding: 0.75rem 0;
+   305→      border-bottom: 1px solid var(--border);
+   306→      vertical-align: baseline;
+   307→    }
+   308→
+   309→    .endpoint-table tr:last-child td { border-bottom: none; }
+   310→
+   311→    .endpoint-table tr {
+   312→      transition: background 0.2s;
+   313→    }
+   314→
+   315→    .endpoint-table tr:hover {
+   316→      background: rgba(255, 255, 255, 0.02);
+   317→    }
+   318→
+   319→    .endpoint-route-cell {
+   320→      width: 5rem;
+   321→    }
+   322→
+   323→    .endpoint-route-link {
+   324→      font-family: var(--font-mono);
+   325→      font-weight: 500;
+   326→      color: var(--white);
+   327→      text-decoration: none;
+   328→      transition: color 0.2s;
+   329→    }
+   330→
+   331→    .endpoint-route-link:hover {
+   332→      color: var(--nasa-blue-light);
+   333→    }
+   334→
+   335→    .endpoint-desc { color: var(--silver-dim); }
+   336→
+   337→    /* ── FOOTER ── */
+   338→    footer {
+   339→      border-top: 1px solid var(--border);
+   340→      padding: 1.75rem 1.5rem;
+   341→    }
+   342→
+   343→    @media (min-width: 640px) {
+   344→      footer { padding: 1.75rem 2.5rem; }
+   345→    }
+   346→
+   347→    .footer-inner {
+   348→      max-width: 56rem;
+   349→      margin: 0 auto;
+   350→      display: flex;
+   351→      justify-content: space-between;
+   352→      align-items: center;
+   353→      flex-wrap: wrap;
+   354→      gap: 0.75rem;
+   355→      font-size: 0.75rem;
+   356→      color: var(--silver-dim);
+   357→    }
+   358→
+   359→    footer a {
+   360→      color: var(--silver);
+   361→      text-decoration: none;
+   362→      transition: color 0.3s;
+   363→    }
+   364→
+   365→    footer a:hover { color: var(--white); }
+   366→
+   367→    .footer-sep {
+   368→      color: var(--border-bright);
+   369→      margin: 0 0.25rem;
+   370→    }
+   371→
+   372→    /* ── ANIMATIONS ── */
+   373→    @keyframes fade-in { to { opacity: 1; } }
+   374→    @keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
+   375→
+   376→    .fade-up {
+   377→      opacity: 0;
+   378→      transform: translateY(14px);
+   379→    }
+   380→
+   381→    .fade-up.visible {
+   382→      animation: fade-up 0.6s ease forwards;
+   383→    }
+   384→
+   385→    /* ── REDUCED MOTION ── */
+   386→    @media (prefers-reduced-motion: reduce) {
+   387→      *, *::before, *::after {
+   388→        animation-duration: 0.01ms;
+   389→        animation-delay: 0ms;
+   390→        transition-duration: 0.01ms;
+   391→      }
+   392→      .hero-img { opacity: 1; }
+   393→      .site-header, .hero-frame, .hero-tagline, .usage,
+   394→      .hero-caption, .fade-up {
+   395→        opacity: 1;
+   396→        transform: none;
+   397→      }
+   398→      .hero-skeleton { animation: none; }
+   399→    }
+   400→
+   401→    /* ── MOBILE ── */
+   402→    @media (max-width: 639px) {
+   403→      .footer-inner { flex-direction: column; text-align: center; }
+   404→      .hero-caption { flex-direction: column; gap: 0.15rem; }
+   405→    }
+   406→  </style>
+   407→</head>
+   408→
+   409→<body>
+   410→  <header class="site-header">
+   411→    <a href="/" class="logo">nasapicture<span class="logo-dot">.</span>com</a>
+   412→    <h1 class="hero-tagline">Today's Astronomy Picture of the Day</h1>
+   413→    <nav class="site-nav" aria-label="Site navigation">
+   414→      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+   415→    </nav>
+   416→  </header>
+   417→
+   418→  <section class="hero">
+   419→    <div class="hero-image-area">
+   420→      <div class="hero-frame">
+   421→        <div class="hero-skeleton" id="hero-skeleton" aria-hidden="true"></div>
+   422→        <img
+   423→          src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+   424→          alt="NASA Astronomy Picture of the Day"
+   425→          class="hero-img"
+   426→          id="hero-img"
+   427→          loading="eager"
+   428→          fetchpriority="high"
+   429→        >
+   430→      </div>
+   431→      <div class="hero-caption visible" id="hero-caption">
+   432→        <span class="hero-caption-title" id="caption-title">10 Years of Detections of Compact Binary Coalescences</span>
+   433→        <span class="hero-caption-date" id="caption-date">2026-03-26</span>
+   434→      </div>
+   435→    </div>
+   436→
+   437→    <div class="usage">
+   438→      <p class="usage-bridge">Embed it anywhere. No API key needed.</p>
+   439→      <div class="usage-snippet" id="usage-snippet" role="button" tabindex="0" aria-label="Copy code snippet">
+   440→        <span class="usage-snippet-comment">// today's image, every day, forever</span>
+   441→        <span><span class="usage-snippet-tag">&lt;img src="</span><span class="usage-snippet-url">https://api.nasapicture.com/</span><span class="usage-snippet-tag">"&gt;</span></span>
+   442→        <button class="usage-copy-btn" id="copy-btn" aria-label="Copy to clipboard">
+   443→          <svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+   444→          <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+   445→        </button>
+   446→      </div>
+   447→    </div>
+   448→  </section>
+   449→
+   450→  <div class="info">
+   451→    <div class="divider"></div>
+   452→
+   453→    <div class="fade-up">
+   454→      <h2>Endpoints</h2>
+   455→      <table class="endpoint-table">
+   456→        <tr>
+   457→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">/</a></td>
+   458→          <td class="endpoint-desc">HD image (falls back to standard)</td>
+   459→        </tr>
+   460→        <tr>
+   461→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">/sd</a></td>
+   462→          <td class="endpoint-desc">Standard resolution</td>
+   463→        </tr>
+   464→        <tr>
+   465→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer">/info</a></td>
+   466→          <td class="endpoint-desc">JSON metadata</td>
+   467→        </tr>
+   468→        <tr>
+   469→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a></td>
+   470→          <td class="endpoint-desc">Plain text</td>
+   471→        </tr>
+   472→      </table>
+   473→    </div>
+   474→  </div>
+   475→
+   476→  <footer>
+   477→    <div class="footer-inner">
+   478→      <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+   479→      <p>
+   480→        <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a>
+   481→        <span class="footer-sep">/</span>
+   482→        <a href="https://github.com/grantkeller/nasa-apod" target="_blank" rel="noopener noreferrer">Source</a>
+   483→      </p>
+   484→    </div>
+   485→  </footer>
+   486→
+   487→  <script>
+   488→    // Image load
+   489→    const img = document.getElementById('hero-img');
+   490→    const skeleton = document.getElementById('hero-skeleton');
+   491→
+   492→    function onImageReady() {
+   493→      img.classList.add('loaded');
+   494→      skeleton.classList.add('hidden');
+   495→    }
+   496→
+   497→    if (img.complete && img.naturalWidth > 0) {
+   498→      onImageReady();
+   499→    } else {
+   500→      img.addEventListener('load', onImageReady);
+   501→      img.addEventListener('error', () => { skeleton.classList.add('hidden'); });
+   502→    }
+   503→
+   504→    // Fetch APOD metadata for caption
+   505→    fetch('https://api.nasapicture.com/info')
+   506→      .then(r => r.json())
+   507→      .then(data => {
+   508→        if (data.title) {
+   509→          document.getElementById('caption-title').textContent = data.title;
+   510→          document.getElementById('caption-date').textContent = data.date;
+   511→          document.getElementById('hero-caption').classList.add('visible');
+   512→        }
+   513→      })
+   514→      .catch(() => {});
+   515→
+   516→    // Copy snippet
+   517→    const snippet = document.getElementById('usage-snippet');
+   518→    const copyBtn = document.getElementById('copy-btn');
+   519→    const copyText = '<img src="https://api.nasapicture.com/">';
+   520→
+   521→    function doCopy() {
+   522→      navigator.clipboard.writeText(copyText).then(() => {
+   523→        copyBtn.classList.add('copied');
+   524→        setTimeout(() => copyBtn.classList.remove('copied'), 2000);
+   525→      });
+   526→    }
+   527→
+   528→    snippet.addEventListener('click', doCopy);
+   529→    snippet.addEventListener('keydown', (e) => {
+   530→      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doCopy(); }
+   531→    });
+   532→
+   533→    // Scroll fade-in
+   534→    const observer = new IntersectionObserver((entries) => {
+   535→      entries.forEach(entry => {
+   536→        if (entry.isIntersecting) {
+   537→          entry.target.classList.add('visible');
+   538→          observer.unobserve(entry.target);
+   539→        }
+   540→      });
+   541→    }, { threshold: 0.15 });
+   542→
+   543→    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+   544→  </script>
+   545→</body>
+   546→</html>
+   547→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:08Z)**_
+
+Now I'll remove all the max-width constraints and make everything use the full viewport width with consistent edge padding.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:13Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:19Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:25Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:31Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:37Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:43Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:23:49Z)**_
+
+Done. Everything is full-width now — header, image, caption, endpoints, and footer all use the entire window with just the edge padding (`1.5rem` mobile, `2.5rem` desktop). No more `max-width` constraints. Reload to see it.
+
+---
+
+_**User (2026-03-26 09:25:41Z)**_
+
+we need to set a max height for the image, probably something like 90vh
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:25:47Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:25:51Z)**_
+
+Image now caps at 90vh. Used `object-fit: contain` so it scales down without cropping regardless of aspect ratio.
+
+---
+
+_**User (2026-03-26 09:28:24Z)**_
+
+the width of the image container needs to not extend beyond it should just be the image itself. also remove the border and rounded corners from the image. here's the design thesis: this is an image hanging in an art gallery. a gallery that contains exactly one image.
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:30Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:31Z)**_
+
+Love that. Strip the frame, let the image float in the void.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:33Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:43Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:48Z)**_
+
+Now remove the frame wrapper and skeleton from the HTML.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:51Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:56Z)**_
+
+Now clean up the JS that referenced the skeleton.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:28:59Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:29:04Z)**_
+
+Also remove the stale reduced-motion reference to `.hero-frame` and skeleton.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:29:07Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:29:18Z)**_
+
+Done. The image now hangs in the void — no frame, no border, no rounded corners, no skeleton. Just the image at its natural width (capped at 90vh height), centered in the dark. One painting in a gallery.
+
+---
+
+_**User (2026-03-26 09:31:21Z)**_
+
+i think we put a shadow around the image. not a drop shadow really for depth, but just to help it pop off the background
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:31:28Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:31:35Z)**_
+
+A soft white luminance around the edges — like gallery lighting catching the surface. Not directional, just a glow that separates it from the void.
+
+---
+
+_**User (2026-03-26 09:32:50Z)**_
+
+oh i was thinking the other way, a black shadow
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:32:56Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:33:01Z)**_
+
+Dark vignette around the edges — deepens the void around the image so it lifts off the background.
+
+---
+
+_**User (2026-03-26 09:33:50Z)**_
+
+a little tighter and a tad lower opacity
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:33:55Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:34:00Z)**_
+
+Tighter spread (40px/80px) and softer (0.5/0.25).
+
+---
+
+_**User (2026-03-26 09:35:18Z)**_
+
+image max height needs to be lowered so the main usage can be seen
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:35:23Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:35:29Z)**_
+
+Down to 70vh — should leave room for the caption and usage snippet to be visible without scrolling.
+
+---
+
+_**User (2026-03-26 09:48:25Z)**_
+
+i made changes. trying to make it more clear and streamlined. [Image #3] I dont like the use of actual table elements yuck clean that up
+
+_**User (2026-03-26 09:48:25Z)**_
+
+[Image: source: /Users/grant/.claude/image-cache/6cef7dcf-a006-46d6-95ed-b844224d2cf4/3.png]
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:48:32Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+   240→    .divider {
+   241→      height: 1px;
+   242→      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+   243→      margin-bottom: 3rem;
+   244→    }
+   245→
+   246→    .info h2 {
+   247→      font-family: var(--font-serif);
+   248→      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+   249→      font-weight: 300;
+   250→      color: var(--white);
+   251→      letter-spacing: -0.02em;
+   252→      margin-bottom: 1.25rem;
+   253→    }
+   254→
+   255→    .info p { line-height: 1.7; }
+   256→
+   257→    /* ── ENDPOINT TABLE ── */
+   258→    .endpoint-table {
+   259→      width: 100%;
+   260→      border-collapse: collapse;
+   261→      font-size: 0.875rem;
+   262→    }
+   263→
+   264→    .endpoint-table td {
+   265→      padding: 0.75rem 0;
+   266→      border-bottom: 1px solid var(--border);
+   267→      vertical-align: baseline;
+   268→    }
+   269→
+   270→    .endpoint-table tr:last-child td { border-bottom: none; }
+   271→
+   272→    .endpoint-table tr {
+   273→      transition: background 0.2s;
+   274→    }
+   275→
+   276→    .endpoint-table tr:hover {
+   277→      background: rgba(255, 255, 255, 0.02);
+   278→    }
+   279→
+   280→    .endpoint-route-cell {
+   281→      width: 5rem;
+   282→    }
+   283→
+   284→    .endpoint-route-link {
+   285→      font-family: var(--font-mono);
+   286→      font-weight: 500;
+   287→      color: var(--white);
+   288→      text-decoration: none;
+   289→      transition: color 0.2s;
+   290→    }
+   291→
+   292→    .endpoint-route-link:hover {
+   293→      color: var(--nasa-blue-light);
+   294→    }
+   295→
+   296→    .endpoint-desc { color: var(--silver-dim); }
+   297→
+   298→    /* ── FOOTER ── */
+   299→    footer {
+   300→      border-top: 1px solid var(--border);
+   301→      padding: 1.75rem 1.5rem;
+   302→    }
+   303→
+   304→    @media (min-width: 640px) {
+   305→      footer { padding: 1.75rem 2.5rem; }
+   306→    }
+   307→
+   308→    .footer-inner {
+   309→      display: flex;
+   310→      justify-content: space-between;
+   311→      align-items: center;
+   312→      flex-wrap: wrap;
+   313→      gap: 0.75rem;
+   314→      font-size: 0.75rem;
+   315→      color: var(--silver-dim);
+   316→    }
+   317→
+   318→    footer a {
+   319→      color: var(--silver);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:48:38Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+   400→          <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+   401→        </button>
+   402→      </div>
+   403→    </div>
+   404→  </section>
+   405→
+   406→  <div class="info">
+   407→    <div class="divider"></div>
+   408→
+   409→    <div class="fade-up">
+   410→      <h2>Endpoints</h2>
+   411→      <table class="endpoint-table">
+   412→        <tr>
+   413→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">/</a></td>
+   414→          <td class="endpoint-desc">HD image (falls back to standard)</td>
+   415→        </tr>
+   416→        <tr>
+   417→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">/sd</a></td>
+   418→          <td class="endpoint-desc">Standard resolution</td>
+   419→        </tr>
+   420→        <tr>
+   421→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer">/info</a></td>
+   422→          <td class="endpoint-desc">JSON metadata</td>
+   423→        </tr>
+   424→        <tr>
+   425→          <td class="endpoint-route-cell"><a class="endpoint-route-link" href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a></td>
+   426→          <td class="endpoint-desc">Plain text</td>
+   427→        </tr>
+   428→      </table>
+   429→    </div>
+   430→  </div>
+   431→
+   432→  <footer>
+   433→    <div class="footer-inner">
+   434→      <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+   435→      <p>
+   436→        <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a>
+   437→        <span class="footer-sep">/</span>
+   438→        <a href="https://github.com/grantkeller/nasa-apod" target="_blank" rel="noopener noreferrer">Source</a>
+   439→      </p>
+   440→    </div>
+   441→  </footer>
+   442→
+   443→  <script>
+   444→    // Image load
+   445→    const img = document.getElementById('hero-img');
+   446→
+   447→    function onImageReady() { img.classList.add('loaded'); }
+   448→
+   449→    if (img.complete && img.naturalWidth > 0) {
+   450→      onImageReady();
+   451→    } else {
+   452→      img.addEventListener('load', onImageReady);
+   453→    }
+   454→
+   455→    // Fetch APOD metadata for caption
+   456→    fetch('https://api.nasapicture.com/info')
+   457→      .then(r => r.json())
+   458→      .then(data => {
+   459→        if (data.title) {
+   460→          document.getElementById('caption-title').textContent = data.title;
+   461→          document.getElementById('caption-date').textContent = data.date;
+   462→          document.getElementById('hero-caption').classList.add('visible');
+   463→        }
+   464→      })
+   465→      .catch(() => {});
+   466→
+   467→    // Copy snippet
+   468→    const snippet = document.getElementById('usage-snippet');
+   469→    const copyBtn = document.getElementById('copy-btn');
+   470→    const copyText = '<img src="https://api.nasapicture.com/">';
+   471→
+   472→    function doCopy() {
+   473→      navigator.clipboard.writeText(copyText).then(() => {
+   474→        copyBtn.classList.add('copied');
+   475→        setTimeout(() => copyBtn.classList.remove('copied'), 2000);
+   476→      });
+   477→    }
+   478→
+   479→    snippet.addEventListener('click', doCopy);
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:48:45Z)**_
+
+Now replace the table CSS and HTML with flex-based rows.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:48:53Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:49:06Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:49:13Z)**_
+
+Done. Table replaced with flex rows — each endpoint is a single `<a>` wrapping the route and description. Whole row is clickable, hover highlights the route in blue. Clean markup.
+
+---
+
+_**User (2026-03-26 09:51:02Z)**_
+
+fix the usage section I was just trying to "rough in" my thoughts
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:51:08Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+   158→      color: var(--silver);
+   159→    }
+   160→
+   161→    /* ── USAGE STRIP ── */
+   162→    .usage {
+   163→      padding: 1.5rem 1.5rem 2.5rem;
+   164→      display: flex;
+   165→      flex-direction: column;
+   166→      align-items: center;
+   167→      gap: 0.75rem;
+   168→      opacity: 0;
+   169→      animation: fade-in 0.8s ease 0.8s forwards;
+   170→    }
+   171→
+   172→    @media (min-width: 640px) {
+   173→      .usage { padding: 1.5rem 2.5rem 3rem; }
+   174→    }
+   175→
+   176→    .usage-bridge {
+   177→      font-size: 0.9rem;
+   178→      color: var(--silver);
+   179→      text-align: center;
+   180→    }
+   181→
+   182→    .usage-snippet {
+   183→      position: relative;
+   184→      background: var(--void-up);
+   185→      border: 1px solid var(--border-bright);
+   186→      padding: 1rem 3rem 1rem 1.25rem;
+   187→      font-family: var(--font-mono);
+   188→      font-size: clamp(0.72rem, 1.8vw, 0.85rem);
+   189→      line-height: 1.6;
+   190→      cursor: pointer;
+   191→      transition: border-color 0.3s;
+   192→      max-width: 100%;
+   193→      overflow-x: auto;
+   194→    }
+   195→
+   196→    .usage-snippet:hover {
+   197→      border-color: rgba(255, 255, 255, 0.2);
+   198→    }
+   199→
+   200→    .usage-snippet-comment {
+   201→      color: var(--silver-dim);
+   202→      display: block;
+   203→    }
+   204→
+   205→    .usage-snippet-tag { color: var(--silver); }
+   206→    .usage-snippet-url { color: var(--nasa-blue-light); }
+   207→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:51:14Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+   385→    <div class="usage">
+   386→      <p class="usage-bridge">New day, new photo, same URL.</p>
+   387→      <div class="usage-snippet" id="usage-snippet" role="button" tabindex="0" aria-label="Copy code snippet">
+   388→        <span class="usage-snippet-comment">A static URL for every day's image. Embed it anywhere.</span>
+   389→        <span class="usage-snippet-tag">https://api.nasapicture.com/</span>
+   390→        <span><span class="usage-snippet-tag">&lt;img src="</span><span class="usage-snippet-url">https://api.nasapicture.com/</span><span class="usage-snippet-tag">"&gt;</span></span>
+   391→        <button class="usage-copy-btn" id="copy-btn" aria-label="Copy to clipboard">
+   392→          <svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+   393→          <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+   394→        </button>
+   395→      </div>
+   396→    </div>
+   397→  </section>
+   398→
+   399→  <div class="info">
+   400→    <div class="divider"></div>
+   401→
+   402→    <div class="fade-up">
+   403→      <h2>Endpoints</h2>
+   404→      <div class="endpoint-list">
+   405→        <a class="endpoint-row" href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">
+   406→          <span class="endpoint-route">/</span>
+   407→          <span class="endpoint-desc">HD image (falls back to standard)</span>
+   408→        </a>
+   409→        <a class="endpoint-row" href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:51:21Z)**_
+
+I can see the intent — the bridge line is the hook, then the snippet shows the URL plainly and the embed code. Let me clean it up: bridge explains what it is, snippet has just the URL on one line and the embed on another, with the comment as a label.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:51:24Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:51:47Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:51:55Z)**_
+
+Cleaned up. The bridge is now one line: "New day, new photo, same URL. Embed it anywhere." The snippet has two clear lines:
+- `url  https://api.nasapicture.com/` — the raw URL
+- `img  <img src="https://api.nasapicture.com/">` — the embed code
+
+Labels (`url`, `img`) in dim text, URLs highlighted in blue. No redundant comment line.
+
+---
+
+_**User (2026-03-26 09:53:31Z)**_
+
+i think the copy should copy the photo url not the entire <img>. maybe <img> has its own, more subdued copy?
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:53:42Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:53:48Z)**_
+
+Now update the HTML — each line gets its own copy button, and remove the old wrapper-level click/button.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:53:56Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:54:03Z)**_
+
+Now update the JS to handle multiple copy buttons instead of the old single-snippet approach.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:54:06Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:54:13Z)**_
+
+Also need to remove the old snippet-level cursor/interaction styles since it's no longer a clickable block.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:54:14Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:54:21Z)**_
+
+Done. Each line has its own copy button now:
+- **URL line**: full-opacity copy icon, copies `https://api.nasapicture.com/`
+- **img line**: subdued copy icon (40% opacity, brightens on hover), copies `<img src="https://api.nasapicture.com/">`
+
+---
+
+_**User (2026-03-26 09:55:12Z)**_
+
+i dont like the usage box. it feels... idk cheap. like AI-generated SaaS. its should feel sophisticated. timeless.
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:55:27Z)**_
+
+_**Agent (claude-opus-4-6 2026-03-26 09:55:28Z)**_
+
+You're right — the bordered code box is a SaaS cliché. In the gallery metaphor, this should read like a placard on the wall. Just text, no box.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:55:33Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>String to replace not found in file.
+String:     .usage-snippet {
+      position: relative;
+      background: var(--void-up);
+      border: 1px solid var(--border-bright);
+      padding: 1rem 3rem 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: clamp(0.72rem, 1.8vw, 0.85rem);
+      line-height: 1.6;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .usage-snippet-line {
+      display: block;
+    }
+
+    .usage-snippet-line {
+      position: relative;
+      padding-right: 2rem;
+    }</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:55:39Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+   178→      color: var(--silver);
+   179→      text-align: center;
+   180→    }
+   181→
+   182→    .usage-snippet {
+   183→      position: relative;
+   184→      background: var(--void-up);
+   185→      border: 1px solid var(--border-bright);
+   186→      padding: 1rem 3rem 1rem 1.25rem;
+   187→      font-family: var(--font-mono);
+   188→      font-size: clamp(0.72rem, 1.8vw, 0.85rem);
+   189→      line-height: 1.6;
+   190→      max-width: 100%;
+   191→      overflow-x: auto;
+   192→    }
+   193→
+   194→    .usage-snippet-line {
+   195→      display: block;
+   196→    }
+   197→
+   198→    .usage-snippet-dim { color: var(--silver-dim); }
+   199→    .usage-snippet-url { color: var(--nasa-blue-light); }
+   200→    .usage-snippet-tag { color: var(--silver); }
+   201→
+   202→    .usage-snippet-line {
+   203→      position: relative;
+   204→      padding-right: 2rem;
+   205→    }
+   206→
+   207→    .copy-btn {
+   208→      position: absolute;
+   209→      right: 0;
+   210→      top: 50%;
+   211→      transform: translateY(-50%);
+   212→      background: none;
+   213→      border: none;
+   214→      color: var(--silver-dim);
+   215→      cursor: pointer;
+   216→      padding: 0.25rem;
+   217→      transition: color 0.2s, opacity 0.2s;
+   218→      display: flex;
+   219→      align-items: center;
+   220→    }
+   221→
+   222→    .copy-btn:hover { color: var(--white); }
+   223→    .copy-btn svg { width: 13px; height: 13px; }
+   224→    .copy-btn .check { display: none; }
+   225→    .copy-btn.copied .copy { display: none; }
+   226→    .copy-btn.copied .check { display: block; color: var(--nasa-blue-light); }
+   227→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:55:52Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:55:57Z)**_
+
+Now update the HTML.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:56:07Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:56:16Z)**_
+
+No box, no background, no border. Just text on the wall:
+
+- **"New day, new photo, same URL. Embed it anywhere."** — the bridge, in sans-serif
+- **`https://api.nasapicture.com/`** — the URL, in mono, white, slightly larger, with a subtle copy icon
+- **`<img src="https://api.nasapicture.com/">`** — the embed, smaller, dimmed, its own copy icon
+
+Like a gallery placard: title, medium, dimensions. Nothing more.
+
+---
+
+_**User (2026-03-26 09:57:34Z)**_
+
+eh now it feels like its just hanging there. [Image #4] perhaps instead of stacking the two usage, we put them all inline in one row?
+
+_**User (2026-03-26 09:57:34Z)**_
+
+[Image: source: /Users/grant/.claude/image-cache/6cef7dcf-a006-46d6-95ed-b844224d2cf4/4.png]
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 09:57:48Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:57:55Z)**_
+
+Now update the HTML to be one inline sentence.
+
+_**Agent (claude-opus-4-6 2026-03-26 09:58:01Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 09:58:09Z)**_
+
+One line now: "New day, new photo, same URL. **https://api.nasapicture.com/** [copy]" — all inline, the URL pops in white mono against the dim sans-serif prose. The `<img>` embed is gone from here (it's in the endpoints section implicitly anyway).
+
+---
+
+_**User (2026-03-26 10:01:28Z)**_
+
+i was thinking like this [Image #5]
+
+_**User (2026-03-26 10:01:28Z)**_
+
+[Image: source: /Users/grant/.claude/image-cache/6cef7dcf-a006-46d6-95ed-b844224d2cf4/5.png]
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 10:01:36Z)**_
+
+I see — two columns side by side, each with prose + URL inline. The wrapper just needs to lay them out horizontally with some space between. Let me clean up the CSS to match what you've roughed in.
+
+_**Agent (claude-opus-4-6 2026-03-26 10:01:42Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:01:59Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:02:07Z)**_
+
+Two items in one row, each with prose flowing into the mono URL + copy button. Left: the raw URL. Right: the embed tag. Wraps on mobile.
+
+---
+
+_**User (2026-03-26 10:04:09Z)**_
+
+in endpoints list the return type and format
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 10:04:22Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:04:29Z)**_
+
+Now add the style for the type column.
+
+_**Agent (claude-opus-4-6 2026-03-26 10:04:31Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:04:39Z)**_
+
+Each endpoint row now shows: route | description | content type (`image/*`, `application/json`, `text/plain`) — the type is pushed to the right edge in dim mono.
+
+---
+
+_**User (2026-03-26 10:11:48Z)**_
+
+<command-message>commit-commands:commit</command-message>
+<command-name>/commit-commands:commit</command-name>
+
+_**User (2026-03-26 10:11:48Z)**_
+
+## Context
+
+- Current git status: On branch dev
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md
+	modified:   CLAUDE.md
+	modified:   board/.doc-ids
+	modified:   landing/index.html
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	board/tasks/TASK-0003_nasa-data-insignia.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+- Current git diff (staged and unstaged changes): <persisted-output>
+Output too large (270.2KB). Full output saved to: /Users/grant/.claude/projects/-Users-grant-code-nasa-apod/6cef7dcf-a006-46d6-95ed-b844224d2cf4/tool-results/bxe9f3itd.txt
+
+Preview (first 2KB):
+diff --git a/.specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md b/.specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md
+index 64929e8..8227dca 100644
+--- a/.specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md
++++ b/.specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md
+@@ -3370,4 +3370,6655 @@ feat(landing): add nasapicture.com landing page and board tasks
+ EOF
+ )"
+ ```
++
++```text
++[dev 1c31164] feat(landing): add nasapicture.com landing page and board tasks
++ 5 files changed, 3021 insertions(+), 1 deletion(-)
++ create mode 100644 board/tasks/TASK-0001_build-landing-page.md
++ create mode 100644 board/tasks/TASK-0002_deploy-landing-page.md
++ create mode 100644 landing/index.html
++```
++</details></tool-use>
++
++---
++
++_**User (2026-03-26 08:36:55Z)**_
++
++<command-message>impeccable:teach-impeccable</command-message>
++<command-name>/impeccable:teach-impeccable</command-name>
++
++_**User (2026-03-26 08:36:55Z)**_
++
++Base directory for this skill: /Users/grant/.claude/plugins/marketplaces/impeccable/.claude/skills/teach-impeccable
++
++Gather design context for this project, then persist it for all future sessions.
++
++## Step 1: Explore the Codebase
++
++Before asking questions, thoroughly scan the project to discover what you can:
++
++- **README and docs**: Project purpose, target audience, any stated goals
++- **Package.json / config files**: Tech stack, dependencies, existing design libraries
++- **Existing components**: Current design patterns, spacing, typography in use
++- **Brand assets**: Logos, favicons, color values already defined
++- **Design tokens / CSS variables**: Existing color palettes, font stacks, spacing scales
++- **Any style guides or brand documentation**
++
++Note what you've learned and what remains unclear.
++
++## Step 2: Ask UX-Focused Questions
++
++STOP and call the AskUserQuestionTool to clarify. Focus only on what you couldn't infer from the codebase:
++
++### Users & Purpose
+...
+</persisted-output>
+- Current branch: dev
+- Recent commits: 1c31164 feat(landing): add nasapicture.com landing page and board tasks
+3318c28 fix(info): use consistent error response format across all endpoints
+a477c71 chore: gitignore wrangler .cache directory
+e3aa765 chore: initialize board system and specstory tracking
+3a5f647 feat: add custom domain routes for nasapicture.com
+2dde14f docs: rewrite README for public-facing repo, update CLAUDE.md
+5cdb8d4 feat: improve error handling, Link headers, and /about endpoint
+a201ed6 feat: serve HD by default, add discoverability and /about endpoint
+aa299d5 chore: upgrade wrangler to v4
+896c5f3 chore: initial project setup
+
+## Your task
+
+Based on the above changes, create a single git commit.
+
+You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
