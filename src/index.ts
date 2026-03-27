@@ -36,34 +36,33 @@ class NasaApiError extends Error {
   }
 }
 
-const apodCache = new Map<string, { fetched: number; apod: ApodResponse }>();
-let logBuffer: string[] = [];
+function apodCacheUrl(key: string): string {
+  return `http://apod-cache/${key}`;
+}
 
-async function fetchApod(apiKey: string, date?: string): Promise<ApodResponse> {
+async function fetchApod(log: string[], apiKey: string, date?: string): Promise<ApodResponse> {
   const cacheKey = date ?? "today";
-  const cached = apodCache.get(cacheKey);
-  if (cached && Date.now() - cached.fetched < CACHE_TTL * 1000) {
-    logBuffer.push(`  [fetchApod] ${cacheKey} → in-memory HIT`);
-    return cached.apod;
+
+  const cache = caches.default;
+  const cacheReq = new Request(apodCacheUrl(cacheKey));
+  const cached = await cache.match(cacheReq);
+  if (cached) {
+    log.push(`  [fetchApod] ${cacheKey} → cache HIT`);
+    return cached.json() as Promise<ApodResponse>;
   }
 
   const url = date
     ? `${NASA_APOD_URL}?api_key=${apiKey}&date=${date}`
     : `${NASA_APOD_URL}?api_key=${apiKey}`;
 
-  const res = await fetch(url, {
-    cf: {
-      cacheTtlByStatus: { "200-299": CACHE_TTL, "300-599": -1 },
-      cacheEverything: true,
-    },
-  });
+  const res = await fetch(url);
 
   const cfCache = res.headers.get("cf-cache-status") ?? "none";
-  logBuffer.push(`  [fetchApod] ${cacheKey} → ${res.status} (cf-cache: ${cfCache})`);
+  log.push(`  [fetchApod] ${cacheKey} → ${res.status} (cf-cache: ${cfCache})`);
 
   if (!res.ok) {
     const body = await res.text();
-    logBuffer.push(`  [fetchApod] body=${body}`);
+    log.push(`  [fetchApod] body=${body}`);
     throw new NasaApiError(res.status,
       res.status === 429
         ? "NASA API rate limit exceeded — try again later"
@@ -72,11 +71,13 @@ async function fetchApod(apiKey: string, date?: string): Promise<ApodResponse> {
   }
 
   const apod = await res.json() as ApodResponse;
-  apodCache.set(cacheKey, { fetched: Date.now(), apod });
+  await cache.put(cacheReq, new Response(JSON.stringify(apod), {
+    headers: { "Cache-Control": `public, max-age=${CACHE_TTL}` },
+  }));
   return apod;
 }
 
-async function findLatestImage(apiKey: string): Promise<ApodResponse> {
+async function findLatestImage(log: string[], apiKey: string): Promise<ApodResponse> {
   let videoStreak = 0;
 
   for (let i = 0; i <= MAX_LOOKBACK_DAYS; i++) {
@@ -84,7 +85,7 @@ async function findLatestImage(apiKey: string): Promise<ApodResponse> {
       ? undefined
       : (() => { const d = new Date(); d.setDate(d.getDate() - i); return d.toLocaleDateString("en-CA", { timeZone: "America/New_York" }); })();
 
-    const apod = await fetchApod(apiKey, date);
+    const apod = await fetchApod(log, apiKey, date);
     if (apod.media_type === "image") return apod;
     videoStreak++;
   }
@@ -94,21 +95,27 @@ async function findLatestImage(apiKey: string): Promise<ApodResponse> {
   );
 }
 
-async function fetchImageCached(url: string): Promise<Response> {
-  const res = await fetch(url, {
-    cf: {
-      cacheTtlByStatus: { "200-299": CACHE_TTL, "300-599": -1 },
-      cacheEverything: true,
-    },
-  });
+async function fetchImageCached(log: string[], url: string): Promise<Response> {
+  const cache = caches.default;
+  const cacheReq = new Request(url);
+  const cached = await cache.match(cacheReq);
+  if (cached) {
+    log.push(`  [fetchImage] ${url.slice(0, 80)}… → cache HIT`);
+    return cached;
+  }
 
-  const cfCache = res.headers.get("cf-cache-status") ?? "none";
-  logBuffer.push(`  [fetchImage] ${url.slice(0, 80)}… → ${res.status} (cf-cache: ${cfCache})`);
+  const res = await fetch(url);
+
+  log.push(`  [fetchImage] ${url.slice(0, 80)}… → ${res.status}`);
 
   if (!res.ok) {
     throw new Error(`Image fetch failed: ${res.status}`);
   }
 
+  const cloned = res.clone();
+  await cache.put(cacheReq, new Response(cloned.body, {
+    headers: { ...Object.fromEntries(res.headers), "Cache-Control": `public, max-age=${CACHE_TTL}` },
+  }));
   return res;
 }
 
@@ -143,18 +150,19 @@ export default {
     const origin = reqUrl.origin;
     const start = Date.now();
 
+    const log: string[] = [];
     let res: Response;
 
     try {
       const apiKey = env.NASA_API_KEY || "DEMO_KEY";
 
       if (pathname === "/" || pathname === "/sd") {
-        const apod = await findLatestImage(apiKey);
+        const apod = await findLatestImage(log, apiKey);
         const imageUrl = pathname === "/sd"
           ? apod.url
           : (apod.hdurl || apod.url);
 
-        const upstream = await fetchImageCached(imageUrl);
+        const upstream = await fetchImageCached(log, imageUrl);
         const contentType = upstream.headers.get("Content-Type") || "image/jpeg";
 
         res = new Response(upstream.body, {
@@ -169,7 +177,7 @@ export default {
         };
 
         try {
-          const apod = await fetchApod(apiKey);
+          const apod = await fetchApod(log, apiKey);
 
           res = new Response(
             JSON.stringify({
@@ -243,9 +251,9 @@ export default {
       );
     }
 
-    console.log(`GET ${pathname} ${res.status} (${Date.now() - start}ms)`);
-    for (const line of logBuffer) console.log(line);
-    logBuffer = [];
+    console.log(`────────────────────────────────────────`);
+    console.log(`${request.method} ${pathname} → ${res.status} (${Date.now() - start}ms)`);
+    for (const line of log) console.log(line);
     return res;
   },
 };
