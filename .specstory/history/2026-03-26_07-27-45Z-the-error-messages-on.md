@@ -10120,3 +10120,807 @@ aa299d5 chore: upgrade wrangler to v4
 Based on the above changes, create a single git commit.
 
 You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 10:11:58Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage and commit landing page redesign
+
+```bash
+git add landing/index.html CLAUDE.md board/.doc-ids board/tasks/TASK-0003_nasa-data-insignia.md .specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md && git commit -m "$(cat <<'EOF'
+feat(landing): redesign as gallery layout with NASA brand colors and design context
+EOF
+)"
+```
+
+```text
+[dev e37c10c] feat(landing): redesign as gallery layout with NASA brand colors and design context
+ 5 files changed, 7215 insertions(+), 301 deletions(-)
+ create mode 100644 board/tasks/TASK-0003_nasa-data-insignia.md
+```
+</details></tool-use>
+
+---
+
+_**User (2026-03-26 10:12:17Z)**_
+
+<command-message>impeccable:critique</command-message>
+<command-name>/impeccable:critique</command-name>
+
+_**User (2026-03-26 10:12:17Z)**_
+
+Base directory for this skill: /Users/grant/.claude/plugins/marketplaces/impeccable/.claude/skills/critique
+
+Conduct a holistic design critique, evaluating whether the interface actually works—not just technically, but as a designed experience. Think like a design director giving feedback.
+
+**First**: Use the frontend-design skill for design principles and anti-patterns.
+
+## Design Critique
+
+Evaluate the interface across these dimensions:
+
+### 1. AI Slop Detection (CRITICAL)
+
+**This is the most important check.** Does this look like every other AI-generated interface from 2024-2025?
+
+Review the design against ALL the **DON'T** guidelines in the frontend-design skill—they are the fingerprints of AI-generated work. Check for the AI color palette, gradient text, dark mode with glowing accents, glassmorphism, hero metric layouts, identical card grids, generic fonts, and all other tells.
+
+**The test**: If you showed this to someone and said "AI made this," would they believe you immediately? If yes, that's the problem.
+
+### 2. Visual Hierarchy
+- Does the eye flow to the most important element first?
+- Is there a clear primary action? Can you spot it in 2 seconds?
+- Do size, color, and position communicate importance correctly?
+- Is there visual competition between elements that should have different weights?
+
+### 3. Information Architecture
+- Is the structure intuitive? Would a new user understand the organization?
+- Is related content grouped logically?
+- Are there too many choices at once? (cognitive overload)
+- Is the navigation clear and predictable?
+
+### 4. Emotional Resonance
+- What emotion does this interface evoke? Is that intentional?
+- Does it match the brand personality?
+- Does it feel trustworthy, approachable, premium, playful—whatever it should feel?
+- Would the target user feel "this is for me"?
+
+### 5. Discoverability & Affordance
+- Are interactive elements obviously interactive?
+- Would a user know what to do without instructions?
+- Are hover/focus states providing useful feedback?
+- Are there hidden features that should be more visible?
+
+### 6. Composition & Balance
+- Does the layout feel balanced or uncomfortably weighted?
+- Is whitespace used intentionally or just leftover?
+- Is there visual rhythm in spacing and repetition?
+- Does asymmetry feel designed or accidental?
+
+### 7. Typography as Communication
+- Does the type hierarchy clearly signal what to read first, second, third?
+- Is body text comfortable to read? (line length, spacing, size)
+- Do font choices reinforce the brand/tone?
+- Is there enough contrast between heading levels?
+
+### 8. Color with Purpose
+- Is color used to communicate, not just decorate?
+- Does the palette feel cohesive?
+- Are accent colors drawing attention to the right things?
+- Does it work for colorblind users? (not just technically—does meaning still come through?)
+
+### 9. States & Edge Cases
+- Empty states: Do they guide users toward action, or just say "nothing here"?
+- Loading states: Do they reduce perceived wait time?
+- Error states: Are they helpful and non-blaming?
+- Success states: Do they confirm and guide next steps?
+
+### 10. Microcopy & Voice
+- Is the writing clear and concise?
+- Does it sound like a human (the right human for this brand)?
+- Are labels and buttons unambiguous?
+- Does error copy help users fix the problem?
+
+## Generate Critique Report
+
+Structure your feedback as a design director would:
+
+### Anti-Patterns Verdict
+**Start here.** Pass/fail: Does this look AI-generated? List specific tells from the skill's Anti-Patterns section. Be brutally honest.
+
+### Overall Impression
+A brief gut reaction—what works, what doesn't, and the single biggest opportunity.
+
+### What's Working
+Highlight 2-3 things done well. Be specific about why they work.
+
+### Priority Issues
+The 3-5 most impactful design problems, ordered by importance:
+
+For each issue:
+- **What**: Name the problem clearly
+- **Why it matters**: How this hurts users or undermines goals
+- **Fix**: What to do about it (be concrete)
+- **Command**: Which command to use (prefer: /animate, /quieter, /optimize, /adapt, /clarify, /distill, /delight, /onboard, /normalize, /audit, /harden, /polish, /extract, /bolder, /critique, /colorize — or other installed skills you're sure exist)
+
+### Minor Observations
+Quick notes on smaller issues worth addressing.
+
+### Questions to Consider
+Provocative questions that might unlock better solutions:
+- "What if the primary action were more prominent?"
+- "Does this need to feel this complex?"
+- "What would a confident version of this look like?"
+
+**Remember**:
+- Be direct—vague feedback wastes everyone's time
+- Be specific—"the submit button" not "some elements"
+- Say what's wrong AND why it matters to users
+- Give concrete suggestions, not just "consider exploring..."
+- Prioritize ruthlessly—if everything is important, nothing is
+- Don't soften criticism—developers need honest feedback to ship great design
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 10:12:25Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→  <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
+     7→  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+     8→  <meta property="og:title" content="nasapicture.com">
+     9→  <meta property="og:description" content="Today's NASA Astronomy Picture of the Day at a stable URL.">
+    10→  <meta property="og:image" content="https://api.nasapicture.com/">
+    11→  <meta property="og:type" content="website">
+    12→  <meta name="twitter:card" content="summary_large_image">
+    13→  <link rel="preconnect" href="https://fonts.googleapis.com">
+    14→  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    15→  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    16→  <style>
+    17→    :root {
+    18→      --void: #05070c;
+    19→      --void-up: #0b0f18;
+    20→      --nasa-blue: #0032A0;
+    21→      --nasa-blue-light: #4d7fd9;
+    22→      --nasa-red: #e4002b;
+    23→      --silver: #b8bcc6;
+    24→      --silver-dim: #5a5f6b;
+    25→      --white: #e8eaed;
+    26→      --border: rgba(255, 255, 255, 0.06);
+    27→      --border-bright: rgba(255, 255, 255, 0.12);
+    28→      --font-serif: 'Cormorant Garamond', Georgia, serif;
+    29→      --font-sans: 'Outfit', sans-serif;
+    30→      --font-mono: 'JetBrains Mono', monospace;
+    31→    }
+    32→
+    33→    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    34→    html { scroll-behavior: smooth; }
+    35→
+    36→    body {
+    37→      font-family: var(--font-sans);
+    38→      font-weight: 300;
+    39→      color: var(--silver);
+    40→      background: var(--void);
+    41→      -webkit-font-smoothing: antialiased;
+    42→    }
+    43→
+    44→    /* ── HEADER ── */
+    45→    .site-header {
+    46→      position: absolute;
+    47→      top: 0;
+    48→      left: 0;
+    49→      right: 0;
+    50→      z-index: 10;
+    51→      display: flex;
+    52→      justify-content: space-between;
+    53→      align-items: baseline;
+    54→      padding: 1.25rem 1.5rem;
+    55→      opacity: 0;
+    56→      animation: fade-in 0.8s ease 0.3s forwards;
+    57→    }
+    58→
+    59→    @media (min-width: 640px) {
+    60→      .site-header { padding: 1.5rem 2.5rem; }
+    61→    }
+    62→
+    63→    .logo {
+    64→      font-family: var(--font-serif);
+    65→      font-size: 1.35rem;
+    66→      font-weight: 300;
+    67→      color: var(--white);
+    68→      text-decoration: none;
+    69→      letter-spacing: -0.01em;
+    70→    }
+    71→
+    72→    .logo-dot { color: var(--nasa-red); }
+    73→
+    74→    .site-nav {
+    75→      font-family: var(--font-mono);
+    76→      font-size: 0.7rem;
+    77→      display: flex;
+    78→      gap: 1.25rem;
+    79→    }
+    80→
+    81→    .site-nav a {
+    82→      color: var(--silver-dim);
+    83→      text-decoration: none;
+    84→      transition: color 0.3s;
+    85→    }
+    86→
+    87→    .site-nav a:hover { color: var(--white); }
+    88→
+    89→    /* ── HERO ── */
+    90→    .hero {
+    91→      position: relative;
+    92→      width: 100%;
+    93→      display: flex;
+    94→      flex-direction: column;
+    95→    }
+    96→
+    97→    .hero-image-area {
+    98→      position: relative;
+    99→      display: flex;
+   100→      flex-direction: column;
+   101→      align-items: center;
+   102→      padding: 3.75rem 1.5rem 0;
+   103→      margin-left: auto;
+   104→      margin-right: auto;
+   105→      margin-bottom: 3rem;
+   106→    }
+   107→
+   108→    @media (min-width: 640px) {
+   109→      .hero-image-area { padding: 4.25rem 2.5rem 0; }
+   110→    }
+   111→
+   112→    .hero-tagline {
+   113→      font-family: var(--font-serif);
+   114→      font-size: 1rem;
+   115→      font-weight: 300;
+   116→      color: var(--silver);
+   117→      letter-spacing: -0.01em;
+   118→      opacity: 0;
+   119→      animation: fade-in 0.8s ease 0.3s forwards;
+   120→    }
+   121→
+   122→    .hero-img {
+   123→      max-width: 100%;
+   124→      max-height: 70vh;
+   125→      height: auto;
+   126→      display: block;
+   127→      opacity: 0;
+   128→      transition: opacity 0.8s ease;
+   129→      box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.5), 0 1rem 6rem rgba(0, 0, 0, 0.25);
+   130→      margin-bottom: 0.6rem;
+   131→    }
+   132→
+   133→    .hero-img.loaded { opacity: 1; }
+   134→
+   135→    /* image caption — populated by JS from /info */
+   136→    .hero-caption {
+   137→      width: 100%;
+   138→      display: flex;
+   139→      justify-content: space-between;
+   140→      align-items: baseline;
+   141→      padding: 0.6rem 0.25rem;
+   142→      font-size: 0.8rem;
+   143→      color: var(--silver-dim);
+   144→      opacity: 0;
+   145→      transition: opacity 0.5s ease;
+   146→    }
+   147→
+   148→    .hero-caption.visible { opacity: 1; }
+   149→
+   150→    .hero-caption-title {
+   151→      font-family: var(--font-sans);
+   152→      font-weight: 500;
+   153→      color: var(--silver);
+   154→    }
+   155→
+   156→    .hero-caption-date {
+   157→      font-family: var(--font-sans);
+   158→      font-size: 1.0rem;
+   159→      color: var(--silver);
+   160→    }
+   161→
+   162→    /* ── USAGE STRIP ── */
+   163→    .usage-row {
+   164→      display: flex;
+   165→      justify-content: center;
+   166→      gap: 2.5rem;
+   167→      padding: 1.25rem 1.5rem 2.5rem;
+   168→      flex-wrap: wrap;
+   169→      opacity: 0;
+   170→      animation: fade-in 0.8s ease 0.8s forwards;
+   171→    }
+   172→
+   173→    @media (min-width: 640px) {
+   174→      .usage-row { padding: 1.25rem 2.5rem 3rem; }
+   175→    }
+   176→
+   177→    .usage-item {
+   178→      display: flex;
+   179→      align-items: baseline;
+   180→      gap: 0.4rem;
+   181→      font-size: 0.8rem;
+   182→      color: var(--silver-dim);
+   183→    }
+   184→
+   185→    .usage-url {
+   186→      font-family: var(--font-mono);
+   187→      font-size: 0.8rem;
+   188→      color: var(--white);
+   189→      letter-spacing: -0.01em;
+   190→      display: inline-flex;
+   191→      align-items: center;
+   192→      gap: 0.35rem;
+   193→    }
+   194→
+   195→    .copy-btn {
+   196→      background: none;
+   197→      border: none;
+   198→      color: var(--silver-dim);
+   199→      cursor: pointer;
+   200→      padding: 0.15rem;
+   201→      transition: color 0.2s;
+   202→      display: inline-flex;
+   203→      align-items: center;
+   204→      opacity: 0.5;
+   205→    }
+   206→
+   207→    .copy-btn:hover { color: var(--white); opacity: 1; }
+   208→    .copy-btn svg { width: 12px; height: 12px; }
+   209→    .copy-btn .check { display: none; }
+   210→    .copy-btn.copied .copy { display: none; }
+   211→    .copy-btn.copied .check { display: block; color: var(--nasa-blue-light); opacity: 1; }
+   212→
+   213→    /* ── CONTENT ── */
+   214→    .info {
+   215→      padding: 0 1.5rem 4rem;
+   216→    }
+   217→
+   218→    @media (min-width: 640px) {
+   219→      .info { padding: 0 2.5rem 4rem; }
+   220→    }
+   221→
+   222→    .divider {
+   223→      height: 1px;
+   224→      background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+   225→      margin-bottom: 3rem;
+   226→    }
+   227→
+   228→    .info h2 {
+   229→      font-family: var(--font-serif);
+   230→      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+   231→      font-weight: 300;
+   232→      color: var(--white);
+   233→      letter-spacing: -0.02em;
+   234→      margin-bottom: 1.25rem;
+   235→    }
+   236→
+   237→    .info p { line-height: 1.7; }
+   238→
+   239→    /* ── ENDPOINTS ── */
+   240→    .endpoint-list {
+   241→      display: flex;
+   242→      flex-direction: column;
+   243→      font-size: 0.875rem;
+   244→    }
+   245→
+   246→    .endpoint-row {
+   247→      display: flex;
+   248→      align-items: baseline;
+   249→      gap: 1.25rem;
+   250→      padding: 0.75rem 0;
+   251→      border-bottom: 1px solid var(--border);
+   252→      text-decoration: none;
+   253→      color: inherit;
+   254→      transition: background 0.2s;
+   255→    }
+   256→
+   257→    .endpoint-row:last-child { border-bottom: none; }
+   258→
+   259→    .endpoint-row:hover { background: rgba(255, 255, 255, 0.02); }
+   260→
+   261→    .endpoint-route {
+   262→      font-family: var(--font-mono);
+   263→      font-weight: 500;
+   264→      color: var(--white);
+   265→      min-width: 4rem;
+   266→      transition: color 0.2s;
+   267→    }
+   268→
+   269→    .endpoint-row:hover .endpoint-route { color: var(--nasa-blue-light); }
+   270→
+   271→    .endpoint-desc {
+   272→      color: var(--silver-dim);
+   273→      flex: 1;
+   274→    }
+   275→
+   276→    .endpoint-type {
+   277→      font-family: var(--font-mono);
+   278→      font-size: 0.75rem;
+   279→      color: var(--silver-dim);
+   280→      margin-left: auto;
+   281→      white-space: nowrap;
+   282→    }
+   283→
+   284→    /* ── FOOTER ── */
+   285→    footer {
+   286→      border-top: 1px solid var(--border);
+   287→      padding: 1.75rem 1.5rem;
+   288→    }
+   289→
+   290→    @media (min-width: 640px) {
+   291→      footer { padding: 1.75rem 2.5rem; }
+   292→    }
+   293→
+   294→    .footer-inner {
+   295→      display: flex;
+   296→      justify-content: space-between;
+   297→      align-items: center;
+   298→      flex-wrap: wrap;
+   299→      gap: 0.75rem;
+   300→      font-size: 0.75rem;
+   301→      color: var(--silver-dim);
+   302→    }
+   303→
+   304→    footer a {
+   305→      color: var(--silver);
+   306→      text-decoration: none;
+   307→      transition: color 0.3s;
+   308→    }
+   309→
+   310→    footer a:hover { color: var(--white); }
+   311→
+   312→    .footer-sep {
+   313→      color: var(--border-bright);
+   314→      margin: 0 0.25rem;
+   315→    }
+   316→
+   317→    /* ── ANIMATIONS ── */
+   318→    @keyframes fade-in { to { opacity: 1; } }
+   319→    @keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
+   320→
+   321→    .fade-up {
+   322→      opacity: 0;
+   323→      transform: translateY(14px);
+   324→    }
+   325→
+   326→    .fade-up.visible {
+   327→      animation: fade-up 0.6s ease forwards;
+   328→    }
+   329→
+   330→    /* ── REDUCED MOTION ── */
+   331→    @media (prefers-reduced-motion: reduce) {
+   332→      *, *::before, *::after {
+   333→        animation-duration: 0.01ms;
+   334→        animation-delay: 0ms;
+   335→        transition-duration: 0.01ms;
+   336→      }
+   337→      .hero-img { opacity: 1; }
+   338→      .site-header, .hero-tagline, .usage,
+   339→      .hero-caption, .fade-up {
+   340→        opacity: 1;
+   341→        transform: none;
+   342→      }
+   343→    }
+   344→
+   345→    /* ── MOBILE ── */
+   346→    @media (max-width: 639px) {
+   347→      .footer-inner { flex-direction: column; text-align: center; }
+   348→      .hero-caption { flex-direction: column; gap: 0.15rem; }
+   349→    }
+   350→  </style>
+   351→</head>
+   352→
+   353→<body>
+   354→  <header class="site-header">
+   355→    <a href="/" class="logo">NASApicture<span class="logo-dot">.</span>com</a>
+   356→    <h1 class="hero-tagline">Today's Astronomy Picture of the Day</h1>
+   357→    <nav class="site-nav" aria-label="Site navigation">
+   358→      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+   359→    </nav>
+   360→  </header>
+   361→
+   362→  <section class="hero">
+   363→    <div class="hero-image-area">
+   364→      <img
+   365→        src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+   366→        alt="NASA Astronomy Picture of the Day"
+   367→        class="hero-img"
+   368→        id="hero-img"
+   369→        loading="eager"
+   370→        fetchpriority="high"
+   371→      >
+   372→      <div class="hero-caption visible" id="hero-caption">
+   373→        <span class="hero-caption-title" id="caption-title">10 Years of Detections of Compact Binary Coalescences</span>
+   374→        <span class="hero-caption-date" id="caption-date">2026-03-26</span>
+   375→      </div>
+   376→    </div>
+   377→
+   378→    <div class="usage-row">
+   379→      <span class="usage-item">New day, new photo, same URL <span class="usage-url">https://api.nasapicture.com<button class="copy-btn" data-copy="https://api.nasapicture.com/" aria-label="Copy URL"><svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></span></span>
+   380→      <span class="usage-item">Use it anywhere like an image <span class="usage-url">&lt;img src="https://api.nasapicture.com/"&gt;<button class="copy-btn" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;' aria-label="Copy img tag"><svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></span></span>
+   381→    </div>
+   382→  </section>
+   383→
+   384→  <div class="info">
+   385→    <div class="fade-up">
+   386→      <h2>Endpoints</h2>
+   387→      <div class="endpoint-list">
+   388→        <a class="endpoint-row" href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">
+   389→          <span class="endpoint-route">/</span>
+   390→          <span class="endpoint-desc">HD image, falls back to standard</span>
+   391→          <span class="endpoint-type">image/*</span>
+   392→        </a>
+   393→        <a class="endpoint-row" href="https://api.nasapicture.com/sd" target="_blank" rel="noopener noreferrer">
+   394→          <span class="endpoint-route">/sd</span>
+   395→          <span class="endpoint-desc">Standard resolution image</span>
+   396→          <span class="endpoint-type">image/*</span>
+   397→        </a>
+   398→        <a class="endpoint-row" href="https://api.nasapicture.com/info" target="_blank" rel="noopener noreferrer">
+   399→          <span class="endpoint-route">/info</span>
+   400→          <span class="endpoint-desc">Title, date, explanation, URLs, copyright</span>
+   401→          <span class="endpoint-type">application/json</span>
+   402→        </a>
+   403→        <a class="endpoint-row" href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">
+   404→          <span class="endpoint-route">/about</span>
+   405→          <span class="endpoint-desc">Description and route listing</span>
+   406→          <span class="endpoint-type">text/plain</span>
+   407→        </a>
+   408→      </div>
+   409→    </div>
+   410→  </div>
+   411→
+   412→  <footer>
+   413→    <div class="footer-inner">
+   414→      <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
+   415→      <p>
+   416→        <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a>
+   417→        <span class="footer-sep">/</span>
+   418→        <a href="https://github.com/grantkeller/nasa-apod" target="_blank" rel="noopener noreferrer">Source</a>
+   419→      </p>
+   420→    </div>
+   421→  </footer>
+   422→
+   423→  <script>
+   424→    // Image load
+   425→    const img = document.getElementById('hero-img');
+   426→
+   427→    function onImageReady() { img.classList.add('loaded'); }
+   428→
+   429→    if (img.complete && img.naturalWidth > 0) {
+   430→      onImageReady();
+   431→    } else {
+   432→      img.addEventListener('load', onImageReady);
+   433→    }
+   434→
+   435→    // Fetch APOD metadata for caption
+   436→    fetch('https://api.nasapicture.com/info')
+   437→      .then(r => r.json())
+   438→      .then(data => {
+   439→        if (data.title) {
+   440→          document.getElementById('caption-title').textContent = data.title;
+   441→          document.getElementById('caption-date').textContent = data.date;
+   442→          document.getElementById('hero-caption').classList.add('visible');
+   443→        }
+   444→      })
+   445→      .catch(() => {});
+   446→
+   447→    // Copy buttons
+   448→    document.querySelectorAll('.copy-btn').forEach(btn => {
+   449→      btn.addEventListener('click', () => {
+   450→        const text = btn.dataset.copy;
+   451→        navigator.clipboard.writeText(text).then(() => {
+   452→          btn.classList.add('copied');
+   453→          setTimeout(() => btn.classList.remove('copied'), 2000);
+   454→        });
+   455→      });
+   456→    });
+   457→
+   458→    // Scroll fade-in
+   459→    const observer = new IntersectionObserver((entries) => {
+   460→      entries.forEach(entry => {
+   461→        if (entry.isIntersecting) {
+   462→          entry.target.classList.add('visible');
+   463→          observer.unobserve(entry.target);
+   464→        }
+   465→      });
+   466→    }, { threshold: 0.15 });
+   467→
+   468→    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+   469→  </script>
+   470→</body>
+   471→</html>
+   472→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:13:12Z)**_
+
+---
+
+## Design Critique: nasapicture.com (gallery revision)
+
+### AI Slop Verdict: **Pass**
+
+This doesn't look AI-generated. The restraint is genuine — no gradient text, no glassmorphism, no glowing cards, no purple. The gallery concept (image floating in void, caption beneath, sparse supporting text) is a specific point of view, not a template. The red dot, Cormorant Garamond, content-type column in the endpoints — these are choices a person made. No AI would remove this much content and leave this much dark space.
+
+### Overall Impression
+
+The gallery concept is landing. The image dominates, the supporting material knows its place, and the page has a clear identity. The **single biggest opportunity** is the transition zone between the hero (gallery) and the info section (developer docs) — they feel like two different pages glued together. The gallery needs a more graceful exit.
+
+### What's Working
+
+1. **The image presentation** — no frame, no border, just shadow lifting it off the void. Works with any APOD regardless of content. The caption (title + date) reads exactly like a gallery placard. This is the strongest design decision on the page.
+
+2. **The usage row** — two inline items with prose flowing into monospace URLs feels natural. It communicates both "what this is" and "how to use it" without a single heading. The copy buttons at 50% opacity are correctly subordinate.
+
+3. **The endpoint list** — flex rows with route/description/content-type is clean API documentation. The content-type column (`image/*`, `application/json`) is a genuinely useful detail that no AI would think to add. Hover state turning the route blue provides clear affordance.
+
+### Priority Issues
+
+**1. The info section has no visual boundary**
+
+The gallery hero ends at the usage row, then you scroll into "Endpoints" floating in the same void with identical padding. There's no divider, no background shift, no spatial signal that you've moved from "the gallery" to "the docs." The `.divider` element exists in the CSS but was removed from the HTML.
+
+- **Why it matters**: Developers scrolling down don't get a sense of arriving somewhere new. The endpoints section feels tacked on.
+- **Fix**: Add back the divider before the endpoints section, or give `.info` a subtle background (`var(--void-up)`) to create a distinct zone. Even a thin `border-top` on `.info` would help.
+- **Command**: `/impeccable:polish`
+
+**2. The hero caption width is unconstrained**
+
+The caption stretches full-width (`width: 100%` on `.hero-caption`), but the image above it is `max-width: 100%; max-height: 70vh` — so the image sizes itself to content while the caption always fills the container. On a wide viewport with a tall/narrow APOD, the caption will be significantly wider than the image, breaking the "placard under painting" illusion.
+
+- **Why it matters**: The gallery metaphor depends on caption and image being aligned. A caption wider than its painting looks wrong.
+- **Fix**: The caption should match the image's rendered width. Wrap the `<img>` and `.hero-caption` in a container with `display: inline-flex; flex-direction: column; align-items: stretch` so the caption's width is determined by the image, not the viewport.
+- **Command**: `/impeccable:polish`
+
+**3. The `<h1>` in the header disappears on mobile**
+
+The header is a three-column flex (`logo | h1 | nav`), but on narrow viewports the h1 gets squeezed between the logo and nav. At small widths it'll either overflow or become unreadably small. There's no mobile-specific rule for `.hero-tagline` and no `display: none` at a breakpoint.
+
+- **Why it matters**: The h1 is doing important SEO and accessibility work. If it's going to be in the header, it needs to gracefully handle narrow viewports — either hide it (and keep it as sr-only) or move it below the logo/nav row.
+- **Fix**: On mobile, either `display: none` the tagline (add `<span class="sr-only">` equivalent for a11y) or let the header wrap to two lines. Test at 375px.
+- **Command**: `/impeccable:adapt`
+
+**4. Endpoint rows lack padding for touch**
+
+The endpoint rows have `padding: 0.75rem 0` — that's a 24px touch target height with no horizontal padding. On mobile, these are the most useful interactive elements on the page, but they're too tight to tap comfortably.
+
+- **Why it matters**: The design context says "44px mobile touch targets." These don't meet it.
+- **Fix**: Add `padding: 0.75rem 0.5rem` and increase to `padding: 1rem 0.5rem` on mobile. The extra vertical space also helps the list breathe.
+- **Command**: `/impeccable:adapt`
+
+### Minor Observations
+
+- **No favicon** — still missing. The browser tab shows a generic icon. Even a simple 🔴 emoji favicon or a red-dot SVG would be better than nothing.
+- **`usage-row` reduced-motion selector references `.usage`** (line 338) but the class is now `.usage-row` — so reduced motion doesn't apply to it.
+- **The second copy button's `data-copy` uses HTML entities** (`&lt;img...&gt;`) — `navigator.clipboard.writeText` will copy the literal entities, not `<img src="...">`. Should use the actual HTML string.
+- **`NASApicture`** (line 354) — the capitalization changed from `nasapicture` to `NASApicture`. If intentional, make sure it matches the `<title>` and OG tags which still say `nasapicture.com`.
+
+### Questions to Consider
+
+- What if the gallery extended its metaphor further — could the endpoint list be styled as a "gallery guide" or "exhibition notes" rather than developer docs?
+- The page has exactly two interactive moments: copy buttons and endpoint links. Is that enough? Would a "try it" link that opens `/` in a new tab make the value proposition more tangible?
+- What happens when the APOD is a portrait orientation image? The 70vh cap handles height, but a very tall narrow image will leave huge empty space on either side. Is that fine (it *is* a gallery), or does it need a minimum width?
+
+---
+
+_**User (2026-03-26 10:13:41Z)**_
+
+create a new NOTE with this feedback
+
+---
+
+_**Agent (claude-opus-4-6 2026-03-26 10:13:49Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/.doc-ids`
+
+```text
+     1→TASK=0003
+     2→EPIC=0000
+     3→ADR=0000
+     4→REFE=0000
+     5→RESO=0000
+     6→NOTE=0002
+     7→
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:14:05Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: note
+status: inbox
+created: 2026-03-26
+---
+
+# Landing page design critique (gallery revision)
+
+## AI Slop Verdict: Pass
+
+The gallery concept is a specific point of view, not a template. Restraint is genuine.
+
+## What's Working
+
+1. **Image presentation** — no frame, just shadow. Works with any APOD. Caption reads like a gallery placard.
+2. **Usage row** — prose flowing into mono URLs feels natural. Copy buttons at 50% opacity are correctly subordinate.
+3. **Endpoint list** — route/description/content-type is clean. Content-type column is a genuinely useful detail.
+
+## Priority Issues
+
+### 1. Info section has no visual boundary
+Gallery hero ends at usage row, then "Endpoints" floats in the same void. The `.divider` element exists in CSS but was removed from HTML. Add it back, or give `.info` a subtle background (`--void-up`) to create a distinct zone.
+
+### 2. Caption width is unconstrained
+Caption stretches full-width but image sizes to content. On wide viewports with tall/narrow APODs, the caption will be wider than the image, breaking the placard illusion. Wrap img + caption in a container with `display: inline-flex; flex-direction: column` so caption matches image width.
+
+### 3. H1 in header disappears on mobile
+The three-column header flex squeezes the h1 on narrow viewports. No mobile-specific rule exists. Either hide it with sr-only on mobile or let the header wrap. Test at 375px.
+
+### 4. Endpoint rows lack touch padding
+`padding: 0.75rem 0` is too tight for mobile tap targets (need 44px). Add horizontal padding and increase vertical on mobile.
+
+## Minor Issues
+
+- No favicon
+- Reduced-motion selector references `.usage` but class is now `.usage-row`
+- Second copy button `data-copy` uses HTML entities — clipboard will copy literal `&lt;` not `<`
+- `NASApicture` capitalization doesn't match `<title>` and OG tags
+- Portrait-orientation APODs will leave large empty space on sides (acceptable for gallery metaphor?)
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/planning/NOTE-0003_landing-page-critique.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:14:06Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/.doc-ids has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-03-26 10:14:13Z)**_
+
+Created `NOTE-0003_landing-page-critique.md` with the full critique — priority issues, minor fixes, and open questions.
+
+---
+
+_**User (2026-03-26 10:21:05Z)**_
+
+<command-name>/exit</command-name>
+            <command-message>exit</command-message>
+            <command-args></command-args>
+
+_**User (2026-03-26 10:21:05Z)**_
+
+<local-command-stdout>Catch you later!</local-command-stdout>
+
+_**User (2026-03-26 10:21:05Z)**_
+
+<local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat>
