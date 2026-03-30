@@ -106,6 +106,7 @@
       margin-left: auto;
       margin-right: auto;
       margin-bottom: 3rem;
+      min-height: calc(70vh + 3.75rem);
     }
 
     @media (min-width: 640px) {
@@ -370,7 +371,7 @@
   <section class="hero">
     <figure class="hero-image-area">
       <img
-        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+        src="https://api.nasapicture.com/"
         alt="NASA Astronomy Picture of the Day"
         class="hero-img"
         id="hero-img"
@@ -438,6 +439,7 @@
 
     // Rewrite all production URLs to use API_BASE
     const defined_replace = (str) => str.replace(PROD_BASE, API_BASE);
+    img.src = defined_replace(img.src);
     document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
       a.href = defined_replace(a.href);
     });
@@ -452,12 +454,11 @@
       });
     });
 
-    // Fetch APOD metadata, then set image + caption from live data
+    // Fetch APOD metadata for caption (image loads directly from proxy)
     fetch(`${API_BASE}/info`)
       .then(r => r.json())
       .then(data => {
         if (data.title) {
-          img.src = data.hdurl || data.url;
           img.alt = data.title;
           document.getElementById('caption-title').textContent = data.title;
           const dateEl = document.getElementById('caption-date');
