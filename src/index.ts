@@ -156,9 +156,12 @@ export default {
     try {
       const apiKey = env.NASA_API_KEY || "DEMO_KEY";
 
-      if (pathname === "/" || pathname === "/sd") {
+      const sdPaths = ["/sd", "/image-sd.jpg"];
+      const hdPaths = ["/", "/image.jpg"];
+
+      if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
         const apod = await findLatestImage(log, apiKey);
-        const imageUrl = pathname === "/sd"
+        const imageUrl = sdPaths.includes(pathname)
           ? apod.url
           : (apod.hdurl || apod.url);
 
@@ -171,7 +174,9 @@ export default {
       } else if (pathname === "/info") {
         const endpoints = {
           "/": "Today's APOD image (high resolution, falls back to standard)",
+          "/image.jpg": "Same as / with file extension (for contexts that need one)",
           "/sd": "Today's APOD image (standard resolution)",
+          "/image-sd.jpg": "Same as /sd with file extension",
           "/info": "JSON metadata for today's APOD",
           "/about": "Plain-text description and attribution",
         };
@@ -224,10 +229,12 @@ export default {
           `    <img src="${origin}/">`,
           "",
           "  Routes:",
-          "    /        HD image (default)",
-          "    /sd      Standard resolution",
-          "    /info    JSON metadata",
-          "    /about   This page",
+          "    /             HD image (default)",
+          "    /image.jpg    HD image (with extension)",
+          "    /sd           Standard resolution",
+          "    /image-sd.jpg Standard resolution (with extension)",
+          "    /info         JSON metadata",
+          "    /about        This page",
           "",
           "  Built by Grant Keller — https://grantkeller.dev",
           "",
