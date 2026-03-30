@@ -430,10 +430,27 @@
   </footer>
 
   <script>
-    const API_BASE = 'http://localhost:8787';
+    const PROD_BASE = 'https://api.nasapicture.com';
+    const API_BASE = location.hostname === 'localhost' ? 'http://localhost:8787' : PROD_BASE;
     const img = document.getElementById('hero-img');
 
     function onImageReady() { img.classList.add('loaded'); }
+
+    // Rewrite all production URLs to use API_BASE
+    const defined_replace = (str) => str.replace(PROD_BASE, API_BASE);
+    document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
+      a.href = defined_replace(a.href);
+    });
+    document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
+      btn.dataset.copy = defined_replace(btn.dataset.copy);
+    });
+    document.querySelectorAll('.usage-url').forEach(el => {
+      el.childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          node.textContent = defined_replace(node.textContent);
+        }
+      });
+    });
 
     // Fetch APOD metadata, then set image + caption from live data
     fetch(`${API_BASE}/info`)
