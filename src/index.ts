@@ -236,7 +236,9 @@ export default {
           "    /info         JSON metadata",
           "    /about        This page",
           "",
-          "  Built by Grant Keller — https://grantkeller.dev",
+          "  Homepage: https://nasapicture.com",
+          "",
+          "  Built by Grant Keller | https://grantkeller.dev",
           "",
         ].join("\n");
 
