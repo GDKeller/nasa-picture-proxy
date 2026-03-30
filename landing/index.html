@@ -431,7 +431,7 @@
 
   <script>
     const PROD_BASE = 'https://api.nasapicture.com';
-    const API_BASE = location.hostname === 'localhost' ? 'http://localhost:8787' : PROD_BASE;
+    const API_BASE = location.hostname === 'localhost' ? `http://localhost:8787` : PROD_BASE;
     const img = document.getElementById('hero-img');
 
     function onImageReady() { img.classList.add('loaded'); }
