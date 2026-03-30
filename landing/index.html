@@ -61,6 +61,7 @@
     }
 
     .logo {
+      flex: 1;
       font-family: var(--font-serif);
       font-size: 1.35rem;
       font-weight: 300;
@@ -72,9 +73,11 @@
     .logo-dot { color: var(--nasa-red); }
 
     .site-nav {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
       font-family: var(--font-mono);
       font-size: 0.7rem;
-      display: flex;
       gap: 1.25rem;
     }
 
@@ -110,11 +113,14 @@
     }
 
     .hero-tagline {
+      flex: 1;
+      text-align: center;
       font-family: var(--font-serif);
       font-size: 1rem;
       font-weight: 300;
       color: var(--silver);
       letter-spacing: -0.01em;
+      white-space: nowrap;
       opacity: 0;
       animation: fade-in 0.8s ease 0.3s forwards;
     }
@@ -135,6 +141,7 @@
     /* image caption — populated by JS from /info */
     .hero-caption {
       width: 100%;
+      min-width: 30rem;
       display: flex;
       justify-content: space-between;
       align-items: baseline;
@@ -359,32 +366,33 @@
     </nav>
   </header>
 
+  <main>
   <section class="hero">
-    <div class="hero-image-area">
+    <figure class="hero-image-area">
       <img
-        src="https://apod.nasa.gov/apod/image/2603/GWTC4-Events-Poster-Landscape.jpg"
+        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
         alt="NASA Astronomy Picture of the Day"
         class="hero-img"
         id="hero-img"
         loading="eager"
         fetchpriority="high"
       >
-      <div class="hero-caption visible" id="hero-caption">
-        <span class="hero-caption-title" id="caption-title">10 Years of Detections of Compact Binary Coalescences</span>
-        <span class="hero-caption-date" id="caption-date">2026-03-26</span>
-      </div>
-    </div>
+      <figcaption class="hero-caption" id="hero-caption">
+        <p class="hero-caption-title" id="caption-title"></p>
+        <time class="hero-caption-date" id="caption-date" datetime=""></time>
+      </figcaption>
+    </figure>
 
     <div class="usage-row">
-      <span class="usage-item">New day, new photo, same URL <span class="usage-url">https://api.nasapicture.com<button class="copy-btn" data-copy="https://api.nasapicture.com/" aria-label="Copy URL"><svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></span></span>
-      <span class="usage-item">Use it anywhere like an image <span class="usage-url">&lt;img src="https://api.nasapicture.com/"&gt;<button class="copy-btn" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;' aria-label="Copy img tag"><svg class="copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></span></span>
+      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url">https://api.nasapicture.com<button type="button" class="copy-btn" data-copy="https://api.nasapicture.com/" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></code></p>
+      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url">&lt;img src="https://api.nasapicture.com/"&gt;<button type="button" class="copy-btn" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;' aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></code></p>
     </div>
   </section>
 
-  <div class="info">
+  <section class="info">
     <div class="fade-up">
       <h2>Endpoints</h2>
-      <div class="endpoint-list">
+      <nav class="endpoint-list" aria-label="API endpoints">
         <a class="endpoint-row" href="https://api.nasapicture.com/" target="_blank" rel="noopener noreferrer">
           <span class="endpoint-route">/</span>
           <span class="endpoint-desc">HD image, falls back to standard</span>
@@ -405,44 +413,45 @@
           <span class="endpoint-desc">Description and route listing</span>
           <span class="endpoint-type">text/plain</span>
         </a>
-      </div>
+      </nav>
     </div>
-  </div>
+  </section>
+  </main>
 
   <footer>
     <div class="footer-inner">
       <p>Built by <a href="https://grantkeller.dev" target="_blank" rel="noopener noreferrer">Grant Keller</a></p>
       <p>
         <a href="https://apod.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA APOD</a>
-        <span class="footer-sep">/</span>
-        <a href="https://github.com/grantkeller/nasa-apod" target="_blank" rel="noopener noreferrer">Source</a>
+        <span class="footer-sep" aria-hidden="true">/</span>
+        <a href="https://github.com/GDKeller/nasa-picture-proxy" target="_blank" rel="noopener noreferrer">Source</a>
       </p>
     </div>
   </footer>
 
   <script>
-    // Image load
+    const API_BASE = 'http://localhost:8787';
     const img = document.getElementById('hero-img');
 
     function onImageReady() { img.classList.add('loaded'); }
 
-    if (img.complete && img.naturalWidth > 0) {
-      onImageReady();
-    } else {
-      img.addEventListener('load', onImageReady);
-    }
-
-    // Fetch APOD metadata for caption
-    fetch('https://api.nasapicture.com/info')
+    // Fetch APOD metadata, then set image + caption from live data
+    fetch(`${API_BASE}/info`)
       .then(r => r.json())
       .then(data => {
         if (data.title) {
+          img.src = data.hdurl || data.url;
+          img.alt = data.title;
           document.getElementById('caption-title').textContent = data.title;
-          document.getElementById('caption-date').textContent = data.date;
+          const dateEl = document.getElementById('caption-date');
+          dateEl.textContent = data.date;
+          dateEl.setAttribute('datetime', data.date);
           document.getElementById('hero-caption').classList.add('visible');
         }
       })
       .catch(() => {});
+
+    img.addEventListener('load', onImageReady);
 
     // Copy buttons
     document.querySelectorAll('.copy-btn').forEach(btn => {
