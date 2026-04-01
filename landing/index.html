@@ -335,17 +335,31 @@
       transition: color 0.2s, opacity 0.2s;
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
       opacity: 0.5;
+      position: relative;
     }
 
     .usage-url:hover .copy-btn { color: #fff; opacity: 1; }
     .copy-btn svg { width: 12px; height: 12px; }
-    .copy-btn .check { display: none; }
-    .copy-btn .copied-text { display: none; font-family: var(--font-body); font-size: 0.7rem; }
-    .copy-btn.copied .copy { display: none; }
-    .copy-btn.copied .check { display: block; color: var(--nasa-blue-light); opacity: 1; }
-    .copy-btn.copied .copied-text { display: inline; color: var(--nasa-blue-light); opacity: 1; }
+    .copy-btn.copied .copy { visibility: hidden; }
+
+    .copied-badge {
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      color: var(--nasa-blue-light);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .usage-url.copied .copied-badge { opacity: 1; }
+    .copied-badge .check { width: 10px; height: 10px; }
+    .copied-badge .copied-text { font-family: var(--font-body); font-size: 0.65rem; white-space: nowrap; }
 
     /* ── CONTENT ── */
     .info {
@@ -517,7 +531,7 @@
   <section class="hero" aria-labelledby="site-heading">
     <figure class="hero-image-area">
       <img
-        src="https://api.nasapicture.com/"
+        src="https://api.nasapicture.com/sd"
         alt="NASA Astronomy Picture of the Day"
         class="hero-img"
         id="hero-img"
@@ -531,8 +545,8 @@
     </figure>
 
     <div class="usage-row">
-      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url" title="Click to copy" data-copy="https://api.nasapicture.com/">https://api.nasapicture.com<span class="copy-btn" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
-      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url" title="Click to copy" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;'>&lt;img src="https://api.nasapicture.com/"&gt;<span class="copy-btn" aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
+      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url" title="Click to copy" data-copy="https://api.nasapicture.com/">https://api.nasapicture.com<span class="copy-btn" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="copied-badge"><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
+      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url" title="Click to copy" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;'>&lt;img src="https://api.nasapicture.com/"&gt;<span class="copy-btn" aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="copied-badge"><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
     </div>
   </section>
 
@@ -622,10 +636,13 @@
     document.querySelectorAll('.usage-url[data-copy]').forEach(el => {
       el.addEventListener('click', () => {
         const text = el.dataset.copy;
-        const icon = el.querySelector('.copy-btn');
         navigator.clipboard.writeText(text).then(() => {
-          icon.classList.add('copied');
-          setTimeout(() => icon.classList.remove('copied'), 2000);
+          el.classList.add('copied');
+          el.querySelector('.copy-btn').classList.add('copied');
+          setTimeout(() => {
+            el.classList.remove('copied');
+            el.querySelector('.copy-btn').classList.remove('copied');
+          }, 2000);
         });
       });
     });
