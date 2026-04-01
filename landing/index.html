@@ -135,26 +135,12 @@
 
     .site-nav {
       flex: 1;
-      display: none;
+      display: flex;
       justify-content: flex-end;
       font-family: var(--font-mono);
       font-size: 0.7rem;
       gap: 1.25rem;
     }
-
-    @media (min-width: 768px) {
-      .site-nav {
-        display: flex;
-      }
-    }
-
-    .site-nav a {
-      color: var(--silver-dim);
-      text-decoration: none;
-      transition: color 0.3s;
-    }
-
-    .site-nav a:hover { color: var(--white); }
 
     /* ── HERO ── */
     .hero {
@@ -221,7 +207,7 @@
       height: auto;
       display: block;
       opacity: 0;
-      transition: opacity 0.8s ease;
+      transition: opacity 0.8s ease, max-height 0.3s ease;
       box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.5), 0 1rem 6rem rgba(0, 0, 0, 0.25);
       margin-bottom: 0.6rem;
     }
@@ -290,7 +276,26 @@
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      position: relative;
     }
+
+    .usage-url::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease-out;
+    }
+
+    .usage-url:hover { color: #fff; }
+    .usage-url:hover::after { transform: scaleX(1); transform-origin: left; transition: transform 0.2s ease-in; }
 
     .copy-btn {
       background: none;
@@ -298,17 +303,34 @@
       color: var(--silver-dim);
       cursor: pointer;
       padding: 0.15rem;
-      transition: color 0.2s;
+      transition: color 0.2s, opacity 0.2s;
       display: inline-flex;
       align-items: center;
       opacity: 0.5;
+      position: relative;
     }
 
-    .copy-btn:hover { color: var(--white); opacity: 1; }
+    .usage-url:hover .copy-btn { color: #fff; opacity: 1; }
     .copy-btn svg { width: 12px; height: 12px; }
-    .copy-btn .check { display: none; }
-    .copy-btn.copied .copy { display: none; }
-    .copy-btn.copied .check { display: block; color: var(--nasa-blue-light); opacity: 1; }
+    .copy-btn.copied .copy { visibility: hidden; }
+
+    .copied-badge {
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      color: var(--nasa-blue-light);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .usage-url.copied .copied-badge { opacity: 1; }
+    .copied-badge .check { width: 10px; height: 10px; }
+    .copied-badge .copied-text { font-family: var(--font-body); font-size: 0.65rem; white-space: nowrap; }
 
     /* ── CONTENT ── */
     .info {
@@ -368,7 +390,7 @@
       transition: color 0.2s;
     }
 
-    .endpoint-row:hover .endpoint-route { color: var(--nasa-blue-light); }
+    .endpoint-row:hover .endpoint-route { color: #fff; }
 
     .endpoint-desc {
       color: var(--silver-dim);
@@ -407,9 +429,24 @@
       color: var(--silver);
       text-decoration: none;
       transition: color 0.3s;
+      position: relative;
     }
 
-    footer a:hover { color: var(--white); }
+    footer a::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease-out;
+    }
+
+    footer a:hover { color: #fff; }
+    footer a:hover::after { transform: scaleX(1); transform-origin: left; transition: transform 0.2s ease-in; }
 
     .footer-sep {
       color: var(--border-bright);
@@ -444,6 +481,62 @@
       }
     }
 
+    /* ── FOCUS MODE ── */
+    .focus-toggle {
+      background: none;
+      border: none;
+      color: var(--silver-dim);
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color 0.3s ease;
+    }
+
+    .focus-toggle svg { width: 16px; height: 16px; }
+    .focus-toggle:hover { color: #fff; }
+
+    .focus-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    body.focus-mode .focus-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    body.focus-mode .hero-img {
+      position: relative;
+      z-index: 51;
+      cursor: default;
+      max-height: 85vh;
+    }
+
+    body.focus-mode .site-header {
+      z-index: 52;
+    }
+
+    body.focus-mode .logo,
+    body.focus-mode .hero-tagline,
+    body.focus-mode .hero-caption {
+      transition: opacity 0.3s ease;
+    }
+
+    body.focus-mode .focus-toggle {
+      color: #999;
+    }
+
+    body.focus-mode .hero-caption {
+      position: relative;
+      z-index: 51;
+    }
+
     /* ── MOBILE ── */
     @media (max-width: 639px) {
       .footer-inner { flex-direction: column; text-align: center; }
@@ -457,15 +550,18 @@
     <a href="/" class="logo">NASApicture<span class="logo-dot">.</span>com</a>
     <h1 id="site-heading" class="hero-tagline">Today's Astronomy Picture of the Day</h1>
     <nav class="site-nav" aria-label="Site navigation">
-      <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
+      <button type="button" class="focus-toggle" id="focus-toggle" aria-label="Dim the lights" title="Dim the lights">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12v6"/><path d="M4.077 10.615A1 1 0 0 0 5 12h14a1 1 0 0 0 .923-1.385l-3.077-7.384A2 2 0 0 0 15 2H9a2 2 0 0 0-1.846 1.23Z"/><path d="M8 20a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z"/></svg>
+      </button>
     </nav>
   </header>
 
   <main>
   <section class="hero" aria-labelledby="site-heading">
+    <div class="focus-overlay" id="focus-overlay"></div>
     <figure class="hero-image-area">
       <img
-        src="https://api.nasapicture.com/"
+        src="https://api.nasapicture.com/sd"
         alt="NASA Astronomy Picture of the Day"
         class="hero-img"
         id="hero-img"
@@ -479,8 +575,8 @@
     </figure>
 
     <div class="usage-row">
-      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url">https://api.nasapicture.com<button type="button" class="copy-btn" data-copy="https://api.nasapicture.com/" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></code></p>
-      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url">&lt;img src="https://api.nasapicture.com/"&gt;<button type="button" class="copy-btn" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;' aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></code></p>
+      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url" title="Click to copy" data-copy="https://api.nasapicture.com/">https://api.nasapicture.com<span class="copy-btn" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="copied-badge"><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
+      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url" title="Click to copy" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;'>&lt;img src="https://api.nasapicture.com/"&gt;<span class="copy-btn" aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="copied-badge"><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
     </div>
   </section>
 
@@ -537,8 +633,8 @@
     document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
       a.href = defined_replace(a.href);
     });
-    document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
-      btn.dataset.copy = defined_replace(btn.dataset.copy);
+    document.querySelectorAll('.usage-url[data-copy]').forEach(el => {
+      el.dataset.copy = defined_replace(el.dataset.copy);
     });
     document.querySelectorAll('.usage-url').forEach(el => {
       el.childNodes.forEach(node => {
@@ -566,13 +662,17 @@
 
     img.addEventListener('load', onImageReady);
 
-    // Copy buttons
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const text = btn.dataset.copy;
+    // Copy on click — entire code block is the target
+    document.querySelectorAll('.usage-url[data-copy]').forEach(el => {
+      el.addEventListener('click', () => {
+        const text = el.dataset.copy;
         navigator.clipboard.writeText(text).then(() => {
-          btn.classList.add('copied');
-          setTimeout(() => btn.classList.remove('copied'), 2000);
+          el.classList.add('copied');
+          el.querySelector('.copy-btn').classList.add('copied');
+          setTimeout(() => {
+            el.classList.remove('copied');
+            el.querySelector('.copy-btn').classList.remove('copied');
+          }, 2000);
         });
       });
     });
@@ -588,6 +688,38 @@
     }, { threshold: 0.15 });
 
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // Focus mode
+    const toggle = document.getElementById('focus-toggle');
+    const overlay = document.getElementById('focus-overlay');
+
+    const dimTargets = document.querySelectorAll('.logo, .hero-tagline, .hero-caption');
+
+    // Clear animation fill-forwards so focus mode can control opacity
+    dimTargets.forEach(el => {
+      el.addEventListener('animationend', () => {
+        el.style.animation = 'none';
+        el.style.opacity = '1';
+      });
+    });
+
+    function setFocusMode(on) {
+      document.body.classList.toggle('focus-mode', on);
+      dimTargets.forEach(el => {
+        el.style.opacity = on ? '0.15' : '1';
+      });
+    }
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setFocusMode(!document.body.classList.contains('focus-mode'));
+    });
+
+    overlay.addEventListener('click', () => setFocusMode(false));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setFocusMode(false);
+    });
   </script>
 </body>
 </html>
