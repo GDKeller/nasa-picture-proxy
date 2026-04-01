@@ -157,16 +157,16 @@ export default {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
           "Access-Control-Max-Age": "86400",
         },
       });
     }
 
-    if (request.method !== "GET") {
+    if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response(
         JSON.stringify({ error: "Method not allowed. This API only supports GET requests." }),
-        { status: 405, headers: { "Allow": "GET, OPTIONS", "Content-Type": "application/json" } },
+        { status: 405, headers: { "Allow": "GET, HEAD, OPTIONS", "Content-Type": "application/json" } },
       );
     }
 
