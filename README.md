@@ -5,6 +5,7 @@ A Cloudflare Worker that proxies [NASA's Astronomy Picture of the Day (APOD)](ht
 [nasapicture.com](https://nasapicture.com) · [GitHub](https://github.com/GDKeller/nasa-picture-proxy)
 
 ![Today's APOD](https://api.nasapicture.com/image-sd.jpg)
+*This is a static URL, but it'll be a different image when you visit this repo tomorrow.*
 
 During a tinkering session, I wanted to set the background image of my homelab [homepage](https://github.com/gethomepage/homepage) dashboard to the APOD. I didn't want to inject additional JavaScript on the page and couldn't find an existing static URL. So, I built this proxy to share with anyone else who'd like to view the wonders of space easily, anywhere.
 
