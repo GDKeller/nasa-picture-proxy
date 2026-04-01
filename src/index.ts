@@ -145,6 +145,13 @@ export default {
       });
     }
 
+    if (request.method !== "GET") {
+      return new Response(
+        JSON.stringify({ error: "Method not allowed. This API only supports GET requests." }),
+        { status: 405, headers: { "Allow": "GET, OPTIONS", "Content-Type": "application/json" } },
+      );
+    }
+
     const reqUrl = new URL(request.url);
     const { pathname } = reqUrl;
     const origin = reqUrl.origin;
