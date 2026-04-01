@@ -154,7 +154,7 @@
       transition: color 0.3s;
     }
 
-    .site-nav a:hover { color: var(--white); }
+    .site-nav a:hover { color: #fff; text-decoration: underline; }
 
     /* ── HERO ── */
     .hero {
@@ -290,7 +290,11 @@
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
+      cursor: pointer;
+      transition: color 0.2s;
     }
+
+    .usage-url:hover { color: #fff; text-decoration: underline; }
 
     .copy-btn {
       background: none;
@@ -298,17 +302,20 @@
       color: var(--silver-dim);
       cursor: pointer;
       padding: 0.15rem;
-      transition: color 0.2s;
+      transition: color 0.2s, opacity 0.2s;
       display: inline-flex;
       align-items: center;
+      gap: 0.3rem;
       opacity: 0.5;
     }
 
-    .copy-btn:hover { color: var(--white); opacity: 1; }
+    .usage-url:hover .copy-btn { color: #fff; opacity: 1; }
     .copy-btn svg { width: 12px; height: 12px; }
     .copy-btn .check { display: none; }
+    .copy-btn .copied-text { display: none; font-family: var(--font-body); font-size: 0.7rem; }
     .copy-btn.copied .copy { display: none; }
     .copy-btn.copied .check { display: block; color: var(--nasa-blue-light); opacity: 1; }
+    .copy-btn.copied .copied-text { display: inline; color: var(--nasa-blue-light); opacity: 1; }
 
     /* ── CONTENT ── */
     .info {
@@ -368,7 +375,7 @@
       transition: color 0.2s;
     }
 
-    .endpoint-row:hover .endpoint-route { color: var(--nasa-blue-light); }
+    .endpoint-row:hover .endpoint-route { color: #fff; }
 
     .endpoint-desc {
       color: var(--silver-dim);
@@ -409,7 +416,7 @@
       transition: color 0.3s;
     }
 
-    footer a:hover { color: var(--white); }
+    footer a:hover { color: #fff; text-decoration: underline; }
 
     .footer-sep {
       color: var(--border-bright);
@@ -479,8 +486,8 @@
     </figure>
 
     <div class="usage-row">
-      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url">https://api.nasapicture.com<button type="button" class="copy-btn" data-copy="https://api.nasapicture.com/" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></code></p>
-      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url">&lt;img src="https://api.nasapicture.com/"&gt;<button type="button" class="copy-btn" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;' aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button></code></p>
+      <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url" title="Click to copy" data-copy="https://api.nasapicture.com/">https://api.nasapicture.com<span class="copy-btn" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
+      <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url" title="Click to copy" data-copy='&lt;img src="https://api.nasapicture.com/"&gt;'>&lt;img src="https://api.nasapicture.com/"&gt;<span class="copy-btn" aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code></p>
     </div>
   </section>
 
@@ -537,8 +544,8 @@
     document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
       a.href = defined_replace(a.href);
     });
-    document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
-      btn.dataset.copy = defined_replace(btn.dataset.copy);
+    document.querySelectorAll('.usage-url[data-copy]').forEach(el => {
+      el.dataset.copy = defined_replace(el.dataset.copy);
     });
     document.querySelectorAll('.usage-url').forEach(el => {
       el.childNodes.forEach(node => {
@@ -566,13 +573,14 @@
 
     img.addEventListener('load', onImageReady);
 
-    // Copy buttons
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const text = btn.dataset.copy;
+    // Copy on click — entire code block is the target
+    document.querySelectorAll('.usage-url[data-copy]').forEach(el => {
+      el.addEventListener('click', () => {
+        const text = el.dataset.copy;
+        const icon = el.querySelector('.copy-btn');
         navigator.clipboard.writeText(text).then(() => {
-          btn.classList.add('copied');
-          setTimeout(() => btn.classList.remove('copied'), 2000);
+          icon.classList.add('copied');
+          setTimeout(() => icon.classList.remove('copied'), 2000);
         });
       });
     });
