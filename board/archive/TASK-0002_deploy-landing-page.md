@@ -1,6 +1,6 @@
 ---
 type: task
-status: todo
+status: done
 created: 2026-03-26
 parent: NOTE-0002
 ---

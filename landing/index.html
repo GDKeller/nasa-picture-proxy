@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
-  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#0a0e17">
   <link rel="canonical" href="https://nasapicture.com/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta property="og:url" content="https://nasapicture.com/">
   <meta property="og:title" content="nasapicture.com — Today's Astronomy Picture of the Day">
-  <meta property="og:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta property="og:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.">
   <meta property="og:image" content="https://api.nasapicture.com/image.jpg">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="nasapicture.com — Today's Astronomy Picture of the Day">
-  <meta name="twitter:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta name="twitter:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.">
   <meta name="twitter:image" content="https://api.nasapicture.com/image.jpg">
   <script type="application/ld+json">
   {
@@ -24,7 +24,7 @@
     "@type": "WebApplication",
     "name": "nasapicture.com",
     "url": "https://nasapicture.com",
-    "description": "A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.",
+    "description": "A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.",
     "applicationCategory": "Utility",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0" },
@@ -558,6 +558,7 @@
           const dateEl = document.getElementById('caption-date');
           dateEl.textContent = data.date;
           dateEl.setAttribute('datetime', data.date);
+          dateEl.title = 'NASA publishes on Eastern Time';
           document.getElementById('hero-caption').classList.add('visible');
         }
       })
