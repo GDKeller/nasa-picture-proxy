@@ -152,9 +152,24 @@
       color: var(--silver-dim);
       text-decoration: none;
       transition: color 0.3s;
+      position: relative;
     }
 
-    .site-nav a:hover { color: #fff; text-decoration: underline; }
+    .site-nav a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease-out;
+    }
+
+    .site-nav a:hover { color: #fff; }
+    .site-nav a:hover::after { transform: scaleX(1); transform-origin: left; transition: transform 0.2s ease-in; }
 
     /* ── HERO ── */
     .hero {
@@ -292,9 +307,24 @@
       gap: 0.35rem;
       cursor: pointer;
       transition: color 0.2s;
+      position: relative;
     }
 
-    .usage-url:hover { color: #fff; text-decoration: underline; }
+    .usage-url::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease-out;
+    }
+
+    .usage-url:hover { color: #fff; }
+    .usage-url:hover::after { transform: scaleX(1); transform-origin: left; transition: transform 0.2s ease-in; }
 
     .copy-btn {
       background: none;
@@ -414,9 +444,24 @@
       color: var(--silver);
       text-decoration: none;
       transition: color 0.3s;
+      position: relative;
     }
 
-    footer a:hover { color: #fff; text-decoration: underline; }
+    footer a::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease-out;
+    }
+
+    footer a:hover { color: #fff; }
+    footer a:hover::after { transform: scaleX(1); transform-origin: left; transition: transform 0.2s ease-in; }
 
     .footer-sep {
       color: var(--border-bright);
