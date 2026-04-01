@@ -6,10 +6,11 @@
  * image bytes — no KV, no cron, no external storage.
  *
  * Routes:
- *   GET /      → today's APOD image (high res, falls back to standard)
- *   GET /sd    → today's APOD image (standard res)
- *   GET /info  → JSON metadata
- *   GET /about → plain-text description and attribution
+ *   GET /          → today's APOD image (high res, falls back to standard)
+ *   GET /sd        → today's APOD image (standard res)
+ *   GET /optimized → optimized image (≤1200px, auto WebP/AVIF)
+ *   GET /info      → JSON metadata
+ *   GET /about     → plain-text description and attribution
  */
 
 export interface Env {
@@ -144,6 +145,7 @@ function baseHeaders(origin: string, headers: Record<string, string> = {}): Reco
     "Link": [
       `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
       `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
+      `<${origin}/optimized>; rel="alternate"; type="image/*"; title="Optimized image"`,
       `<${origin}/info>; rel="describedby"`,
       `<${origin}/about>; rel="about"`,
     ].join(", "),
@@ -183,6 +185,7 @@ export default {
 
       const sdPaths = ["/sd", "/image-sd.jpg"];
       const hdPaths = ["/", "/image.jpg"];
+      const optimizedPaths = ["/optimized", "/image-optimized.jpg"];
 
       if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
         const apod = await findLatestImage(log, apiKey);
@@ -196,12 +199,47 @@ export default {
         res = new Response(upstream.body, {
           headers: baseHeaders(origin, { "Content-Type": contentType }),
         });
+      } else if (optimizedPaths.includes(pathname)) {
+        const apod = await findLatestImage(log, apiKey);
+        const imageUrl = apod.hdurl || apod.url;
+        validateImageUrl(imageUrl);
+
+        const imageOpts: RequestInitCfPropertiesImage = {
+          fit: "scale-down",
+          width: 1200,
+          quality: 85,
+        };
+
+        const accept = request.headers.get("Accept") || "";
+        if (/image\/avif/.test(accept)) {
+          imageOpts.format = "avif";
+        } else if (/image\/webp/.test(accept)) {
+          imageOpts.format = "webp";
+        }
+
+        log.push(`  [optimized] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
+
+        const upstream = await fetch(imageUrl, {
+          cf: { image: imageOpts },
+        });
+
+        if (!upstream.ok) {
+          throw new Error(`Image transform failed: ${upstream.status}`);
+        }
+
+        const contentType = upstream.headers.get("Content-Type") || "image/jpeg";
+
+        res = new Response(upstream.body, {
+          headers: baseHeaders(origin, { "Content-Type": contentType }),
+        });
       } else if (pathname === "/info") {
         const endpoints = {
           "/": "Today's APOD image (high resolution, falls back to standard)",
           "/image.jpg": "Same as / with file extension (for contexts that need one)",
           "/sd": "Today's APOD image (standard resolution)",
           "/image-sd.jpg": "Same as /sd with file extension",
+          "/optimized": "Optimized image (≤1200px, auto WebP/AVIF)",
+          "/image-optimized.jpg": "Same as /optimized with file extension",
           "/info": "JSON metadata for today's APOD",
           "/about": "Plain-text description and attribution",
         };
@@ -254,12 +292,14 @@ export default {
           `    <img src="${origin}/">`,
           "",
           "  Routes:",
-          "    /             HD image (default)",
-          "    /image.jpg    HD image (with extension)",
-          "    /sd           Standard resolution",
-          "    /image-sd.jpg Standard resolution (with extension)",
-          "    /info         JSON metadata",
-          "    /about        This page",
+          "    /                    HD image (default)",
+          "    /image.jpg           HD image (with extension)",
+          "    /sd                  Standard resolution",
+          "    /image-sd.jpg        Standard resolution (with extension)",
+          "    /optimized           Optimized (≤1200px, auto WebP/AVIF)",
+          "    /image-optimized.jpg Optimized (with extension)",
+          "    /info                JSON metadata",
+          "    /about               This page",
           "",
           "  Homepage: https://nasapicture.com",
           "",
@@ -272,7 +312,7 @@ export default {
         });
       } else {
         res = new Response(
-          JSON.stringify({ error: "Not found. Routes: /, /sd, /info, /about" }),
+          JSON.stringify({ error: "Not found. Routes: /, /sd, /optimized, /info, /about" }),
           { status: 404, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
         );
       }
@@ -288,6 +328,10 @@ export default {
     console.log(`────────────────────────────────────────`);
     console.log(`${request.method} ${pathname} → ${res.status} (${Date.now() - start}ms)`);
     for (const line of log) console.log(line);
+
+    if (request.method === "HEAD") {
+      return new Response(null, { status: res.status, headers: res.headers });
+    }
     return res;
   },
 };
