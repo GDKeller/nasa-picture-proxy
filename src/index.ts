@@ -95,7 +95,19 @@ async function findLatestImage(log: string[], apiKey: string): Promise<ApodRespo
   );
 }
 
+function validateImageUrl(url: string): void {
+  const parsed = new URL(url);
+  if (parsed.protocol !== "https:") {
+    throw new Error(`Blocked image fetch: non-HTTPS scheme (${parsed.protocol})`);
+  }
+  if (!parsed.hostname.endsWith(".nasa.gov")) {
+    throw new Error(`Blocked image fetch: unexpected host (${parsed.hostname})`);
+  }
+}
+
 async function fetchImageCached(log: string[], url: string): Promise<Response> {
+  validateImageUrl(url);
+
   const cache = caches.default;
   const cacheReq = new Request(url);
   const cached = await cache.match(cacheReq);
@@ -112,10 +124,16 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
     throw new Error(`Image fetch failed: ${res.status}`);
   }
 
+  const contentType = res.headers.get("Content-Type") || "image/jpeg";
+  const contentLength = res.headers.get("Content-Length");
+  const cacheHeaders: Record<string, string> = {
+    "Content-Type": contentType,
+    "Cache-Control": `public, max-age=${CACHE_TTL}`,
+  };
+  if (contentLength) cacheHeaders["Content-Length"] = contentLength;
+
   const cloned = res.clone();
-  await cache.put(cacheReq, new Response(cloned.body, {
-    headers: { ...Object.fromEntries(res.headers), "Cache-Control": `public, max-age=${CACHE_TTL}` },
-  }));
+  await cache.put(cacheReq, new Response(cloned.body, { headers: cacheHeaders }));
   return res;
 }
 
@@ -143,6 +161,13 @@ export default {
           "Access-Control-Max-Age": "86400",
         },
       });
+    }
+
+    if (request.method !== "GET") {
+      return new Response(
+        JSON.stringify({ error: "Method not allowed. This API only supports GET requests." }),
+        { status: 405, headers: { "Allow": "GET, OPTIONS", "Content-Type": "application/json" } },
+      );
     }
 
     const reqUrl = new URL(request.url);

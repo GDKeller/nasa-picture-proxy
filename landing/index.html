@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>nasapicture.com — Today's Astronomy Picture of the Day</title>
-  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta name="description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#0a0e17">
   <link rel="canonical" href="https://nasapicture.com/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta property="og:url" content="https://nasapicture.com/">
   <meta property="og:title" content="nasapicture.com — Today's Astronomy Picture of the Day">
-  <meta property="og:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta property="og:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.">
   <meta property="og:image" content="https://api.nasapicture.com/image.jpg">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="nasapicture.com — Today's Astronomy Picture of the Day">
-  <meta name="twitter:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.">
+  <meta name="twitter:description" content="A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.">
   <meta name="twitter:image" content="https://api.nasapicture.com/image.jpg">
   <script type="application/ld+json">
   {
@@ -24,7 +24,7 @@
     "@type": "WebApplication",
     "name": "nasapicture.com",
     "url": "https://nasapicture.com",
-    "description": "A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key.",
+    "description": "A stable proxy for NASA's Astronomy Picture of the Day. One URL, today's image, no API key needed. Embed the cosmos in your projects with zero configuration.",
     "applicationCategory": "Utility",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0" },
@@ -45,8 +45,8 @@
       --nasa-blue: #0032A0;
       --nasa-blue-light: #4d7fd9;
       --nasa-red: #e4002b;
-      --silver: #b8bcc6;
-      --silver-dim: #5a5f6b;
+      --silver: #eeeff2;
+      --silver-dim: #b8bcc6;
       --white: #e8eaed;
       --border: rgba(255, 255, 255, 0.06);
       --border-bright: rgba(255, 255, 255, 0.12);
@@ -455,14 +455,14 @@
 <body>
   <header class="site-header">
     <a href="/" class="logo">NASApicture<span class="logo-dot">.</span>com</a>
-    <h1 class="hero-tagline">Today's Astronomy Picture of the Day</h1>
+    <h1 id="site-heading" class="hero-tagline">Today's Astronomy Picture of the Day</h1>
     <nav class="site-nav" aria-label="Site navigation">
       <a href="https://api.nasapicture.com/about" target="_blank" rel="noopener noreferrer">/about</a>
     </nav>
   </header>
 
   <main>
-  <section class="hero">
+  <section class="hero" aria-labelledby="site-heading">
     <figure class="hero-image-area">
       <img
         src="https://api.nasapicture.com/"
@@ -474,7 +474,7 @@
       >
       <figcaption class="hero-caption" id="hero-caption">
         <p class="hero-caption-title" id="caption-title"></p>
-        <time class="hero-caption-date" id="caption-date" datetime=""></time>
+        <time class="hero-caption-date" id="caption-date"></time>
       </figcaption>
     </figure>
 
@@ -558,6 +558,7 @@
           const dateEl = document.getElementById('caption-date');
           dateEl.textContent = data.date;
           dateEl.setAttribute('datetime', data.date);
+          dateEl.title = 'NASA publishes on Eastern Time';
           document.getElementById('hero-caption').classList.add('visible');
         }
       })
