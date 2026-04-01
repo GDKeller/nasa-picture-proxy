@@ -12,20 +12,30 @@ APOD Proxy — a Cloudflare Worker that proxies NASA's Astronomy Picture of the 
 npm run dev        # Local dev server at http://localhost:8787
 npm run deploy     # Deploy to Cloudflare Workers
 npx tsc --noEmit   # Type-check (no build artifact — Wrangler bundles directly)
+npm run api        # API dev server only (no landing page)
+npm run log        # Tail both API and landing page logs
+npm run stop       # Kill dev servers
 ```
 
 ## Architecture
 
-Single-file Worker (`src/index.ts`) with four routes:
+Single-file Worker (`src/index.ts`) with these routes (plus `.jpg` aliases for each image endpoint):
 
 - `GET /` — proxies today's HD APOD image (falls back to standard if unavailable)
 - `GET /sd` — proxies the standard-res version
+- `GET /optimized` — optimized image (≤1200px, auto WebP/AVIF via Cloudflare Image Transformations)
 - `GET /info` — returns JSON metadata
 - `GET /about` — plain-text description and attribution
 
-Caching is handled entirely by Cloudflare's edge cache via `cf: { cacheTtl, cacheEverything }` on fetch calls — no KV, D1, or cron. Cache key changes naturally when the date rolls over (new date string = new API URL).
+Caching uses the Workers Cache API (`caches.default`) with a two-tier strategy — no KV, D1, or cron:
+- **Primary cache** (6h TTL): APOD metadata keyed by ET date, image bytes keyed by NASA URL
+- **Stale fallback** (24h TTL): same data under a `:stale` suffixed key, served when NASA's API is down or rate-limited
+
+Cache keys are date-based in `America/New_York` timezone, so they roll over at midnight ET.
 
 The `findLatestImage` function walks backwards from today up to `MAX_LOOKBACK_DAYS` (7) to skip video APODs.
+
+The landing page (`landing/index.html`) is a static site served at `nasapicture.com`. The Worker serves `api.nasapicture.com` and `get.nasapicture.com`.
 
 ## Environment
 

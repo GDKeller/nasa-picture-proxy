@@ -19,7 +19,8 @@ export interface Env {
 
 const NASA_APOD_URL = "https://api.nasa.gov/planetary/apod";
 const MAX_LOOKBACK_DAYS = 7;
-const CACHE_TTL = 3600;
+const CACHE_TTL = 21600;      // 6 hours — APOD changes once/day
+const STALE_CACHE_TTL = 86400; // 24 hours — fallback when NASA API is down/rate-limited
 
 interface ApodResponse {
   date: string;
@@ -41,20 +42,25 @@ function apodCacheUrl(key: string): string {
   return `http://apod-cache/${key}`;
 }
 
+function todayET(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+}
+
 async function fetchApod(log: string[], apiKey: string, date?: string): Promise<ApodResponse> {
-  const cacheKey = date ?? "today";
+  const resolvedDate = date ?? todayET();
+  const cacheKey = resolvedDate;
 
   const cache = caches.default;
   const cacheReq = new Request(apodCacheUrl(cacheKey));
+  const staleReq = new Request(apodCacheUrl(`${cacheKey}:stale`));
+
   const cached = await cache.match(cacheReq);
   if (cached) {
     log.push(`  [fetchApod] ${cacheKey} → cache HIT`);
     return cached.json() as Promise<ApodResponse>;
   }
 
-  const url = date
-    ? `${NASA_APOD_URL}?api_key=${apiKey}&date=${date}`
-    : `${NASA_APOD_URL}?api_key=${apiKey}`;
+  const url = `${NASA_APOD_URL}?api_key=${apiKey}&date=${resolvedDate}`;
 
   const res = await fetch(url);
 
@@ -64,6 +70,14 @@ async function fetchApod(log: string[], apiKey: string, date?: string): Promise<
   if (!res.ok) {
     const body = await res.text();
     log.push(`  [fetchApod] body=${body}`);
+
+    // Try stale cache before giving up
+    const stale = await cache.match(staleReq);
+    if (stale) {
+      log.push(`  [fetchApod] ${cacheKey} → stale cache fallback`);
+      return stale.json() as Promise<ApodResponse>;
+    }
+
     throw new NasaApiError(res.status,
       res.status === 429
         ? "NASA API rate limit exceeded — try again later"
@@ -72,9 +86,15 @@ async function fetchApod(log: string[], apiKey: string, date?: string): Promise<
   }
 
   const apod = await res.json() as ApodResponse;
-  await cache.put(cacheReq, new Response(JSON.stringify(apod), {
-    headers: { "Cache-Control": `public, max-age=${CACHE_TTL}` },
-  }));
+  const body = JSON.stringify(apod);
+  await Promise.all([
+    cache.put(cacheReq, new Response(body, {
+      headers: { "Cache-Control": `public, max-age=${CACHE_TTL}` },
+    })),
+    cache.put(staleReq, new Response(body, {
+      headers: { "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` },
+    })),
+  ]);
   return apod;
 }
 
@@ -82,9 +102,9 @@ async function findLatestImage(log: string[], apiKey: string): Promise<ApodRespo
   let videoStreak = 0;
 
   for (let i = 0; i <= MAX_LOOKBACK_DAYS; i++) {
-    const date = i === 0
-      ? undefined
-      : (() => { const d = new Date(); d.setDate(d.getDate() - i); return d.toLocaleDateString("en-CA", { timeZone: "America/New_York" }); })();
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const date = d.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
     const apod = await fetchApod(log, apiKey, date);
     if (apod.media_type === "image") return apod;
@@ -110,7 +130,9 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   validateImageUrl(url);
 
   const cache = caches.default;
-  const cacheReq = new Request(url);
+  const cacheReq = new Request(`http://apod-image-cache/${encodeURIComponent(url)}`);
+  const staleReq = new Request(`http://apod-image-cache/${encodeURIComponent(url)}:stale`);
+
   const cached = await cache.match(cacheReq);
   if (cached) {
     log.push(`  [fetchImage] ${url.slice(0, 80)}… → cache HIT`);
@@ -122,6 +144,12 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   log.push(`  [fetchImage] ${url.slice(0, 80)}… → ${res.status}`);
 
   if (!res.ok) {
+    // Try stale cache before giving up
+    const stale = await cache.match(staleReq);
+    if (stale) {
+      log.push(`  [fetchImage] ${url.slice(0, 80)}… → stale cache fallback`);
+      return stale;
+    }
     throw new Error(`Image fetch failed: ${res.status}`);
   }
 
@@ -133,9 +161,14 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   };
   if (contentLength) cacheHeaders["Content-Length"] = contentLength;
 
-  const cloned = res.clone();
-  await cache.put(cacheReq, new Response(cloned.body, { headers: cacheHeaders }));
-  return res;
+  const staleCacheHeaders = { ...cacheHeaders, "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` };
+
+  const arrayBuffer = await res.arrayBuffer();
+  await Promise.all([
+    cache.put(cacheReq, new Response(arrayBuffer, { headers: cacheHeaders })),
+    cache.put(staleReq, new Response(arrayBuffer, { headers: staleCacheHeaders })),
+  ]);
+  return new Response(arrayBuffer, { headers: cacheHeaders });
 }
 
 function baseHeaders(origin: string, headers: Record<string, string> = {}): Record<string, string> {
