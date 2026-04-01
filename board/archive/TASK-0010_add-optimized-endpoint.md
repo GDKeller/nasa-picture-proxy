@@ -1,6 +1,6 @@
 ---
 type: task
-status: todo
+status: done
 created: 2026-04-01
 ---
 
