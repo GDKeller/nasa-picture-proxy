@@ -1,7 +1,8 @@
 ---
 type: note
-status: inbox
+status: refined
 created: 2026-04-01
+tasks: [TASK-0012, TASK-0013, TASK-0014]
 ---
 
 # Add Vite for SCSS and HMR
@@ -19,8 +20,8 @@ The landing page (`landing/index.html`) is currently a single HTML file with all
 - Add a `build` step that outputs a static `dist/` for production deployment
 - Vite's built-in PostCSS pipeline can also handle Tailwind if that's added later
 
-## Open questions
+## Resolved questions
 
-- Should Vite live at the project root or in a `landing/` sub-package with its own `vite.config.ts`?
-- Does the production landing page stay on Cloudflare Pages, or continue deploying as static files alongside the Worker?
-- Worth adding Tailwind at the same time, or keep it pure SCSS for now?
+- **Vite location**: `landing/` sub-package with its own `package.json` and `vite.config.ts`
+- **Deployment**: Stays on Cloudflare Pages (`nasapicture-landing` project), deploy target changes from `landing/` to `landing/dist/`
+- **Styling**: Pure SCSS, no Tailwind
