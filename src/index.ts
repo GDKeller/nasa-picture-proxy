@@ -39,8 +39,10 @@ class NasaApiError extends Error {
   }
 }
 
+const inflightApod = new Map<string, Promise<ApodResponse>>();
+
 function apodCacheUrl(key: string): string {
-  return `http://apod-cache/${key}`;
+  return `https://api.nasapicture.com/_cache/apod/${key}`;
 }
 
 function todayET(): string {
@@ -61,6 +63,27 @@ async function fetchApod(log: string[], apiKey: string, date?: string): Promise<
     return cached.json() as Promise<ApodResponse>;
   }
 
+  // Deduplicate concurrent requests for the same date
+  const inflight = inflightApod.get(cacheKey);
+  if (inflight) {
+    log.push(`  [fetchApod] ${cacheKey} → coalesced with in-flight request`);
+    return inflight;
+  }
+
+  const promise = fetchApodFromNasa(log, apiKey, resolvedDate, cacheKey, cacheReq, staleReq);
+  inflightApod.set(cacheKey, promise);
+  try {
+    return await promise;
+  } finally {
+    inflightApod.delete(cacheKey);
+  }
+}
+
+async function fetchApodFromNasa(
+  log: string[], apiKey: string, resolvedDate: string, cacheKey: string,
+  cacheReq: Request, staleReq: Request,
+): Promise<ApodResponse> {
+  const cache = caches.default;
   const url = `${NASA_APOD_URL}?api_key=${apiKey}&date=${resolvedDate}`;
 
   const res = await fetch(url);
@@ -88,13 +111,11 @@ async function fetchApod(log: string[], apiKey: string, date?: string): Promise<
 
   const apod = await res.json() as ApodResponse;
   const body = JSON.stringify(apod);
+  const cacheHeaders = { "Content-Type": "application/json", "Cache-Control": `public, max-age=${CACHE_TTL}` };
+  const staleHeaders = { "Content-Type": "application/json", "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` };
   await Promise.all([
-    cache.put(cacheReq, new Response(body, {
-      headers: { "Cache-Control": `public, max-age=${CACHE_TTL}` },
-    })),
-    cache.put(staleReq, new Response(body, {
-      headers: { "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` },
-    })),
+    cache.put(cacheReq, new Response(body, { headers: cacheHeaders })),
+    cache.put(staleReq, new Response(body, { headers: staleHeaders })),
   ]);
   return apod;
 }
@@ -131,8 +152,8 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   validateImageUrl(url);
 
   const cache = caches.default;
-  const cacheReq = new Request(`http://apod-image-cache/${encodeURIComponent(url)}`);
-  const staleReq = new Request(`http://apod-image-cache/${encodeURIComponent(url)}:stale`);
+  const cacheReq = new Request(`https://api.nasapicture.com/_cache/image/${encodeURIComponent(url)}`);
+  const staleReq = new Request(`https://api.nasapicture.com/_cache/image/${encodeURIComponent(url)}:stale`);
 
   const cached = await cache.match(cacheReq);
   if (cached) {
@@ -181,7 +202,7 @@ async function fetchImageDimensions(log: string[], imageUrl: string): Promise<Im
   validateImageUrl(imageUrl);
 
   const cache = caches.default;
-  const cacheKey = `http://apod-dimensions-cache/${encodeURIComponent(imageUrl)}`;
+  const cacheKey = `https://api.nasapicture.com/_cache/dimensions/${encodeURIComponent(imageUrl)}`;
   const cacheReq = new Request(cacheKey);
   const staleReq = new Request(`${cacheKey}:stale`);
 
