@@ -2026,4 +2026,321 @@ _**Agent (claude-opus-4-6 2026-04-04 03:42:46Z)**_
 Stage specstory history reorganization
 
 `git add '.specstory/history/2026-03-26_03-14-12Z-analyze-this-codebase.md' '.specstory/history/2026-03-26_03-22-19Z-lets-think-about-users.md' '.specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md' '.specstory/history/2026-03-26_22-58-18Z-hm-i-m-still.md' '.specstory/history/2026-03-27_00-43-05Z-so-in-the-server.md' '.specstory/history/2026-03-27_12-27-11Z-lets-push-this-up.md' '.specstory/history/2026-03-29_05-34-14Z-check-to-see-if.md' '.specstory/history/2026-03-30_01-53-02Z-i-have-the-api.md' '.specstory/history/2026-03-30_09-34-32Z-command-name-compact-command.md' '.specstory/history/2026-04-01_01-00-01Z-command-message-board-add.md' '.specstory/history/2026-04-01_01-43-47Z-command-name-clear-command.md' '.specstory/history/2026-04-01_05-14-16Z-i-dont-think-all.md' '.specstory/history/2026-04-01_08-30-38Z-command-name-clear-command.md' '.specstory/history/2026-04-01_09-47-27Z-command-name-clear-command.md' '.specstory/history/2026-04-01_10-40-26Z-command-name-clear-command.md' '.specstory/history/2026-04-01_14-07-51Z-command-message-board-add.md' '.specstory/history/2026-04-01_14-19-59Z-command-name-clear-command.md' '.specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md' '.specstory/history/2026/'`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 03:42:53Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Commit specstory history reorganization
+
+```bash
+git commit -m "$(cat <<'EOF'
+chore: organize specstory history into year/month directories
+EOF
+)" && git status
+```
+
+```text
+[dev 5bcbef8] chore: organize specstory history into year/month directories
+ 27 files changed, 20617 insertions(+)
+ create mode 100644 .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+ rename .specstory/history/{ => 2026/03}/2026-03-26_03-14-12Z-analyze-this-codebase.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-26_03-22-19Z-lets-think-about-users.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-26_07-27-45Z-the-error-messages-on.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-26_22-58-18Z-hm-i-m-still.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-27_00-43-05Z-so-in-the-server.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-27_12-27-11Z-lets-push-this-up.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-29_05-34-14Z-check-to-see-if.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-30_01-53-02Z-i-have-the-api.md (100%)
+ rename .specstory/history/{ => 2026/03}/2026-03-30_09-34-32Z-command-name-compact-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_01-00-01Z-command-message-board-add.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_01-43-47Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_05-14-16Z-i-dont-think-all.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_08-30-38Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_09-47-27Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_10-40-26Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_14-07-51Z-command-message-board-add.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-01_14-19-59Z-command-name-clear-command.md (100%)
+ create mode 100644 .specstory/history/2026/04/2026-04-01_16-59-17Z-we-didn-t-fix.md
+ create mode 100644 .specstory/history/2026/04/2026-04-01_23-56-29Z-command-name-compact-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-02_06-36-41Z-command-name-plugin-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-02_07-15-21Z-command-name-plugin-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-02_07-15-21Z-local-command-stdout-chrome.md
+ create mode 100644 .specstory/history/2026/04/2026-04-02_07-56-58Z-command-name-clear-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-02_13-04-01Z-command-name-clear-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-04_03-11-38Z-running-npm-run-log.md
+ create mode 100644 .specstory/history/2026/04/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+On branch dev
+Your branch is ahead of 'origin/dev' by 7 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+	modified:   landing/src/styles/_endpoints.scss
+	modified:   landing/src/styles/_header.scss
+	modified:   landing/src/styles/_hero.scss
+	modified:   package.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 03:42:57Z)**_
+
+Committed: `chore: organize specstory history into year/month directories` — 27 files reorganized into `2026/03/` and `2026/04/` subdirectories.
+
+Remaining unstaged changes are the SCSS and package.json modifications from your landing page work.
+
+---
+
+_**User (2026-04-04 04:04:07Z)**_
+
+<command-message>commit-commands:commit</command-message>
+<command-name>/commit-commands:commit</command-name>
+
+_**User (2026-04-04 04:04:07Z)**_
+
+## Context
+
+- Current git status: On branch dev
+Your branch is ahead of 'origin/dev' by 7 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+	modified:   landing/src/styles/_endpoints.scss
+	modified:   landing/src/styles/_header.scss
+	modified:   landing/src/styles/_hero.scss
+	modified:   package.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+- Current git diff (staged and unstaged changes): diff --git a/.specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md b/.specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+index 8d7382c..c295d47 100644
+--- a/.specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
++++ b/.specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+@@ -2026,4 +2026,74 @@ _**Agent (claude-opus-4-6 2026-04-04 03:42:46Z)**_
+ Stage specstory history reorganization
+ 
+ `git add '.specstory/history/2026-03-26_03-14-12Z-analyze-this-codebase.md' '.specstory/history/2026-03-26_03-22-19Z-lets-think-about-users.md' '.specstory/history/2026-03-26_07-27-45Z-the-error-messages-on.md' '.specstory/history/2026-03-26_22-58-18Z-hm-i-m-still.md' '.specstory/history/2026-03-27_00-43-05Z-so-in-the-server.md' '.specstory/history/2026-03-27_12-27-11Z-lets-push-this-up.md' '.specstory/history/2026-03-29_05-34-14Z-check-to-see-if.md' '.specstory/history/2026-03-30_01-53-02Z-i-have-the-api.md' '.specstory/history/2026-03-30_09-34-32Z-command-name-compact-command.md' '.specstory/history/2026-04-01_01-00-01Z-command-message-board-add.md' '.specstory/history/2026-04-01_01-43-47Z-command-name-clear-command.md' '.specstory/history/2026-04-01_05-14-16Z-i-dont-think-all.md' '.specstory/history/2026-04-01_08-30-38Z-command-name-clear-command.md' '.specstory/history/2026-04-01_09-47-27Z-command-name-clear-command.md' '.specstory/history/2026-04-01_10-40-26Z-command-name-clear-command.md' '.specstory/history/2026-04-01_14-07-51Z-command-message-board-add.md' '.specstory/history/2026-04-01_14-19-59Z-command-name-clear-command.md' '.specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md' '.specstory/history/2026/'`
++
++```text
++(Bash completed with no output)
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 03:42:53Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Commit specstory history reorganization
++
++```bash
++git commit -m "$(cat <<'EOF'
++chore: organize specstory history into year/month directories
++EOF
++)" && git status
++```
++
++```text
++[dev 5bcbef8] chore: organize specstory history into year/month directories
++ 27 files changed, 20617 insertions(+)
++ create mode 100644 .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
++ rename .specstory/history/{ => 2026/03}/2026-03-26_03-14-12Z-analyze-this-codebase.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-26_03-22-19Z-lets-think-about-users.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-26_07-27-45Z-the-error-messages-on.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-26_22-58-18Z-hm-i-m-still.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-27_00-43-05Z-so-in-the-server.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-27_12-27-11Z-lets-push-this-up.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-29_05-34-14Z-check-to-see-if.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-30_01-53-02Z-i-have-the-api.md (100%)
++ rename .specstory/history/{ => 2026/03}/2026-03-30_09-34-32Z-command-name-compact-command.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_01-00-01Z-command-message-board-add.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_01-43-47Z-command-name-clear-command.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_05-14-16Z-i-dont-think-all.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_08-30-38Z-command-name-clear-command.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_09-47-27Z-command-name-clear-command.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_10-40-26Z-command-name-clear-command.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_14-07-51Z-command-message-board-add.md (100%)
++ rename .specstory/history/{ => 2026/04}/2026-04-01_14-19-59Z-command-name-clear-command.md (100%)
++ create mode 100644 .specstory/history/2026/04/2026-04-01_16-59-17Z-we-didn-t-fix.md
++ create mode 100644 .specstory/history/2026/04/2026-04-01_23-56-29Z-command-name-compact-command.md
++ create mode 100644 .specstory/history/2026/04/2026-04-02_06-36-41Z-command-name-plugin-command.md
++ create mode 100644 .specstory/history/2026/04/2026-04-02_07-15-21Z-command-name-plugin-command.md
++ create mode 100644 .specstory/history/2026/04/2026-04-02_07-15-21Z-local-command-stdout-chrome.md
++ create mode 100644 .specstory/history/2026/04/2026-04-02_07-56-58Z-command-name-clear-command.md
++ create mode 100644 .specstory/history/2026/04/2026-04-02_13-04-01Z-command-name-clear-command.md
++ create mode 100644 .specstory/history/2026/04/2026-04-04_03-11-38Z-running-npm-run-log.md
++ create mode 100644 .specstory/history/2026/04/2026-04-04_03-23-11Z-command-message-specstory-guard.md
++On branch dev
++Your branch is ahead of 'origin/dev' by 7 commits.
++  (use "git push" to publish your local commits)
++
++Changes not staged for commit:
++  (use "git add <file>..." to update what will be committed)
++  (use "git restore <file>..." to discard changes in working directory)
++	modified:   .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
++	modified:   landing/src/styles/_endpoints.scss
++	modified:   landing/src/styles/_header.scss
++	modified:   landing/src/styles/_hero.scss
++	modified:   package.json
++
++no changes added to commit (use "git add" and/or "git commit -a")
++```
+ </details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 03:42:57Z)**_
++
++Committed: `chore: organize specstory history into year/month directories` — 27 files reorganized into `2026/03/` and `2026/04/` subdirectories.
++
++Remaining unstaged changes are the SCSS and package.json modifications from your landing page work.
+diff --git a/landing/src/styles/_endpoints.scss b/landing/src/styles/_endpoints.scss
+index 68961cb..580146b 100644
+--- a/landing/src/styles/_endpoints.scss
++++ b/landing/src/styles/_endpoints.scss
+@@ -13,7 +13,7 @@
+     text-transform: uppercase;
+     color: var(--silver);
+     letter-spacing: 0.05em;
+-    margin-bottom: 1.0rem;
++    margin-bottom: 0.5rem;
+     padding-left: 0.5rem;
+   }
+ 
+@@ -39,7 +39,7 @@
+   align-items: baseline;
+   position: relative;
+   gap: 1.25rem;
+-  padding: 0.75rem 1.0rem;
++  padding: 0.5rem 1.0rem;
+   border-bottom: 1px solid var(--border);
+   text-decoration: none;
+   transition: background 0.2s;
+diff --git a/landing/src/styles/_header.scss b/landing/src/styles/_header.scss
+index e29dbe0..7afbcb7 100644
+--- a/landing/src/styles/_header.scss
++++ b/landing/src/styles/_header.scss
+@@ -21,7 +21,7 @@
+   font-family: var(--font-sans);
+   font-weight: var(--font-weight-regular);
+   font-size: 1rem;
+-  color: var(--silver-dim);
++  color: var(--silver-dimmer);
+   text-decoration: none;
+ 
+   @media (min-width: 640px) {
+diff --git a/landing/src/styles/_hero.scss b/landing/src/styles/_hero.scss
+index 8e7ea6a..eb47810 100644
+--- a/landing/src/styles/_hero.scss
++++ b/landing/src/styles/_hero.scss
+@@ -14,7 +14,7 @@
+   padding: 1rem 1.2rem 0;
+   margin-left: auto;
+   margin-right: auto;
+-  margin-bottom: 6rem;
++  margin-bottom: 10rem;
+   max-width: 100%;
+ 
+   @media (min-width: 640px) {
+@@ -37,9 +37,9 @@
+   font-size: 0.8rem;
+   line-height: 0.8em;
+   font-weight: var(--font-weight-medmium);
+-  color: var(--silver-dim);
++  color: var(--silver-dimmer);
+   white-space: nowrap;
+-  letter-spacing: 0.04em;
++  letter-spacing: 0.05em;
+   word-spacing: 0.1em;
+   opacity: 0;
+   animation: fade-in 0.8s ease 0.3s forwards;
+@@ -49,7 +49,7 @@
+   }
+ 
+   @media (min-width: 768px) {
+-    font-size: 1.0rem;
++    font-size: 0.9rem;
+     text-align: center;
+   }
+ }
+@@ -92,18 +92,18 @@
+ .hero-caption-title {
+   font-family: var(--font-serif);
+   font-weight: var(--font-weight-regular);
+-  font-size: 1.3rem;
++  font-size: 1.2rem;
+   letter-spacing: 0.03em;
+   word-spacing: 0.02em;
+   color: var(--silver);
+-  margin-bottom: 0.5rem;
++  margin-bottom: 0.75rem;
+ }
+ 
+ .hero-caption-date {
+   font-family: var(--font-sans);
+   font-size: 0.8rem;
+   letter-spacing: 0.04em;
+-  color: var(--silver-dim);
++  color: var(--silver-dimmer);
+ }
+ 
+ .usage-row {
+@@ -127,7 +127,7 @@
+   align-items: baseline;
+   gap: 0.5rem;
+   font-size: 0.9rem;
+-  color: var(--silver-dim);
++  color: var(--silver-dimmer);
+ }
+ 
+ code {
+diff --git a/package.json b/package.json
+index 14ecd9a..9684ad2 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,7 @@
+   "name": "apod-proxy",
+   "private": true,
+   "scripts": {
+-    "dev": "mkdir -p logs && wrangler dev > logs/api.log 2>&1 & npm run dev:landing > logs/landing.log 2>&1 & echo 'Dev servers started\n  API:     http://localhost:8787\n  Landing: http://localhost:8788\n\nRun npm run log to watch output'",
++    "dev": "mkdir -p logs && wrangler dev > logs/api.log 2>&1 & npm run dev:landing < /dev/null > logs/landing.log 2>&1 & echo 'Dev servers started\n  API:     http://localhost:8787\n  Landing: http://localhost:8788\n\nRun npm run log to watch output'",
+     "api": "wrangler dev",
+     "dev:landing": "cd landing && npx vite",
+     "log": "tail -f logs/api.log logs/landing.log",
+- Current branch: dev
+- Recent commits: 5bcbef8 chore: organize specstory history into year/month directories
+8d8f2e3 feat(landing): add Vite build toolchain and extract styles to SCSS
+aa08f42 chore(board): extract Vite tasks from NOTE-0015 and archive
+c87edc2 fix(landing): keep focus toggle above overlay in focus mode
+e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+8b5833d chore: add specstory history and board planning notes
+8436587 Merge pull request #3 from GDKeller/dev
+614adbe Merge branch 'main' into dev
+47d0ad2 chore(board): archive completed TASK-0010
+cc1c24a feat(api): add /optimized endpoint with Cloudflare Image Transformations
+
+## Your task
+
+Based on the above changes, create a single git commit.
+
+You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 04:04:11Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage landing style tweaks and package.json fix
+
+`git add landing/src/styles/_endpoints.scss landing/src/styles/_header.scss landing/src/styles/_hero.scss package.json .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md`
 </details></tool-use>
