@@ -54,19 +54,24 @@
   <main>
     <section class="hero" aria-labelledby="site-heading">
       <figure class="hero-image-area">
-        <img src="https://api.nasapicture.com/optimized" alt="NASA Astronomy Picture of the Day" class="hero-img"
-          id="hero-img" loading="eager" fetchpriority="high">
+        <div class="hero-img-wrapper" id="hero-img-wrapper">
+          <img src="https://api.nasapicture.com/optimized" alt="NASA Astronomy Picture of the Day" class="hero-img"
+            id="hero-img" loading="eager" fetchpriority="high">
+        </div>
         <figcaption class="hero-caption" id="hero-caption">
           <p class="hero-caption-title" id="caption-title"></p>
           <time class="hero-caption-date" id="caption-date"></time>
         </figcaption>
       </figure>
+    </section>
 
+    <section class="usage">
+      <div class="divider"></div>
       <div class="usage-row">
-        <p class="usage-item"><span>New day, new photo, same URL</span> <code class="usage-url" title="Click to copy"
+        <p class="usage-item"><span>New day, new photo, same URL:</span> <code class="usage-url animated-bottom-border" title="Click to copy"
             data-copy="https://api.nasapicture.com/">https://api.nasapicture.com<span class="copy-btn" aria-label="Copy URL"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="copied-badge"><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code>
         </p>
-        <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url"
+        <p class="usage-item"><span>Use it anywhere you'd put an image URL</span> <code class="usage-url animated-bottom-border"
             title="Click to copy"
             data-copy='&lt;img src="https://api.nasapicture.com/"&gt;'>&lt;img src="https://api.nasapicture.com/"&gt;<span class="copy-btn" aria-label="Copy img tag"><svg class="copy" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span><span class="copied-badge"><svg class="check" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="copied-text">Copied</span></span></code>
         </p>
@@ -75,7 +80,7 @@
 
     <section class="info">
       <div class="fade-up">
-        <h2>Endpoints</h2>
+        <h2>API Endpoints</h2>
         <nav class="endpoint-list" aria-label="API endpoints">
           <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/" target="_blank"
             rel="noopener noreferrer">
@@ -128,6 +133,7 @@
         d="M4.077 10.615A1 1 0 0 0 5 12h14a1 1 0 0 0 .923-1.385l-3.077-7.384A2 2 0 0 0 15 2H9a2 2 0 0 0-1.846 1.23Z" />
       <path d="M8 20a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z" />
     </svg>
+    <span class="label">Focus</span>
   </button>
   <div class="focus-overlay" id="focus-overlay"></div>
 
@@ -135,6 +141,8 @@
     const PROD_BASE = 'https://api.nasapicture.com';
     const API_BASE = location.hostname === 'localhost' ? `http://localhost:8787` : PROD_BASE;
     const img = document.getElementById('hero-img');
+    const wrapper = document.getElementById('hero-img-wrapper');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function onImageReady() { img.classList.add('loaded'); }
 
@@ -154,10 +162,13 @@
       });
     });
 
-    // Fetch APOD metadata for caption (image loads directly from proxy)
-    fetch(`${API_BASE}/info`)
-      .then(r => r.json())
-      .then(data => {
+    // Fetch metadata + thumbnail in parallel
+    const infoPromise = fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
+    const thumbPromise = fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
+
+    Promise.all([infoPromise, thumbPromise]).then(([data, thumbUrl]) => {
+      if (data) {
+        // Set caption
         if (data.title) {
           img.alt = data.title;
           document.getElementById('caption-title').textContent = data.title;
@@ -167,10 +178,26 @@
           dateEl.title = 'NASA publishes on Eastern Time';
           document.getElementById('hero-caption').classList.add('visible');
         }
-      })
-      .catch(() => { });
 
-    img.addEventListener('load', onImageReady);
+        // Pre-size container with aspect ratio from dimensions
+        if (data.width && data.height) {
+          wrapper.style.aspectRatio = `${data.width} / ${data.height}`;
+        }
+      }
+
+      // Show scaled-up thumbnail as placeholder
+      if (thumbUrl) {
+        wrapper.style.backgroundImage = `url(${thumbUrl})`;
+        wrapper.classList.add('has-thumb');
+      }
+    });
+
+    img.addEventListener('load', () => {
+      if (prefersReducedMotion) {
+        img.style.opacity = '1';
+      }
+      onImageReady();
+    });
 
     // Copy on click
     document.querySelectorAll('.usage-url[data-copy]').forEach(el => {

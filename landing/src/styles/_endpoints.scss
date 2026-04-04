@@ -22,12 +22,6 @@
   }
 }
 
-.divider {
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--border-bright), transparent);
-  margin-bottom: 3rem;
-}
-
 .endpoint-list {
   display: flex;
   flex-direction: column;
@@ -40,9 +34,23 @@
   position: relative;
   gap: 1.25rem;
   padding: 0.5rem 1.0rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--void-up);
   text-decoration: none;
-  transition: background 0.2s;
+  transition: background 0.3s;
+
+  &.animated-bottom-border {
+    &::after {
+      opacity: 0.2;
+      bottom: 0;
+      transition-duration: 0.2s;
+    }
+
+    &:hover::after {
+      opacity: 0.2;
+      bottom: 0;
+      transition-duration: 0.35s;
+    }
+  }
 
   &:last-child {
     border-bottom: none;
@@ -61,9 +69,9 @@
 .endpoint-route {
   background: none;
   font-family: var(--font-mono);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
   color: var(--silver-dim);
-  min-width: 5rem;
+  min-width: 6rem;
   transition: color 0.2s;
 }
 
@@ -77,7 +85,7 @@
 .endpoint-type {
   background: none;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   color: var(--silver-dim);
   margin-left: auto;
   white-space: nowrap;

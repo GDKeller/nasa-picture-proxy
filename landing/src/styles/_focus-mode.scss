@@ -4,13 +4,15 @@
   right: 1.2rem;
   z-index: 60;
   background: none;
+  flex-direction: column;
   border: none;
   color: var(--silver-dimmer);
   cursor: pointer;
   display: flex;
   align-items: center;
   padding: 0.3rem;
-  transition: color 3.0s ease-in-out;
+  gap: 0.25rem;
+  transition: color 0.8s ease-in-out;
 
   @media (min-width: 640px) {
     top: 1.6rem;
@@ -22,9 +24,21 @@
     height: 1rem;
   }
 
+  .label {
+    color: var(--silver-dimmer);
+    font-size: 0.5rem;
+    letter-spacing: 0.03em;
+    transition: color 0.8s ease-in-out;
+  }
+
   &:hover {
     color: var(--white);
     transition: color 0.2s ease-in-out;
+
+    .label {
+      color: var(--white);
+      transition: color 0.2s ease-in-out;
+    }
   }
 }
 
@@ -52,11 +66,21 @@ body.focus-mode {
   }
 
   .focus-toggle {
-    color: var(--silver-dimmer);
+    color: var(--silver-dimmest);
+
+    .label {
+      color: var(--silver-dimmest);
+    }
+
     
     &:hover {
       color: var(--white);
       transition: color 0.2s ease-in-out;
+      
+      .label {
+        color: var(--white);
+        transition: color 0.2s ease-in-out;
+      }
     }
   }
 }

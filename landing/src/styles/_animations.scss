@@ -20,6 +20,28 @@
   }
 }
 
+.animated-bottom-border {
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -0.25em;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--silver-dimmer);
+    transform: scale(0, 0.5);
+    transform-origin: right;
+    transition: transform 0.2s ease-out;
+  }
+
+  &:hover::after {
+    transform: scale(1, 0.5);
+    transform-origin: left;
+    transition: transform 0.2s ease-in;
+  }
+}
+
+
 // Reduced motion
 @media (prefers-reduced-motion: reduce) {
   *,
