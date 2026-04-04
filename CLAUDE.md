@@ -9,12 +9,16 @@ APOD Proxy — a Cloudflare Worker that proxies NASA's Astronomy Picture of the 
 ## Commands
 
 ```bash
-npm run dev        # Local dev server at http://localhost:8787
+npm run dev        # Start API (localhost:8787) + landing (localhost:8788) in background
 npm run deploy     # Deploy to Cloudflare Workers
 npx tsc --noEmit   # Type-check (no build artifact — Wrangler bundles directly)
 npm run api        # API dev server only (no landing page)
+npm run dev:landing # Landing page Vite dev server only
 npm run log        # Tail both API and landing page logs
+npm run log:tail   # Show last 20 lines of both logs
 npm run stop       # Kill dev servers
+npm run build:landing   # Vite production build for landing page
+npm run deploy:landing  # Deploy landing to Cloudflare Pages
 ```
 
 ## Architecture
@@ -35,7 +39,7 @@ Cache keys are date-based in `America/New_York` timezone, so they roll over at m
 
 The `findLatestImage` function walks backwards from today up to `MAX_LOOKBACK_DAYS` (7) to skip video APODs.
 
-The landing page (`landing/index.html`) is a static site served at `nasapicture.com`. The Worker serves `api.nasapicture.com` and `get.nasapicture.com`.
+The landing page (`landing/`) is built with Vite and SCSS, served at `nasapicture.com` via Cloudflare Pages. Source is `landing/index.html` with styles in `landing/src/styles/` (8 SCSS partials). The Worker serves `api.nasapicture.com` and `get.nasapicture.com`.
 
 ## Environment
 
@@ -54,9 +58,9 @@ Everyone — developers integrating the API into dashboards and side projects, t
 **Awe + simplicity.** Visitors should feel wonder at the cosmos (the APOD image does the heavy lifting) and relief at how easy the tool is. The design should get out of the way of the content while still feeling crafted.
 
 ### Aesthetic Direction
-- **Theme**: Dark space — deep navy (#0a0e17) with atmospheric depth (starfield, glows), not flat black
-- **Accent**: Warm amber/gold (#e8a838) — deliberate contrast to typical blue/purple space sites
-- **Typography**: Instrument Serif (headings), DM Sans (body), JetBrains Mono (code) — no generic fonts
+- **Theme**: Dark space — deep void (#05070c) with atmospheric depth, not flat black
+- **Accent**: Warm amber/gold (#e8a838) — planned but not yet implemented; current palette is monochrome silver with NASA blue
+- **Typography**: Source Serif 4 Display (headings), Source Sans 3 (body), Source Code Pro (code) — Adobe Typekit, no generic fonts
 - **Layout**: Generous whitespace, content-forward, max-width constrained (~5xl)
 - **Motion**: Subtle and purposeful — twinkling stars, staggered fade-ins, gentle hover lifts. Always respect `prefers-reduced-motion`
 - **Anti-references**: No AI slop aesthetics, no purple gradients on white, no cookie-cutter SaaS layouts
@@ -66,7 +70,7 @@ Everyone — developers integrating the API into dashboards and side projects, t
 2. **Earn trust through restraint** — fewer elements, better. If it doesn't serve the visitor, remove it.
 3. **Craft in the details** — personality lives in small moments (ASCII art, code comments, hover states), not in loud design choices.
 4. **Accessible by default** — WCAG AA contrast, semantic HTML, reduced-motion alternatives. Accessibility is not optional.
-5. **One file, zero friction** — the landing page mirrors the API philosophy: simple to deploy, simple to understand.
+5. **Zero friction** — the landing page mirrors the API philosophy: simple to deploy, simple to understand.
 
 ## Project Board
 
