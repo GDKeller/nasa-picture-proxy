@@ -2075,12 +2075,6 @@ _**User (2026-04-04 04:17:48Z)**_
 
 _**User (2026-04-04 04:18:00Z)**_
 
-<command-message>impeccable:critique</command-message>
-<command-name>/impeccable:critique</command-name>
-<command-args>the dev site at http://localhost:8788/</command-args>
-
-_**User (2026-04-04 04:18:00Z)**_
-
 Base directory for this skill: /Users/grant/.claude/plugins/marketplaces/impeccable/.claude/skills/critique
 
 ## MANDATORY PREPARATION
@@ -2279,6 +2273,12 @@ After presenting the summary, tell the user:
 > Re-run `/critique` after fixes to see your score improve.
 
 ARGUMENTS: the dev site at http://localhost:8788/
+
+_**User (2026-04-04 04:18:00Z)**_
+
+<command-message>impeccable:critique</command-message>
+<command-name>/impeccable:critique</command-name>
+<command-args>the dev site at http://localhost:8788/</command-args>
 
 ---
 
@@ -5049,3 +5049,892 @@ e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
 Based on the above changes, create a single git commit.
 
 You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:25:54Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage new board notes and specstory
+
+`git add board/planning/NOTE-0018_cf-thumbnail-placeholder.md board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:25:58Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Commit new board planning notes
+
+```bash
+git commit -m "$(cat <<'EOF'
+chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
+EOF
+)"
+```
+
+```text
+[dev 32156e3] chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
+ 3 files changed, 1424 insertions(+)
+ create mode 100644 board/planning/NOTE-0018_cf-thumbnail-placeholder.md
+ create mode 100644 board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md
+```
+</details></tool-use>
+
+---
+
+_**User (2026-04-04 06:32:00Z)**_
+
+extract TASKs from NOTE-0018 and NOTE-0019
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:32:04Z)**_
+
+_**Agent (claude-opus-4-6 2026-04-04 06:32:05Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/planning/NOTE-0018_cf-thumbnail-placeholder.md`
+
+```text
+1	---
+2	type: note
+3	status: inbox
+4	created: 2026-04-03
+5	---
+6	
+7	# Generate CF thumbnail placeholder
+8	
+9	Have Cloudflare Image Transformations generate a tiny thumbnail of the APOD image that loads instantly as a placeholder. On hero image load, crossfade from the scaled-up thumbnail to the full resolution.
+10	
+11	This would solve the empty void users see while the hero image loads on slower connections (flagged as P3 in NOTE-0017).
+12	
+13	## Approach
+14	
+15	The `/optimized` endpoint already uses `cf: { image: { ... } }` for Image Transformations (scale-down to 1200px, auto WebP/AVIF). A new `/thumb` route could use the same pattern with aggressive settings:
+16	
+17	```ts
+18	const imageOpts: RequestInitCfPropertiesImage = {
+19	  fit: "scale-down",
+20	  width: 32,       // tiny thumbnail
+21	  quality: 30,
+22	  format: "webp",  // always WebP for smallest size
+23	  blur: 5,         // optional: pre-blur server-side
+24	};
+25	```
+26	
+27	Expected output: ~500B-2KB WebP. Small enough to inline as a base64 data URI in the `/info` response, or to load in parallel with near-zero latency.
+28	
+29	## Implementation options
+30	
+31	1. **New `/thumb` route** -- returns the tiny image directly. Landing page fetches it in parallel with the full image. Simple, cacheable independently.
+32	2. **Inline in `/info` response** -- add a `thumbnail` field with a base64 data URI. One fewer request, but increases `/info` payload and couples the two.
+33	3. **Build-time bake** -- not viable since the image changes daily.
+34	
+35	Option 1 is cleanest. The landing page would:
+36	1. Set the thumbnail as `background-image` on `.hero-image-area`
+37	2. Load the full image via `<img>` as today
+38	3. On `.loaded`, the image covers the thumbnail naturally
+39	
+40	## Caching
+41	
+42	Same two-tier strategy as other image routes (6h primary, 24h stale). Cache key based on ET date like everything else.
+43
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:32:06Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md`
+
+```text
+1	---
+2	type: note
+3	status: inbox
+4	created: 2026-04-03
+5	---
+6	
+7	# Pre-size image container using metadata
+8	
+9	The landing page already fetches `/info` independently of the image (`fetch(\`${API_BASE}/info\`)`). If the metadata includes image dimensions, the container can be set to the correct aspect ratio before the image loads, preventing layout shift and giving a visible frame for the thumbnail placeholder (NOTE-0018).
+10	
+11	## Current state
+12	
+13	- The `/info` response includes `title`, `date`, `explanation`, `url`, `hdurl`, `copyright` -- **no dimensions**.
+14	- NASA's APOD API does not return image dimensions.
+15	- The hero image uses `max-height: 80vh` with `height: auto`, so the container size is unknown until load.
+16	- Current CLS: the image pops in at `opacity: 1` with no reserved space, but since it fades in (no reflow of surrounding content pushed down) the visual shift is minimal. The real problem is the empty void, not layout shift per se.
+17	
+18	## Approach
+19	
+20	Add `width` and `height` fields to the `/info` response by measuring the image in the Worker:
+21	
+22	1. After fetching the APOD image URL from NASA, make a HEAD request or fetch a small portion to read dimensions
+23	2. Cloudflare Image Transformations can return original dimensions via the `cf-image` response header when processing -- we could extract them from the `/optimized` fetch
+24	3. Cache dimensions alongside the APOD metadata (same 6h/24h two-tier strategy)
+25	
+26	The landing page would then:
+27	```js
+28	fetch(`${API_BASE}/info`)
+29	  .then(r => r.json())
+30	  .then(data => {
+31	    if (data.width && data.height) {
+32	      const img = document.getElementById('hero-img');
+33	      img.width = data.width;
+34	      img.height = data.height;
+35	      // Browser reserves correct aspect ratio space via width/height attributes
+36	    }
+37	  });
+38	```
+39	
+40	## Open questions
+41	
+42	- Is the HEAD request approach reliable for NASA's image CDN, or do we need to fetch actual bytes?
+43	- Does `cf: { image: ... }` expose original dimensions in response headers? If so, we get this for free from the existing `/optimized` path.
+44	- Should we store the aspect ratio (simpler) or full pixel dimensions (more useful)?
+45	
+46	## Relationship to NOTE-0018
+47	
+48	These two notes complement each other: NOTE-0018 provides the visual placeholder, this note provides the correctly-sized container to put it in. Together they eliminate both the empty void and any layout shift.
+49
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:32:07Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Get next TASK ID
+
+`bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/next-id.sh TASK ./board`
+
+```text
+0015
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:32:13Z)**_
+
+I see three discrete tasks across these two notes:
+
+1. **TASK-0015**: Add `/thumb` route to the Worker (the API-side work from NOTE-0018)
+2. **TASK-0016**: Add image dimensions to `/info` response (the API-side work from NOTE-0019)
+3. **TASK-0017**: Add thumbnail placeholder and pre-sized container to landing page (the frontend work that consumes both)
+
+TASK-0017 depends on the other two. Does that breakdown look right, or would you split/combine differently?
+
+---
+
+_**User (2026-04-04 06:33:56Z)**_
+
+looks good
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:34:06Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: task
+status: backlog
+priority: 2
+parent: NOTE-0018
+created: 2026-04-03
+---
+
+# Add /thumb route to Worker
+
+Add a `/thumb` (and `/thumb.jpg` alias) route that returns a tiny thumbnail of today's APOD via Cloudflare Image Transformations.
+
+## Implementation
+
+Use the same pattern as `/optimized` with aggressive settings:
+
+\```ts
+const imageOpts: RequestInitCfPropertiesImage = {
+  fit: "scale-down",
+  width: 32,
+  quality: 30,
+  format: "webp",
+  blur: 5,
+};
+\```
+
+Expected output: ~500B-2KB WebP.
+
+## Caching
+
+Same two-tier strategy as other image routes (6h primary, 24h stale). Cache key based on ET date.
+
+## Acceptance
+
+- `GET /thumb` returns a tiny WebP thumbnail of today's APOD
+- Response is cached with the standard two-tier strategy
+- `/about` and route listing updated to include the new route
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/tasks/TASK-0015_add-thumb-route.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:34:11Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: task
+status: backlog
+priority: 2
+parent: NOTE-0019
+created: 2026-04-03
+---
+
+# Add image dimensions to /info response
+
+Add `width` and `height` fields to the `/info` JSON response so the landing page can pre-size the image container before the image loads.
+
+## Approach
+
+NASA's APOD API does not return dimensions. Options to obtain them:
+
+1. Extract from `cf-image` response headers when processing via Image Transformations (may already be available from the `/optimized` path)
+2. HEAD request to NASA's image CDN
+3. Fetch a small portion of the image bytes to read dimensions from headers (JPEG SOF, PNG IHDR)
+
+Option 1 is preferred if CF exposes original dimensions. Investigate first.
+
+## Caching
+
+Cache dimensions alongside the APOD metadata in the existing two-tier strategy (6h primary, 24h stale).
+
+## Acceptance
+
+- `GET /info` response includes `width` and `height` (integers, pixels) for today's APOD image
+- Dimensions are cached and don't require extra fetches on subsequent requests
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/tasks/TASK-0016_add-dimensions-to-info.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:34:17Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: task
+status: backlog
+priority: 2
+blocked_by: TASK-0015, TASK-0016
+parent: NOTE-0018
+created: 2026-04-03
+---
+
+# Add thumbnail placeholder and pre-sized container to landing page
+
+Use the `/thumb` and `/info` dimensions endpoints to show a scaled-up thumbnail placeholder while the full hero image loads, inside a correctly-sized container.
+
+## Implementation
+
+1. Fetch `/info` and set `width`/`height` attributes on the `<img>` so the browser reserves the correct aspect ratio
+2. Fetch `/thumb` and set it as `background-image` on `.hero-image-area` (or a wrapper), scaled up with CSS
+3. On `img.loaded`, the full image covers the thumbnail naturally via opacity transition
+
+## Acceptance
+
+- Image area shows a blurred thumbnail immediately while the full image loads
+- Container is pre-sized to the correct aspect ratio (no layout shift)
+- On fast connections, the transition is seamless (thumbnail may not even be visible)
+- Works with `prefers-reduced-motion` (skip crossfade, just show image when ready)
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/tasks/TASK-0017_landing-thumbnail-placeholder.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:34:22Z)**_
+
+Created:
+
+- `board/tasks/TASK-0015_add-thumb-route.md` -- `/thumb` route via CF Image Transformations (parent: NOTE-0018)
+- `board/tasks/TASK-0016_add-dimensions-to-info.md` -- width/height in `/info` response (parent: NOTE-0019)
+- `board/tasks/TASK-0017_landing-thumbnail-placeholder.md` -- frontend integration, blocked by TASK-0015 + TASK-0016
+
+---
+
+_**User (2026-04-04 06:35:19Z)**_
+
+<command-message>board:update</command-message>
+<command-name>/board:update</command-name>
+
+_**User (2026-04-04 06:35:19Z)**_
+
+Base directory for this skill: /Users/grant/Documents/Projects/BoardPM/plugin/skills/update
+
+# Board Update
+
+Analyze the codebase and git history to automatically reconcile the project board with reality. The system spec is bundled with the plugin at `/Users/grant/Documents/Projects/BoardPM/plugin/spec/board-system-spec.md`.
+
+## Board Data
+
+Pre-loaded active board data:
+
+filepath	type	status	priority	blocked_by	parent	title
+./board/tasks/TASK-0003_nasa-data-insignia.md	task	todo	-	-	-	Apply for NASA Data Insignia
+./board/tasks/TASK-0011_add-r2-storage-layer.md	task	todo	-	-	-	Add R2 storage layer for APOD image archiving
+./board/tasks/TASK-0012_add-vite-to-landing.md	task	todo	-	-	NOTE-0015	Add Vite to Landing Page
+./board/tasks/TASK-0013_extract-styles-to-scss.md	task	todo	-	-	NOTE-0015	Extract Inline Styles to SCSS
+./board/tasks/TASK-0014_landing-build-and-deploy.md	task	todo	-	-	NOTE-0015	Add Landing Page Build and Deploy
+./board/tasks/TASK-0015_add-thumb-route.md	task	backlog	2	-	NOTE-0018	Add /thumb route to Worker
+./board/tasks/TASK-0016_add-dimensions-to-info.md	task	backlog	2	-	NOTE-0019	Add image dimensions to /info response
+./board/tasks/TASK-0017_landing-thumbnail-placeholder.md	task	backlog	2	TASK-0015, TASK-0016	NOTE-0018	Add thumbnail placeholder and pre-sized container to landing page
+./board/planning/NOTE-0005_add-individual-metadata-routes.md	note	inbox	-	-	-	Add individual metadata routes
+./board/planning/NOTE-0006_add-why-is-this-needed-section.md	note	inbox	-	-	-	Add a "Why Is This Needed" Section That Explains the APOD API
+./board/planning/NOTE-0008_generate-daily-og-image.md	note	inbox	-	-	-	Generate a daily OG image
+./board/planning/NOTE-0010_auto-refresh-landing-page-on-rollover.md	note	inbox	-	-	-	Auto-refresh landing page on APOD rollover
+./board/planning/NOTE-0013_find-non-google-font-alternatives.md	note	inbox	-	-	-	Find non-Google font alternatives
+./board/planning/NOTE-0014_add-gh-action-auto-deploy-on-merge.md	note	inbox	-	-	-	Add GitHub Action to auto-deploy to Cloudflare on PR merge into main
+./board/planning/NOTE-0016_local-timezone-apod-rollover.md	note	inbox	-	-	-	Local timezone APOD rollover
+./board/planning/NOTE-0017_landing-page-critique-apr-2026.md	note	inbox	-	-	-	Landing page design critique (April 2026)
+./board/planning/NOTE-0018_cf-thumbnail-placeholder.md	note	inbox	-	-	-	Generate CF thumbnail placeholder
+./board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md	note	inbox	-	-	-	Pre-size image container using metadata
+
+Archive counts:
+
+filepath	type	status	priority	blocked_by	parent	title
+./board/tasks/TASK-0003_nasa-data-insignia.md	task	todo	-	-	-	Apply for NASA Data Insignia
+./board/tasks/TASK-0011_add-r2-storage-layer.md	task	todo	-	-	-	Add R2 storage layer for APOD image archiving
+./board/tasks/TASK-0012_add-vite-to-landing.md	task	todo	-	-	NOTE-0015	Add Vite to Landing Page
+./board/tasks/TASK-0013_extract-styles-to-scss.md	task	todo	-	-	NOTE-0015	Extract Inline Styles to SCSS
+./board/tasks/TASK-0014_landing-build-and-deploy.md	task	todo	-	-	NOTE-0015	Add Landing Page Build and Deploy
+./board/tasks/TASK-0015_add-thumb-route.md	task	backlog	2	-	NOTE-0018	Add /thumb route to Worker
+./board/tasks/TASK-0016_add-dimensions-to-info.md	task	backlog	2	-	NOTE-0019	Add image dimensions to /info response
+./board/tasks/TASK-0017_landing-thumbnail-placeholder.md	task	backlog	2	TASK-0015, TASK-0016	NOTE-0018	Add thumbnail placeholder and pre-sized container to landing page
+./board/planning/NOTE-0005_add-individual-metadata-routes.md	note	inbox	-	-	-	Add individual metadata routes
+./board/planning/NOTE-0006_add-why-is-this-needed-section.md	note	inbox	-	-	-	Add a "Why Is This Needed" Section That Explains the APOD API
+./board/planning/NOTE-0008_generate-daily-og-image.md	note	inbox	-	-	-	Generate a daily OG image
+./board/planning/NOTE-0010_auto-refresh-landing-page-on-rollover.md	note	inbox	-	-	-	Auto-refresh landing page on APOD rollover
+./board/planning/NOTE-0013_find-non-google-font-alternatives.md	note	inbox	-	-	-	Find non-Google font alternatives
+./board/planning/NOTE-0014_add-gh-action-auto-deploy-on-merge.md	note	inbox	-	-	-	Add GitHub Action to auto-deploy to Cloudflare on PR merge into main
+./board/planning/NOTE-0016_local-timezone-apod-rollover.md	note	inbox	-	-	-	Local timezone APOD rollover
+./board/planning/NOTE-0017_landing-page-critique-apr-2026.md	note	inbox	-	-	-	Landing page design critique (April 2026)
+./board/planning/NOTE-0018_cf-thumbnail-placeholder.md	note	inbox	-	-	-	Generate CF thumbnail placeholder
+./board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md	note	inbox	-	-	-	Pre-size image container using metadata
+
+# Archive counts (type	count)
+TASK	12
+NOTE	9
+
+## Steps
+
+### 1. Review Board State
+
+Parse the pre-loaded board data above. Identify:
+- All items with `status: backlog` or `status: current` (candidates for completion)
+- Epics and their child tasks (via `parent` field)
+- Blocked items and their blockers
+- Items with terminal status (`done`, `processed`) that should be archived
+
+### 2. Gather Codebase Context
+
+- Run `git log --oneline` for recent commits (last 30) to understand what work has been done
+- Only Read full file bodies for tasks whose status is `backlog` or `current` AND whose title suggests overlap with recent commits
+- Use the context budget escalation (Glob → Grep → Read with limit → Full read) for any additional lookups
+
+### 3. Detect Completed Work
+
+For each task with `status: backlog` or `status: current`, check if the work described has already been done:
+
+- Look at recent commits for evidence the work was completed
+- Check the codebase for the feature/fix the task describes
+- If the work is done, flag it for status update to `done`
+
+### 4. Detect New Work Needed
+
+Scan for things that should become tasks but aren't tracked yet:
+
+- Check recent commits for TODOs or FIXMEs introduced in code
+- Look at open epics — are there obvious next steps not yet captured as tasks?
+- Check if any `blocked_by` dependencies have been resolved (unblocking tasks)
+
+### 5. Update Epic Progress
+
+For each active epic:
+
+- Check if all child tasks are `done` — if so, flag the epic as `done`
+- Check if any child tasks are `current` — if so, the epic should be `current`
+- Update the task list in the epic body if tasks have been added/removed
+
+### 6. Check for Stale Items
+
+- Tasks marked `current` but with no related commits in the last 30 days
+- Epics in `planning` with no child tasks
+- Resources stuck in `inbox` or `processing`
+
+### 7. Present Changes
+
+Present ALL proposed changes as a single summary before making any edits:
+
+```
+## Board Update Proposal
+
+### Status Changes
+- TASK-0003: backlog -> done (cache-decoded-image: implemented in commit a1b2c3d)
+- EPIC-0001: planning -> current (has active child tasks)
+
+### New Tasks Suggested
+- "Fix FIXME in preprocessing.rs line 42" (found in recent commit)
+
+### Ready to Archive
+- TASK-0003: done
+- NOTE-0002: processed
+
+### Stale Items
+- TASK-0007: marked current but no activity in 45 days
+
+### Unblocked
+- TASK-0005: blocker TASK-0003 is now done
+```
+
+**Avoid redundant invocations** — if this skill was already invoked earlier in the session and the board has not been modified since, reuse the previous board data instead of invoking again.
+
+Ask the user to approve, reject, or cherry-pick which changes to apply. Then execute only the approved changes:
+
+- **Status updates**: Use `/board:board-edit` to update status fields
+- **New tasks**: Invoke `/board:board-add` for each approved new task
+- **Archiving**: Run `bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/archive-batch.sh ./board <file1> <file2> ...` directly for approved items
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:23Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Recent commits for board reconciliation
+
+`git log --oneline -30`
+
+```text
+32156e3 chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
+f261277 docs: update CLAUDE.md to match current implementation and add design critique
+a0f724b style(landing): refine spacing, typography, and color hierarchy
+5bcbef8 chore: organize specstory history into year/month directories
+8d8f2e3 feat(landing): add Vite build toolchain and extract styles to SCSS
+aa08f42 chore(board): extract Vite tasks from NOTE-0015 and archive
+c87edc2 fix(landing): keep focus toggle above overlay in focus mode
+e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+8b5833d chore: add specstory history and board planning notes
+8436587 Merge pull request #3 from GDKeller/dev
+614adbe Merge branch 'main' into dev
+47d0ad2 chore(board): archive completed TASK-0010
+cc1c24a feat(api): add /optimized endpoint with Cloudflare Image Transformations
+c26cfb8 fix: allow HEAD requests and use SD image for OG metadata
+a705162 Merge pull request #2 from GDKeller/dev
+c8b0f83 chore: use Lucide lamp icon, dim toggle in focus mode, archive completed board items
+c1eeff1 feat(landing): add focus mode to dim UI around hero image
+c7677f9 fix(landing): use SD hero image, position copied badge above code block
+31136bc style(landing): replace text-decoration underlines with animated scaleX pseudo-elements
+e017836 fix(landing): improve copy-to-clipboard UX and hover states
+eba6755 docs: add caption below APOD image in README
+74380a7 fix(docs): use SD image in README to avoid GitHub size limit
+b055505 Merge pull request #1 from GDKeller/dev
+14c15c5 fix(landing): update silver/silver-dim colors for WCAG AA contrast compliance
+2ddf773 fix(api): validate image URL hostname and sanitize cached headers
+79a3e80 fix(api): block non-GET methods, add robots.txt/sitemap, board notes
+d9764af chore(board): add image optimization and R2 archiving tasks
+4394a3d chore(board): archive completed planning notes
+53496b3 chore:specstory history
+f965254 feat(landing): improve meta descriptions, add date tooltip, and update board
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:28Z)**_
+
+The Vite-related tasks (TASK-0012, 0013, 0014) were completed in commit `8d8f2e3`. Let me verify and check NOTE-0013 (fonts).
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:29Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/tasks/TASK-0012_add-vite-to-landing.md`
+
+```text
+1	---
+2	type: task
+3	status: todo
+4	created: 2026-04-02
+5	parent: NOTE-0015
+6	---
+7	
+8	# Add Vite to Landing Page
+9	
+10	Set up Vite as the dev server for `landing/`, replacing `npx serve`.
+11	
+12	## Scope
+13	
+14	- Init `landing/package.json` with Vite as a dev dependency
+15	- Create `landing/vite.config.ts` pointing at `index.html` as the entry
+16	- Install `sass` as a dev dependency (needed for TASK-0013)
+17	- Update root `package.json` dev scripts to use Vite instead of `npx serve`
+18	- Verify HMR works on file changes
+19
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:29Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/tasks/TASK-0013_extract-styles-to-scss.md`
+
+```text
+1	---
+2	type: task
+3	status: todo
+4	created: 2026-04-02
+5	parent: NOTE-0015
+6	depends: TASK-0012
+7	---
+8	
+9	# Extract Inline Styles to SCSS
+10	
+11	Move the inline `<style>` block from `landing/index.html` into SCSS files imported by Vite.
+12	
+13	## Scope
+14	
+15	- Extract styles from the `<style>` tag into `.scss` files (e.g. `landing/src/styles/main.scss`)
+16	- Organize into partials by section (header, hero, endpoints, footer, focus mode, animations)
+17	- Import the entry SCSS file in the HTML via `<link>` or a JS entry point
+18	- Remove the inline `<style>` block from `index.html`
+19	- No Tailwind, pure SCSS
+20
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:30Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/tasks/TASK-0014_landing-build-and-deploy.md`
+
+```text
+1	---
+2	type: task
+3	status: todo
+4	created: 2026-04-02
+5	parent: NOTE-0015
+6	depends: TASK-0012
+7	---
+8	
+9	# Add Landing Page Build and Deploy
+10	
+11	Configure Vite production build and update the deploy workflow.
+12	
+13	## Scope
+14	
+15	- Add `build` script to `landing/package.json` (`vite build`)
+16	- Configure output to `landing/dist/`
+17	- Add `deploy:landing` script to root `package.json` (`wrangler pages deploy landing/dist/ --project-name nasapicture-landing`)
+18	- Add `landing/dist/` to `.gitignore`
+19	- Verify built output matches current dev behavior
+20
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:31Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/planning/NOTE-0013_find-non-google-font-alternatives.md`
+
+```text
+1	---
+2	type: note
+3	status: inbox
+4	created: 2026-04-01
+5	---
+6	
+7	# Find non-Google font alternatives
+8	
+9	Explore non-Google font options for the landing page. Current fonts (Cormorant Garamond, Outfit, JetBrains Mono) are all from Google Fonts, which are ubiquitous across the web, especially on vibe-coded pages. The goal is typographic distinction: fonts that feel intentional and uncommon rather than default AI-project choices.
+10
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:36Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Glob"><details>
+<summary>Tool use: **Glob**</summary>
+ pattern `landing/vite.config.ts`
+
+```text
+landing/vite.config.ts
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:36Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Glob"><details>
+<summary>Tool use: **Glob**</summary>
+ pattern `landing/src/styles/*.scss`
+
+```text
+landing/src/styles/_variables.scss
+landing/src/styles/_reset.scss
+landing/src/styles/_footer.scss
+landing/src/styles/_animations.scss
+landing/src/styles/main.scss
+landing/src/styles/_focus-mode.scss
+landing/src/styles/_endpoints.scss
+landing/src/styles/_header.scss
+landing/src/styles/_hero.scss
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:35:51Z)**_
+
+## Board Update Proposal
+
+### Status Changes
+
+- **TASK-0012** `todo` -> `done` -- Vite is set up: `landing/vite.config.ts` exists, `landing/package.json` has Vite, root scripts updated. Completed in `8d8f2e3`.
+- **TASK-0013** `todo` -> `done` -- Styles extracted to 8 SCSS partials in `landing/src/styles/`. Completed in `8d8f2e3`.
+- **TASK-0014** `todo` -> `done` -- `build:landing` and `deploy:landing` scripts exist in root `package.json`. Completed in `8d8f2e3`.
+- **NOTE-0013** `inbox` -> `processed` -- Fonts were replaced with Adobe Typekit (Source Serif 4 Display, Source Sans 3, Source Code Pro). The note's goal of finding non-Google alternatives is resolved.
+
+### Ready to Archive
+
+- TASK-0012, TASK-0013, TASK-0014 (all done, parent NOTE-0015 already archived)
+- NOTE-0013 (processed)
+
+### No Changes Needed
+
+- TASK-0003 (NASA Data Insignia) -- external process, no code evidence
+- TASK-0011 (R2 storage) -- not started
+- TASK-0015, 0016, 0017 -- newly created, backlog
+- All other NOTEs -- still relevant planning items
+
+### Stale Items
+
+None detected -- all active items have recent context.
+
+Approve all, or cherry-pick?
+
+---
+
+_**User (2026-04-04 06:36:27Z)**_
+
+approved
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:36:32Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/tasks/TASK-0012_add-vite-to-landing.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:36:32Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/tasks/TASK-0013_extract-styles-to-scss.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:36:33Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/tasks/TASK-0014_landing-build-and-deploy.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:36:34Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/planning/NOTE-0013_find-non-google-font-alternatives.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:36:56Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Archive completed items
+
+`bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/archive-batch.sh ./board board/tasks/TASK-0012_add-vite-to-landing.md board/tasks/TASK-0013_extract-styles-to-scss.md board/tasks/TASK-0014_landing-build-and-deploy.md board/planning/NOTE-0013_find-non-google-font-alternatives.md`
+
+```text
+Archived:
+  TASK-0012_add-vite-to-landing.md
+  TASK-0013_extract-styles-to-scss.md
+  TASK-0014_landing-build-and-deploy.md
+  NOTE-0013_find-non-google-font-alternatives.md
+
+Total: 4 archived, 0 skipped
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:37:00Z)**_
+
+Done. Updated statuses and archived 4 items:
+
+- **TASK-0012, 0013, 0014** -- marked done, archived (Vite + SCSS + deploy all shipped)
+- **NOTE-0013** -- marked processed, archived (fonts resolved via Adobe Typekit)
+
+---
+
+_**User (2026-04-04 06:43:52Z)**_
+
+<command-message>commit-commands:commit</command-message>
+<command-name>/commit-commands:commit</command-name>
+
+_**User (2026-04-04 06:43:52Z)**_
+
+## Context
+
+- Current git status: On branch dev
+Your branch is ahead of 'origin/dev' by 10 commits.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	renamed:    board/planning/NOTE-0013_find-non-google-font-alternatives.md -> board/archive/NOTE-0013_find-non-google-font-alternatives.md
+	renamed:    board/tasks/TASK-0012_add-vite-to-landing.md -> board/archive/TASK-0012_add-vite-to-landing.md
+	renamed:    board/tasks/TASK-0013_extract-styles-to-scss.md -> board/archive/TASK-0013_extract-styles-to-scss.md
+	renamed:    board/tasks/TASK-0014_landing-build-and-deploy.md -> board/archive/TASK-0014_landing-build-and-deploy.md
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+	modified:   board/archive/NOTE-0013_find-non-google-font-alternatives.md
+	modified:   board/archive/TASK-0012_add-vite-to-landing.md
+	modified:   board/archive/TASK-0013_extract-styles-to-scss.md
+	modified:   board/archive/TASK-0014_landing-build-and-deploy.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	board/tasks/TASK-0015_add-thumb-route.md
+	board/tasks/TASK-0016_add-dimensions-to-info.md
+	board/tasks/TASK-0017_landing-thumbnail-placeholder.md
+- Current git diff (staged and unstaged changes): <persisted-output>
+Output too large (31.8KB). Full output saved to: /Users/grant/.claude/projects/-Users-grant-code-nasa-apod/790649fb-2f69-4921-8eef-20bd24848b4c/tool-results/bij3k1zvg.txt
+
+Preview (first 2KB):
+diff --git a/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md b/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+index f7fe6ff..a9ba06c 100644
+--- a/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
++++ b/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+@@ -5049,3 +5049,770 @@ e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+ Based on the above changes, create a single git commit.
+ 
+ You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
++
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-04 06:25:54Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Stage new board notes and specstory
++
++`git add board/planning/NOTE-0018_cf-thumbnail-placeholder.md board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md`
++
++```text
++(Bash completed with no output)
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:25:58Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Commit new board planning notes
++
++```bash
++git commit -m "$(cat <<'EOF'
++chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
++EOF
++)"
++```
++
++```text
++[dev 32156e3] chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
++ 3 files changed, 1424 insertions(+)
++ create mode 100644 board/planning/NOTE-0018_cf-thumbnail-placeholder.md
++ create mode 100644 board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md
++```
++</details></tool-use>
++
++---
++
++_**User (2026-04-04 06:32:00Z)**_
++
+...
+</persisted-output>
+- Current branch: dev
+- Recent commits: 32156e3 chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
+f261277 docs: update CLAUDE.md to match current implementation and add design critique
+a0f724b style(landing): refine spacing, typography, and color hierarchy
+5bcbef8 chore: organize specstory history into year/month directories
+8d8f2e3 feat(landing): add Vite build toolchain and extract styles to SCSS
+aa08f42 chore(board): extract Vite tasks from NOTE-0015 and archive
+c87edc2 fix(landing): keep focus toggle above overlay in focus mode
+e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+8b5833d chore: add specstory history and board planning notes
+8436587 Merge pull request #3 from GDKeller/dev
+
+## Your task
+
+Based on the above changes, create a single git commit.
+
+You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:44:00Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage board changes and specstory
+
+`git add board/archive/NOTE-0013_find-non-google-font-alternatives.md board/archive/TASK-0012_add-vite-to-landing.md board/archive/TASK-0013_extract-styles-to-scss.md board/archive/TASK-0014_landing-build-and-deploy.md board/tasks/TASK-0015_add-thumb-route.md board/tasks/TASK-0016_add-dimensions-to-info.md board/tasks/TASK-0017_landing-thumbnail-placeholder.md .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md`
+</details></tool-use>
