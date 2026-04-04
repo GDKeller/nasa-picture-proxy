@@ -3715,3 +3715,1337 @@ e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
 Based on the above changes, create a single git commit.
 
 You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:01:14Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage all changed and untracked files
+
+`git add CLAUDE.md board/.doc-ids board/planning/NOTE-0017_landing-page-critique-apr-2026.md .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md .specstory/history/2026-04-04_04-05-53Z-command-message-impeccable-critique.md .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:01:21Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Create commit with updated docs
+
+```bash
+git commit -m "$(cat <<'EOF'
+docs: update CLAUDE.md to match current implementation and add design critique
+
+Sync CLAUDE.md with actual codebase state: fix typography (Source Serif/Sans/Code Pro),
+background color (#05070c), accent color status, landing page Vite+SCSS architecture,
+and add missing dev scripts. Add NOTE-0017 design critique capture.
+EOF
+)"
+```
+
+```text
+[dev f261277] docs: update CLAUDE.md to match current implementation and add design critique
+ 6 files changed, 5794 insertions(+), 7 deletions(-)
+ create mode 100644 .specstory/history/2026-04-04_04-05-53Z-command-message-impeccable-critique.md
+ create mode 100644 .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+ create mode 100644 board/planning/NOTE-0017_landing-page-critique-apr-2026.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:01:25Z)**_
+
+Committed: `docs: update CLAUDE.md to match current implementation and add design critique` (f261277)
+
+---
+
+_**User (2026-04-04 06:04:06Z)**_
+
+<command-message>board:add</command-message>
+<command-name>/board:add</command-name>
+<command-args>NOTE: have CF generate a very small version of the image that we can use as a placeholder "blur up" on load NOTE: need to add some form of visual indicator of where the image will be on the landing page before it actually loads. Do we fetch the metadata independently of the image? if so, we can create the properly-sized container</command-args>
+
+_**User (2026-04-04 06:04:06Z)**_
+
+Base directory for this skill: /Users/grant/Documents/Projects/BoardPM/plugin/skills/add
+
+# Add Board Item
+
+Create a new item in the `board/` project management system. The system spec is bundled with the plugin at `/Users/grant/Documents/Projects/BoardPM/plugin/spec/board-system-spec.md`.
+
+## Existing Board Items
+
+Pre-loaded board data for duplicate detection:
+
+filepath	type	status	priority	blocked_by	parent	title
+./board/tasks/TASK-0003_nasa-data-insignia.md	task	todo	-	-	-	Apply for NASA Data Insignia
+./board/tasks/TASK-0011_add-r2-storage-layer.md	task	todo	-	-	-	Add R2 storage layer for APOD image archiving
+./board/tasks/TASK-0012_add-vite-to-landing.md	task	todo	-	-	NOTE-0015	Add Vite to Landing Page
+./board/tasks/TASK-0013_extract-styles-to-scss.md	task	todo	-	-	NOTE-0015	Extract Inline Styles to SCSS
+./board/tasks/TASK-0014_landing-build-and-deploy.md	task	todo	-	-	NOTE-0015	Add Landing Page Build and Deploy
+./board/planning/NOTE-0005_add-individual-metadata-routes.md	note	inbox	-	-	-	Add individual metadata routes
+./board/planning/NOTE-0006_add-why-is-this-needed-section.md	note	inbox	-	-	-	Add a "Why Is This Needed" Section That Explains the APOD API
+./board/planning/NOTE-0008_generate-daily-og-image.md	note	inbox	-	-	-	Generate a daily OG image
+./board/planning/NOTE-0010_auto-refresh-landing-page-on-rollover.md	note	inbox	-	-	-	Auto-refresh landing page on APOD rollover
+./board/planning/NOTE-0013_find-non-google-font-alternatives.md	note	inbox	-	-	-	Find non-Google font alternatives
+./board/planning/NOTE-0014_add-gh-action-auto-deploy-on-merge.md	note	inbox	-	-	-	Add GitHub Action to auto-deploy to Cloudflare on PR merge into main
+./board/planning/NOTE-0016_local-timezone-apod-rollover.md	note	inbox	-	-	-	Local timezone APOD rollover
+./board/planning/NOTE-0017_landing-page-critique-apr-2026.md	note	inbox	-	-	-	Landing page design critique (April 2026)
+
+Before creating, check if a similar item already exists. If a close match is found, ask the user if they still want to create a new one.
+
+## Scope Assessment
+
+When the user requests a **TASK**, evaluate whether it is actually EPIC-sized before creating it. Look for these signals:
+
+- Multiple distinct steps or deliverables in the description
+- Multiple action verbs joined by "and" (e.g., "add auth and set up roles and integrate SSO")
+- Work that spans different code areas or concerns
+- Sub-steps that could be completed and shipped independently
+
+**Quick test:** "Could someone meaningfully complete and ship part of this while the rest remains undone?" If yes → likely an EPIC.
+
+If EPIC signals are present, suggest an EPIC + sub-TASKs with a concrete breakdown. For example:
+
+> "This looks like it has multiple independent deliverables. Want me to create an EPIC with separate TASKs for each piece instead?"
+
+**This is a soft suggestion only.** If the user says "just make it a task," comply without pushback.
+
+This assessment only applies to TASK creation — do not second-guess EPICs, NOTEs, or other types.
+
+## Arguments
+
+The user provides the type and title: `/board:board-add task <title>`, `/board:board-add epic <title>`, etc.
+
+If no type is given, ask the user what type of item to create.
+
+## Determine Next ID
+
+Run the ID assignment script:
+
+```bash
+bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/next-id.sh <TYPE> ./board
+```
+
+This scans all directories (including `board/archive/` and `.doc-ids`) and returns the next available 4-digit zero-padded ID.
+
+## Create the File
+
+Use the correct directory, frontmatter, and naming convention:
+
+| Type | Directory | Filename Example |
+|------|-----------|-----------------|
+| task | `board/tasks/` | `TASK-0014_add-batch-processing.md` |
+| epic | `board/planning/` | `EPIC-0009_batch-mode.md` |
+| adr | `board/planning/` | `ADR-0002_chose-webgpu-over-wasm.md` |
+| note | `board/planning/` | `NOTE-0001_explore-wasm-option.md` |
+| reference | `board/reference/` | `REFE-0007_webgpu-overview.md` |
+| resource | `board/resources/` | `RESO-0001_webgpu-article.md` |
+
+## Frontmatter Templates
+
+Task:
+```yaml
+---
+type: task
+status: backlog
+priority: 2
+created: YYYY-MM-DD
+---
+```
+
+Epic:
+```yaml
+---
+type: epic
+status: planning
+created: YYYY-MM-DD
+---
+```
+
+ADR:
+```yaml
+---
+type: adr
+status: active
+context_date: YYYY-MM-DD
+created: YYYY-MM-DD
+---
+```
+
+Note:
+```yaml
+---
+type: note
+status: inbox
+created: YYYY-MM-DD
+---
+```
+
+Reference:
+```yaml
+---
+type: reference
+created: YYYY-MM-DD
+---
+```
+
+Resource (ask user for URL):
+```yaml
+---
+type: resource
+status: inbox
+url: <url>
+created: YYYY-MM-DD
+---
+```
+
+## Naming Rules
+
+- Convert title to kebab-case for filename
+- Task titles MUST be imperative mood (start with a verb). If the user gives a noun phrase, rewrite it (e.g., "batch processing" -> "Add batch processing support")
+- Use today's date for `created`
+
+## After Creation
+
+Show the file path and ask if the user wants to add more detail to the body.
+
+
+ARGUMENTS: NOTE: have CF generate a very small version of the image that we can use as a placeholder "blur up" on load NOTE: need to add some form of visual indicator of where the image will be on the landing page before it actually loads. Do we fetch the metadata independently of the image? if so, we can create the properly-sized container
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:04:12Z)**_
+
+
+
+These are two related but distinct notes. Let me check for duplicates and get the next IDs.
+
+_**Agent (claude-opus-4-6 2026-04-04 06:04:12Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Get next NOTE ID
+
+`bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/next-id.sh NOTE ./board`
+
+```text
+0018
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:04:18Z)**_
+
+No existing duplicates -- NOTE-0017 (the critique) mentions image loading as a P3 issue but doesn't cover the Cloudflare image transformation approach or the metadata-driven container sizing. These are implementation ideas, not just the problem statement.
+
+I'd suggest splitting into two notes since they're independent ideas:
+
+1. **NOTE-0018**: CF-generated blur-up placeholder image
+2. **NOTE-0019**: Pre-sized image container using metadata
+
+Want me to create them as two separate notes, or keep them as one combined note?
+
+---
+
+_**User (2026-04-04 06:13:38Z)**_
+
+2
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:13:46Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: note
+status: inbox
+created: 2026-04-03
+---
+
+# Generate CF blur-up placeholder image
+
+Have Cloudflare Image Transformations generate a very small version of the APOD image (e.g., 20-40px wide, heavy blur) that can be inlined or loaded instantly as a placeholder. On image load, crossfade from the blurred placeholder to the full image ("blur up" technique).
+
+This would solve the empty void users see while the hero image loads on slower connections (flagged as P3 in NOTE-0017).
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-blur-up-placeholder-image.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:13:49Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Write"><details>
+<summary>Tool use: **Write**</summary>
+
+```md
+---
+type: note
+status: inbox
+created: 2026-04-03
+---
+
+# Pre-size image container using metadata
+
+The landing page fetches `/info` metadata independently of the image. If the metadata includes image dimensions (or we add them), we can set the container to the correct aspect ratio before the image loads, preventing layout shift and giving a visible frame for the placeholder.
+
+Questions:
+- Does NASA's APOD API return image dimensions? If not, can we measure and cache them in the Worker?
+- Can Cloudflare Image Transformations report dimensions in a header?
+
+```
+
+```text
+File created successfully at: /Users/grant/code/nasa-apod/board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:14:34Z)**_
+
+Created:
+- `board/planning/NOTE-0018_cf-blur-up-placeholder-image.md` -- CF-generated tiny image for blur-up loading
+- `board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md` -- use /info metadata to pre-size the container
+
+Want to add more detail to either?
+
+---
+
+_**User (2026-04-04 06:19:59Z)**_
+
+add whatever detail is needed
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:05Z)**_
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:06Z)**_
+
+Let me check the current implementation to add concrete technical detail.
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:08Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `./src/index.ts` pattern `optimized|Image Transformations|cf-image`
+
+```text
+8- * Routes:
+9- *   GET /          → today's APOD image (high res, falls back to standard)
+10- *   GET /sd        → today's APOD image (standard res)
+11: *   GET /optimized → optimized image (≤1200px, auto WebP/AVIF)
+12- *   GET /info      → JSON metadata
+13- *   GET /about     → plain-text description and attribution
+14- */
+--
+178-    "Link": [
+179-      `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
+180-      `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
+181:      `<${origin}/optimized>; rel="alternate"; type="image/*"; title="Optimized image"`,
+182-      `<${origin}/info>; rel="describedby"`,
+183-      `<${origin}/about>; rel="about"`,
+184-    ].join(", "),
+--
+218-
+219-      const sdPaths = ["/sd", "/image-sd.jpg"];
+220-      const hdPaths = ["/", "/image.jpg"];
+221:      const optimizedPaths = ["/optimized", "/image-optimized.jpg"];
+222-
+223-      if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
+224-        const apod = await findLatestImage(log, apiKey);
+--
+232-        res = new Response(upstream.body, {
+233-          headers: baseHeaders(origin, { "Content-Type": contentType }),
+234-        });
+235:      } else if (optimizedPaths.includes(pathname)) {
+236-        const apod = await findLatestImage(log, apiKey);
+237-        const imageUrl = apod.hdurl || apod.url;
+238-        validateImageUrl(imageUrl);
+--
+250-          imageOpts.format = "webp";
+251-        }
+252-
+253:        log.push(`  [optimized] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
+254-
+255-        const upstream = await fetch(imageUrl, {
+256-          cf: { image: imageOpts },
+--
+271-          "/image.jpg": "Same as / with file extension (for contexts that need one)",
+272-          "/sd": "Today's APOD image (standard resolution)",
+273-          "/image-sd.jpg": "Same as /sd with file extension",
+274:          "/optimized": "Optimized image (≤1200px, auto WebP/AVIF)",
+275:          "/image-optimized.jpg": "Same as /optimized with file extension",
+276-          "/info": "JSON metadata for today's APOD",
+277-          "/about": "Plain-text description and attribution",
+278-        };
+--
+329-          "    /image.jpg           HD image (with extension)",
+330-          "    /sd                  Standard resolution",
+331-          "    /image-sd.jpg        Standard resolution (with extension)",
+332:          "    /optimized           Optimized (≤1200px, auto WebP/AVIF)",
+333:          "    /image-optimized.jpg Optimized (with extension)",
+334-          "    /info                JSON metadata",
+335-          "    /about               This page",
+336-          "",
+--
+345-        });
+346-      } else {
+347-        res = new Response(
+348:          JSON.stringify({ error: "Not found. Routes: /, /sd, /optimized, /info, /about" }),
+349-          { status: 404, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+350-        );
+351-      }
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:09Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `./landing/index.html` pattern `fetch.*info|/info|title.*date`
+
+```text
+87-            rel="noopener noreferrer">
+88-            <code class="endpoint-route">/sd</code>
+89-            <span class="endpoint-desc">Standard resolution image</span>
+90-            <code class="endpoint-type">image/*</code>
+91-          </a>
+92:          <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/info" target="_blank"
+93-            rel="noopener noreferrer">
+94:            <code class="endpoint-route">/info</code>
+95-            <span class="endpoint-desc">Title, date, explanation, URLs, copyright</span>
+96-            <code class="endpoint-type">application/json</code>
+97-          </a>
+98-          <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/about" target="_blank"
+99-            rel="noopener noreferrer">
+--
+153-        }
+154-      });
+155-    });
+156-
+157-    // Fetch APOD metadata for caption (image loads directly from proxy)
+158:    fetch(`${API_BASE}/info`)
+159-      .then(r => r.json())
+160-      .then(data => {
+161-        if (data.title) {
+162-          img.alt = data.title;
+163-          document.getElementById('caption-title').textContent = data.title;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:14Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `./src/index.ts` pattern `cf.*image|imageOpts|width|height`
+
+```text
+238-        validateImageUrl(imageUrl);
+239-
+240:        const imageOpts: RequestInitCfPropertiesImage = {
+241-          fit: "scale-down",
+242:          width: 1200,
+243-          quality: 85,
+244-        };
+--
+246-        const accept = request.headers.get("Accept") || "";
+247-        if (/image\/avif/.test(accept)) {
+248:          imageOpts.format = "avif";
+249-        } else if (/image\/webp/.test(accept)) {
+250:          imageOpts.format = "webp";
+251-        }
+252-
+253:        log.push(`  [optimized] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
+254-
+255-        const upstream = await fetch(imageUrl, {
+256:          cf: { image: imageOpts },
+257-        });
+258-
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:15Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ path `./src/index.ts` pattern `apod\.(hdurl|url|title|date|explanation|copyright)`
+
+```text
+226:          ? apod.url
+227:          : (apod.hdurl || apod.url);
+237:        const imageUrl = apod.hdurl || apod.url;
+285:              title: apod.title,
+286:              date: apod.date,
+287:              explanation: apod.explanation,
+289:              url: apod.url,
+290:              hdurl: apod.hdurl ?? null,
+291:              copyright: apod.copyright ?? null,
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:19Z)**_
+
+Good. The `/optimized` endpoint already uses `cf: { image: imageOpts }` for Cloudflare Image Transformations. The `/info` response includes `url` and `hdurl` but no dimensions. Now I have what I need.
+
+_**Agent (claude-opus-4-6 2026-04-04 06:20:36Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-blur-up-placeholder-image.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:21:03Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:21:09Z)**_
+
+Both notes updated with implementation detail:
+
+- **NOTE-0018**: Concrete `cf.image` options (~32px, 30 quality, WebP), expected payload size, three implementation options with recommendation, caching strategy
+- **NOTE-0019**: Current state analysis (no dimensions in API or NASA data), approach via CF Image Transformations response headers, landing page integration code, and how the two notes work together
+
+---
+
+_**User (2026-04-04 06:24:10Z)**_
+
+the "blur up" placeholder is essnetially a thumb
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:15Z)**_
+
+
+
+Good point. Let me rename it.
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:16Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Rename NOTE-0018 to use "thumbnail" terminology
+
+`mv /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-blur-up-placeholder-image.md /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-thumbnail-placeholder.md`
+
+```text
+(Bash completed with no output)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:24Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:25Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:26Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:27Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md has been updated. All occurrences were successfully replaced.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:30Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/planning/NOTE-0018_cf-thumbnail-placeholder.md`
+
+```text
+1	---
+2	type: note
+3	status: inbox
+4	created: 2026-04-03
+5	---
+6	
+7	# Generate CF blur-up placeholder image
+8	
+9	Have Cloudflare Image Transformations generate a very small version of the APOD image that loads instantly as a placeholder. On hero image load, crossfade from the blurred placeholder to the full resolution ("blur up" technique).
+10	
+11	This would solve the empty void users see while the hero image loads on slower connections (flagged as P3 in NOTE-0017).
+12	
+13	## Approach
+14	
+15	The `/optimized` endpoint already uses `cf: { image: { ... } }` for Image Transformations (scale-down to 1200px, auto WebP/AVIF). A new `/placeholder` route could use the same pattern with aggressive settings:
+16	
+17	```ts
+18	const imageOpts: RequestInitCfPropertiesImage = {
+19	  fit: "scale-down",
+20	  width: 32,       // tiny -- just enough for blur-up
+21	  quality: 30,
+22	  format: "webp",  // always WebP for smallest size
+23	  blur: 5,         // optional: pre-blur server-side
+24	};
+25	```
+26	
+27	Expected output: ~500B-2KB WebP. Small enough to inline as a base64 data URI in the `/info` response, or to load in parallel with near-zero latency.
+28	
+29	## Implementation options
+30	
+31	1. **New `/placeholder` route** -- returns the tiny image directly. Landing page fetches it in parallel with the full image. Simple, cacheable independently.
+32	2. **Inline in `/info` response** -- add a `placeholder` field with a base64 data URI. One fewer request, but increases `/info` payload and couples the two.
+33	3. **Build-time bake** -- not viable since the image changes daily.
+34	
+35	Option 1 is cleanest. The landing page would:
+36	1. Set the placeholder as `background-image` on `.hero-image-area`
+37	2. Load the full image via `<img>` as today
+38	3. On `.loaded`, the image covers the placeholder naturally
+39	
+40	## Caching
+41	
+42	Same two-tier strategy as other image routes (6h primary, 24h stale). Cache key based on ET date like everything else.
+43
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:43Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-thumbnail-placeholder.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-04 06:24:51Z)**_
+
+Done. Renamed file to `NOTE-0018_cf-thumbnail-placeholder.md`, updated all references to use "thumbnail" / `/thumb` instead of "blur-up" / `/placeholder`. NOTE-0019 updated too.
+
+---
+
+_**User (2026-04-04 06:25:48Z)**_
+
+<command-message>commit-commands:commit</command-message>
+<command-name>/commit-commands:commit</command-name>
+
+_**User (2026-04-04 06:25:48Z)**_
+
+## Context
+
+- Current git status: On branch dev
+Your branch is ahead of 'origin/dev' by 9 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	board/planning/NOTE-0018_cf-thumbnail-placeholder.md
+	board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+- Current git diff (staged and unstaged changes): diff --git a/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md b/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+index ecfdd49..bf21446 100644
+--- a/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
++++ b/.specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+@@ -3715,3 +3715,644 @@ e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+ Based on the above changes, create a single git commit.
+ 
+ You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
++
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-04 06:01:14Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Stage all changed and untracked files
++
++`git add CLAUDE.md board/.doc-ids board/planning/NOTE-0017_landing-page-critique-apr-2026.md .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md .specstory/history/2026-04-04_04-05-53Z-command-message-impeccable-critique.md .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md`
++
++```text
++(Bash completed with no output)
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:01:21Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Create commit with updated docs
++
++```bash
++git commit -m "$(cat <<'EOF'
++docs: update CLAUDE.md to match current implementation and add design critique
++
++Sync CLAUDE.md with actual codebase state: fix typography (Source Serif/Sans/Code Pro),
++background color (#05070c), accent color status, landing page Vite+SCSS architecture,
++and add missing dev scripts. Add NOTE-0017 design critique capture.
++EOF
++)"
++```
++
++```text
++[dev f261277] docs: update CLAUDE.md to match current implementation and add design critique
++ 6 files changed, 5794 insertions(+), 7 deletions(-)
++ create mode 100644 .specstory/history/2026-04-04_04-05-53Z-command-message-impeccable-critique.md
++ create mode 100644 .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
++ create mode 100644 board/planning/NOTE-0017_landing-page-critique-apr-2026.md
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:01:25Z)**_
++
++Committed: `docs: update CLAUDE.md to match current implementation and add design critique` (f261277)
++
++---
++
++_**User (2026-04-04 06:04:06Z)**_
++
++<command-message>board:add</command-message>
++<command-name>/board:add</command-name>
++<command-args>NOTE: have CF generate a very small version of the image that we can use as a placeholder "blur up" on load NOTE: need to add some form of visual indicator of where the image will be on the landing page before it actually loads. Do we fetch the metadata independently of the image? if so, we can create the properly-sized container</command-args>
++
++_**User (2026-04-04 06:04:06Z)**_
++
++Base directory for this skill: /Users/grant/Documents/Projects/BoardPM/plugin/skills/add
++
++# Add Board Item
++
++Create a new item in the `board/` project management system. The system spec is bundled with the plugin at `/Users/grant/Documents/Projects/BoardPM/plugin/spec/board-system-spec.md`.
++
++## Existing Board Items
++
++Pre-loaded board data for duplicate detection:
++
++filepath	type	status	priority	blocked_by	parent	title
++./board/tasks/TASK-0003_nasa-data-insignia.md	task	todo	-	-	-	Apply for NASA Data Insignia
++./board/tasks/TASK-0011_add-r2-storage-layer.md	task	todo	-	-	-	Add R2 storage layer for APOD image archiving
++./board/tasks/TASK-0012_add-vite-to-landing.md	task	todo	-	-	NOTE-0015	Add Vite to Landing Page
++./board/tasks/TASK-0013_extract-styles-to-scss.md	task	todo	-	-	NOTE-0015	Extract Inline Styles to SCSS
++./board/tasks/TASK-0014_landing-build-and-deploy.md	task	todo	-	-	NOTE-0015	Add Landing Page Build and Deploy
++./board/planning/NOTE-0005_add-individual-metadata-routes.md	note	inbox	-	-	-	Add individual metadata routes
++./board/planning/NOTE-0006_add-why-is-this-needed-section.md	note	inbox	-	-	-	Add a "Why Is This Needed" Section That Explains the APOD API
++./board/planning/NOTE-0008_generate-daily-og-image.md	note	inbox	-	-	-	Generate a daily OG image
++./board/planning/NOTE-0010_auto-refresh-landing-page-on-rollover.md	note	inbox	-	-	-	Auto-refresh landing page on APOD rollover
++./board/planning/NOTE-0013_find-non-google-font-alternatives.md	note	inbox	-	-	-	Find non-Google font alternatives
++./board/planning/NOTE-0014_add-gh-action-auto-deploy-on-merge.md	note	inbox	-	-	-	Add GitHub Action to auto-deploy to Cloudflare on PR merge into main
++./board/planning/NOTE-0016_local-timezone-apod-rollover.md	note	inbox	-	-	-	Local timezone APOD rollover
++./board/planning/NOTE-0017_landing-page-critique-apr-2026.md	note	inbox	-	-	-	Landing page design critique (April 2026)
++
++Before creating, check if a similar item already exists. If a close match is found, ask the user if they still want to create a new one.
++
++## Scope Assessment
++
++When the user requests a **TASK**, evaluate whether it is actually EPIC-sized before creating it. Look for these signals:
++
++- Multiple distinct steps or deliverables in the description
++- Multiple action verbs joined by "and" (e.g., "add auth and set up roles and integrate SSO")
++- Work that spans different code areas or concerns
++- Sub-steps that could be completed and shipped independently
++
++**Quick test:** "Could someone meaningfully complete and ship part of this while the rest remains undone?" If yes → likely an EPIC.
++
++If EPIC signals are present, suggest an EPIC + sub-TASKs with a concrete breakdown. For example:
++
++> "This looks like it has multiple independent deliverables. Want me to create an EPIC with separate TASKs for each piece instead?"
++
++**This is a soft suggestion only.** If the user says "just make it a task," comply without pushback.
++
++This assessment only applies to TASK creation — do not second-guess EPICs, NOTEs, or other types.
++
++## Arguments
++
++The user provides the type and title: `/board:board-add task <title>`, `/board:board-add epic <title>`, etc.
++
++If no type is given, ask the user what type of item to create.
++
++## Determine Next ID
++
++Run the ID assignment script:
++
++```bash
++bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/next-id.sh <TYPE> ./board
++```
++
++This scans all directories (including `board/archive/` and `.doc-ids`) and returns the next available 4-digit zero-padded ID.
++
++## Create the File
++
++Use the correct directory, frontmatter, and naming convention:
++
++| Type | Directory | Filename Example |
++|------|-----------|-----------------|
++| task | `board/tasks/` | `TASK-0014_add-batch-processing.md` |
++| epic | `board/planning/` | `EPIC-0009_batch-mode.md` |
++| adr | `board/planning/` | `ADR-0002_chose-webgpu-over-wasm.md` |
++| note | `board/planning/` | `NOTE-0001_explore-wasm-option.md` |
++| reference | `board/reference/` | `REFE-0007_webgpu-overview.md` |
++| resource | `board/resources/` | `RESO-0001_webgpu-article.md` |
++
++## Frontmatter Templates
++
++Task:
++```yaml
++---
++type: task
++status: backlog
++priority: 2
++created: YYYY-MM-DD
++---
++```
++
++Epic:
++```yaml
++---
++type: epic
++status: planning
++created: YYYY-MM-DD
++---
++```
++
++ADR:
++```yaml
++---
++type: adr
++status: active
++context_date: YYYY-MM-DD
++created: YYYY-MM-DD
++---
++```
++
++Note:
++```yaml
++---
++type: note
++status: inbox
++created: YYYY-MM-DD
++---
++```
++
++Reference:
++```yaml
++---
++type: reference
++created: YYYY-MM-DD
++---
++```
++
++Resource (ask user for URL):
++```yaml
++---
++type: resource
++status: inbox
++url: <url>
++created: YYYY-MM-DD
++---
++```
++
++## Naming Rules
++
++- Convert title to kebab-case for filename
++- Task titles MUST be imperative mood (start with a verb). If the user gives a noun phrase, rewrite it (e.g., "batch processing" -> "Add batch processing support")
++- Use today's date for `created`
++
++## After Creation
++
++Show the file path and ask if the user wants to add more detail to the body.
++
++
++ARGUMENTS: NOTE: have CF generate a very small version of the image that we can use as a placeholder "blur up" on load NOTE: need to add some form of visual indicator of where the image will be on the landing page before it actually loads. Do we fetch the metadata independently of the image? if so, we can create the properly-sized container
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-04 06:04:12Z)**_
++
++
++
++These are two related but distinct notes. Let me check for duplicates and get the next IDs.
++
++_**Agent (claude-opus-4-6 2026-04-04 06:04:12Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Get next NOTE ID
++
++`bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/next-id.sh NOTE ./board`
++
++```text
++0018
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:04:18Z)**_
++
++No existing duplicates -- NOTE-0017 (the critique) mentions image loading as a P3 issue but doesn't cover the Cloudflare image transformation approach or the metadata-driven container sizing. These are implementation ideas, not just the problem statement.
++
++I'd suggest splitting into two notes since they're independent ideas:
++
++1. **NOTE-0018**: CF-generated blur-up placeholder image
++2. **NOTE-0019**: Pre-sized image container using metadata
++
++Want me to create them as two separate notes, or keep them as one combined note?
++
++---
++
++_**User (2026-04-04 06:13:38Z)**_
++
++2
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-04 06:13:46Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Write"><details>
++<summary>Tool use: **Write**</summary>
++
++```md
++---
++type: note
++status: inbox
++created: 2026-04-03
++---
++
++# Generate CF blur-up placeholder image
++
++Have Cloudflare Image Transformations generate a very small version of the APOD image (e.g., 20-40px wide, heavy blur) that can be inlined or loaded instantly as a placeholder. On image load, crossfade from the blurred placeholder to the full image ("blur up" technique).
++
++This would solve the empty void users see while the hero image loads on slower connections (flagged as P3 in NOTE-0017).
++
++```
++
++```text
++File created successfully at: /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-blur-up-placeholder-image.md
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:13:49Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Write"><details>
++<summary>Tool use: **Write**</summary>
++
++```md
++---
++type: note
++status: inbox
++created: 2026-04-03
++---
++
++# Pre-size image container using metadata
++
++The landing page fetches `/info` metadata independently of the image. If the metadata includes image dimensions (or we add them), we can set the container to the correct aspect ratio before the image loads, preventing layout shift and giving a visible frame for the placeholder.
++
++Questions:
++- Does NASA's APOD API return image dimensions? If not, can we measure and cache them in the Worker?
++- Can Cloudflare Image Transformations report dimensions in a header?
++
++```
++
++```text
++File created successfully at: /Users/grant/code/nasa-apod/board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:14:34Z)**_
++
++Created:
++- `board/planning/NOTE-0018_cf-blur-up-placeholder-image.md` -- CF-generated tiny image for blur-up loading
++- `board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md` -- use /info metadata to pre-size the container
++
++Want to add more detail to either?
++
++---
++
++_**User (2026-04-04 06:19:59Z)**_
++
++add whatever detail is needed
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:05Z)**_
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:06Z)**_
++
++Let me check the current implementation to add concrete technical detail.
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:08Z)**_
++
++<tool-use data-tool-type="search" data-tool-name="Grep"><details>
++<summary>Tool use: **Grep**</summary>
++ path `./src/index.ts` pattern `optimized|Image Transformations|cf-image`
++
++```text
++8- * Routes:
++9- *   GET /          → today's APOD image (high res, falls back to standard)
++10- *   GET /sd        → today's APOD image (standard res)
++11: *   GET /optimized → optimized image (≤1200px, auto WebP/AVIF)
++12- *   GET /info      → JSON metadata
++13- *   GET /about     → plain-text description and attribution
++14- */
++--
++178-    "Link": [
++179-      `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
++180-      `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
++181:      `<${origin}/optimized>; rel="alternate"; type="image/*"; title="Optimized image"`,
++182-      `<${origin}/info>; rel="describedby"`,
++183-      `<${origin}/about>; rel="about"`,
++184-    ].join(", "),
++--
++218-
++219-      const sdPaths = ["/sd", "/image-sd.jpg"];
++220-      const hdPaths = ["/", "/image.jpg"];
++221:      const optimizedPaths = ["/optimized", "/image-optimized.jpg"];
++222-
++223-      if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
++224-        const apod = await findLatestImage(log, apiKey);
++--
++232-        res = new Response(upstream.body, {
++233-          headers: baseHeaders(origin, { "Content-Type": contentType }),
++234-        });
++235:      } else if (optimizedPaths.includes(pathname)) {
++236-        const apod = await findLatestImage(log, apiKey);
++237-        const imageUrl = apod.hdurl || apod.url;
++238-        validateImageUrl(imageUrl);
++--
++250-          imageOpts.format = "webp";
++251-        }
++252-
++253:        log.push(`  [optimized] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
++254-
++255-        const upstream = await fetch(imageUrl, {
++256-          cf: { image: imageOpts },
++--
++271-          "/image.jpg": "Same as / with file extension (for contexts that need one)",
++272-          "/sd": "Today's APOD image (standard resolution)",
++273-          "/image-sd.jpg": "Same as /sd with file extension",
++274:          "/optimized": "Optimized image (≤1200px, auto WebP/AVIF)",
++275:          "/image-optimized.jpg": "Same as /optimized with file extension",
++276-          "/info": "JSON metadata for today's APOD",
++277-          "/about": "Plain-text description and attribution",
++278-        };
++--
++329-          "    /image.jpg           HD image (with extension)",
++330-          "    /sd                  Standard resolution",
++331-          "    /image-sd.jpg        Standard resolution (with extension)",
++332:          "    /optimized           Optimized (≤1200px, auto WebP/AVIF)",
++333:          "    /image-optimized.jpg Optimized (with extension)",
++334-          "    /info                JSON metadata",
++335-          "    /about               This page",
++336-          "",
++--
++345-        });
++346-      } else {
++347-        res = new Response(
++348:          JSON.stringify({ error: "Not found. Routes: /, /sd, /optimized, /info, /about" }),
++349-          { status: 404, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
++350-        );
++351-      }
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:09Z)**_
++
++<tool-use data-tool-type="search" data-tool-name="Grep"><details>
++<summary>Tool use: **Grep**</summary>
++ path `./landing/index.html` pattern `fetch.*info|/info|title.*date`
++
++```text
++87-            rel="noopener noreferrer">
++88-            <code class="endpoint-route">/sd</code>
++89-            <span class="endpoint-desc">Standard resolution image</span>
++90-            <code class="endpoint-type">image/*</code>
++91-          </a>
++92:          <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/info" target="_blank"
++93-            rel="noopener noreferrer">
++94:            <code class="endpoint-route">/info</code>
++95-            <span class="endpoint-desc">Title, date, explanation, URLs, copyright</span>
++96-            <code class="endpoint-type">application/json</code>
++97-          </a>
++98-          <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/about" target="_blank"
++99-            rel="noopener noreferrer">
++--
++153-        }
++154-      });
++155-    });
++156-
++157-    // Fetch APOD metadata for caption (image loads directly from proxy)
++158:    fetch(`${API_BASE}/info`)
++159-      .then(r => r.json())
++160-      .then(data => {
++161-        if (data.title) {
++162-          img.alt = data.title;
++163-          document.getElementById('caption-title').textContent = data.title;
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:14Z)**_
++
++<tool-use data-tool-type="search" data-tool-name="Grep"><details>
++<summary>Tool use: **Grep**</summary>
++ path `./src/index.ts` pattern `cf.*image|imageOpts|width|height`
++
++```text
++238-        validateImageUrl(imageUrl);
++239-
++240:        const imageOpts: RequestInitCfPropertiesImage = {
++241-          fit: "scale-down",
++242:          width: 1200,
++243-          quality: 85,
++244-        };
++--
++246-        const accept = request.headers.get("Accept") || "";
++247-        if (/image\/avif/.test(accept)) {
++248:          imageOpts.format = "avif";
++249-        } else if (/image\/webp/.test(accept)) {
++250:          imageOpts.format = "webp";
++251-        }
++252-
++253:        log.push(`  [optimized] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
++254-
++255-        const upstream = await fetch(imageUrl, {
++256:          cf: { image: imageOpts },
++257-        });
++258-
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:15Z)**_
++
++<tool-use data-tool-type="search" data-tool-name="Grep"><details>
++<summary>Tool use: **Grep**</summary>
++ path `./src/index.ts` pattern `apod\.(hdurl|url|title|date|explanation|copyright)`
++
++```text
++226:          ? apod.url
++227:          : (apod.hdurl || apod.url);
++237:        const imageUrl = apod.hdurl || apod.url;
++285:              title: apod.title,
++286:              date: apod.date,
++287:              explanation: apod.explanation,
++289:              url: apod.url,
++290:              hdurl: apod.hdurl ?? null,
++291:              copyright: apod.copyright ?? null,
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:19Z)**_
++
++Good. The `/optimized` endpoint already uses `cf: { image: imageOpts }` for Cloudflare Image Transformations. The `/info` response includes `url` and `hdurl` but no dimensions. Now I have what I need.
++
++_**Agent (claude-opus-4-6 2026-04-04 06:20:36Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++The file /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-blur-up-placeholder-image.md has been updated successfully.
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:21:03Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++The file /Users/grant/code/nasa-apod/board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md has been updated successfully.
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:21:09Z)**_
++
++Both notes updated with implementation detail:
++
++- **NOTE-0018**: Concrete `cf.image` options (~32px, 30 quality, WebP), expected payload size, three implementation options with recommendation, caching strategy
++- **NOTE-0019**: Current state analysis (no dimensions in API or NASA data), approach via CF Image Transformations response headers, landing page integration code, and how the two notes work together
++
++---
++
++_**User (2026-04-04 06:24:10Z)**_
++
++the "blur up" placeholder is essnetially a thumb
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:15Z)**_
++
++
++
++Good point. Let me rename it.
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:16Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Rename NOTE-0018 to use "thumbnail" terminology
++
++`mv /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-blur-up-placeholder-image.md /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-thumbnail-placeholder.md`
++
++```text
++(Bash completed with no output)
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:24Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:25Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:26Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:27Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++The file /Users/grant/code/nasa-apod/board/planning/NOTE-0019_pre-sized-image-container-from-metadata.md has been updated. All occurrences were successfully replaced.
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:30Z)**_
++
++<tool-use data-tool-type="read" data-tool-name="Read"><details>
++<summary>Tool use: **Read**</summary>
++ `./board/planning/NOTE-0018_cf-thumbnail-placeholder.md`
++
++```text
++1	---
++2	type: note
++3	status: inbox
++4	created: 2026-04-03
++5	---
++6	
++7	# Generate CF blur-up placeholder image
++8	
++9	Have Cloudflare Image Transformations generate a very small version of the APOD image that loads instantly as a placeholder. On hero image load, crossfade from the blurred placeholder to the full resolution ("blur up" technique).
++10	
++11	This would solve the empty void users see while the hero image loads on slower connections (flagged as P3 in NOTE-0017).
++12	
++13	## Approach
++14	
++15	The `/optimized` endpoint already uses `cf: { image: { ... } }` for Image Transformations (scale-down to 1200px, auto WebP/AVIF). A new `/placeholder` route could use the same pattern with aggressive settings:
++16	
++17	```ts
++18	const imageOpts: RequestInitCfPropertiesImage = {
++19	  fit: "scale-down",
++20	  width: 32,       // tiny -- just enough for blur-up
++21	  quality: 30,
++22	  format: "webp",  // always WebP for smallest size
++23	  blur: 5,         // optional: pre-blur server-side
++24	};
++25	```
++26	
++27	Expected output: ~500B-2KB WebP. Small enough to inline as a base64 data URI in the `/info` response, or to load in parallel with near-zero latency.
++28	
++29	## Implementation options
++30	
++31	1. **New `/placeholder` route** -- returns the tiny image directly. Landing page fetches it in parallel with the full image. Simple, cacheable independently.
++32	2. **Inline in `/info` response** -- add a `placeholder` field with a base64 data URI. One fewer request, but increases `/info` payload and couples the two.
++33	3. **Build-time bake** -- not viable since the image changes daily.
++34	
++35	Option 1 is cleanest. The landing page would:
++36	1. Set the placeholder as `background-image` on `.hero-image-area`
++37	2. Load the full image via `<img>` as today
++38	3. On `.loaded`, the image covers the placeholder naturally
++39	
++40	## Caching
++41	
++42	Same two-tier strategy as other image routes (6h primary, 24h stale). Cache key based on ET date like everything else.
++43
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:43Z)**_
++
++<tool-use data-tool-type="write" data-tool-name="Edit"><details>
++<summary>Tool use: **Edit**</summary>
++
++```text
++The file /Users/grant/code/nasa-apod/board/planning/NOTE-0018_cf-thumbnail-placeholder.md has been updated successfully.
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-04 06:24:51Z)**_
++
++Done. Renamed file to `NOTE-0018_cf-thumbnail-placeholder.md`, updated all references to use "thumbnail" / `/thumb` instead of "blur-up" / `/placeholder`. NOTE-0019 updated too.
+- Current branch: dev
+- Recent commits: f261277 docs: update CLAUDE.md to match current implementation and add design critique
+a0f724b style(landing): refine spacing, typography, and color hierarchy
+5bcbef8 chore: organize specstory history into year/month directories
+8d8f2e3 feat(landing): add Vite build toolchain and extract styles to SCSS
+aa08f42 chore(board): extract Vite tasks from NOTE-0015 and archive
+c87edc2 fix(landing): keep focus toggle above overlay in focus mode
+e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+8b5833d chore: add specstory history and board planning notes
+8436587 Merge pull request #3 from GDKeller/dev
+614adbe Merge branch 'main' into dev
+
+## Your task
+
+Based on the above changes, create a single git commit.
+
+You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
