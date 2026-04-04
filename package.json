@@ -2,13 +2,15 @@
   "name": "apod-proxy",
   "private": true,
   "scripts": {
-    "dev": "mkdir -p logs && wrangler dev > logs/api.log 2>&1 & npx serve landing --listen 8788 > logs/landing.log 2>&1 & echo 'Dev servers started\n  API:     http://localhost:8787\n  Landing: http://localhost:8788\n\nRun npm run log to watch output'",
+    "dev": "mkdir -p logs && wrangler dev > logs/api.log 2>&1 & npm run dev:landing > logs/landing.log 2>&1 & echo 'Dev servers started\n  API:     http://localhost:8787\n  Landing: http://localhost:8788\n\nRun npm run log to watch output'",
     "api": "wrangler dev",
-    "dev:landing": "npx serve landing --listen 8788",
+    "dev:landing": "cd landing && npx vite",
     "log": "tail -f logs/api.log logs/landing.log",
     "log:tail": "tail -20 logs/api.log logs/landing.log",
     "stop": "lsof -ti:8787,8788 | xargs kill 2>/dev/null && echo 'Dev servers stopped' || echo 'No servers running'",
-    "deploy": "wrangler deploy"
+    "build:landing": "cd landing && npx vite build",
+    "deploy": "wrangler deploy",
+    "deploy:landing": "wrangler pages deploy landing/dist/ --project-name nasapicture-landing"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241004.0",

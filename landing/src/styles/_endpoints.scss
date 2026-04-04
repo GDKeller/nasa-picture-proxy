@@ -1,0 +1,84 @@
+.info {
+  padding: 0 1.2rem 4rem;
+  max-width: 38rem;
+  margin: 0 auto;
+
+  @media (min-width: 640px) {
+    padding: 0 2.5rem 4rem;
+  }
+
+  h2 {
+    font-size: 0.8rem;
+    font-weight: var(--font-weight-regular);
+    text-transform: uppercase;
+    color: var(--silver);
+    letter-spacing: 0.05em;
+    margin-bottom: 1.0rem;
+    padding-left: 0.5rem;
+  }
+
+  p {
+    line-height: 1.7;
+  }
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+  margin-bottom: 3rem;
+}
+
+.endpoint-list {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.875rem;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: baseline;
+  position: relative;
+  gap: 1.25rem;
+  padding: 0.75rem 1.0rem;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: background 0.2s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--void-mid);
+
+    .endpoint-route,
+    .endpoint-desc {
+      color: var(--white);
+    }
+  }
+}
+
+.endpoint-route {
+  background: none;
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--silver-dim);
+  min-width: 5rem;
+  transition: color 0.2s;
+}
+
+.endpoint-desc {
+  color: var(--silver-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.endpoint-type {
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--silver-dim);
+  margin-left: auto;
+  white-space: nowrap;
+}
