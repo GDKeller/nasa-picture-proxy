@@ -9,7 +9,8 @@
  *   GET /          → today's APOD image (high res, falls back to standard)
  *   GET /sd        → today's APOD image (standard res)
  *   GET /optimized → optimized image (≤1200px, auto WebP/AVIF)
- *   GET /info      → JSON metadata
+ *   GET /thumb     → tiny thumbnail (32px, blurred WebP)
+ *   GET /info      → JSON metadata (includes image dimensions)
  *   GET /about     → plain-text description and attribution
  */
 
@@ -171,6 +172,66 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   return new Response(arrayBuffer, { headers: cacheHeaders });
 }
 
+interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
+async function fetchImageDimensions(log: string[], imageUrl: string): Promise<ImageDimensions | null> {
+  validateImageUrl(imageUrl);
+
+  const cache = caches.default;
+  const cacheKey = `http://apod-dimensions-cache/${encodeURIComponent(imageUrl)}`;
+  const cacheReq = new Request(cacheKey);
+  const staleReq = new Request(`${cacheKey}:stale`);
+
+  const cached = await cache.match(cacheReq);
+  if (cached) {
+    log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → cache HIT`);
+    return cached.json() as Promise<ImageDimensions>;
+  }
+
+  try {
+    const res = await fetch(imageUrl, {
+      cf: { image: { format: "json" } },
+    });
+
+    if (!res.ok) {
+      const stale = await cache.match(staleReq);
+      if (stale) {
+        log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → stale cache fallback`);
+        return stale.json() as Promise<ImageDimensions>;
+      }
+      log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → ${res.status} (failed)`);
+      return null;
+    }
+
+    const info = await res.json() as { original: { width: number; height: number } };
+    const dimensions: ImageDimensions = {
+      width: info.original.width,
+      height: info.original.height,
+    };
+
+    log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → ${dimensions.width}×${dimensions.height}`);
+
+    const body = JSON.stringify(dimensions);
+    await Promise.all([
+      cache.put(cacheReq, new Response(body, {
+        headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${CACHE_TTL}` },
+      })),
+      cache.put(staleReq, new Response(body, {
+        headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` },
+      })),
+    ]);
+    return dimensions;
+  } catch (err) {
+    log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → error: ${err instanceof Error ? err.message : "unknown"}`);
+    const stale = await cache.match(staleReq);
+    if (stale) return stale.json() as Promise<ImageDimensions>;
+    return null;
+  }
+}
+
 function baseHeaders(origin: string, headers: Record<string, string> = {}): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -179,6 +240,7 @@ function baseHeaders(origin: string, headers: Record<string, string> = {}): Reco
       `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
       `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
       `<${origin}/optimized>; rel="alternate"; type="image/*"; title="Optimized image"`,
+      `<${origin}/thumb>; rel="alternate"; type="image/webp"; title="Thumbnail"`,
       `<${origin}/info>; rel="describedby"`,
       `<${origin}/about>; rel="about"`,
     ].join(", "),
@@ -219,6 +281,7 @@ export default {
       const sdPaths = ["/sd", "/image-sd.jpg"];
       const hdPaths = ["/", "/image.jpg"];
       const optimizedPaths = ["/optimized", "/image-optimized.jpg"];
+      const thumbPaths = ["/thumb", "/thumb.jpg"];
 
       if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
         const apod = await findLatestImage(log, apiKey);
@@ -265,6 +328,34 @@ export default {
         res = new Response(upstream.body, {
           headers: baseHeaders(origin, { "Content-Type": contentType }),
         });
+      } else if (thumbPaths.includes(pathname)) {
+        const apod = await findLatestImage(log, apiKey);
+        const imageUrl = apod.hdurl || apod.url;
+        validateImageUrl(imageUrl);
+
+        const imageOpts: RequestInitCfPropertiesImage = {
+          fit: "scale-down",
+          width: 32,
+          quality: 30,
+          format: "webp",
+          blur: 5,
+        };
+
+        log.push(`  [thumb] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
+
+        const upstream = await fetch(imageUrl, {
+          cf: { image: imageOpts },
+        });
+
+        if (!upstream.ok) {
+          throw new Error(`Thumbnail transform failed: ${upstream.status}`);
+        }
+
+        const contentType = upstream.headers.get("Content-Type") || "image/webp";
+
+        res = new Response(upstream.body, {
+          headers: baseHeaders(origin, { "Content-Type": contentType }),
+        });
       } else if (pathname === "/info") {
         const endpoints = {
           "/": "Today's APOD image (high resolution, falls back to standard)",
@@ -273,12 +364,16 @@ export default {
           "/image-sd.jpg": "Same as /sd with file extension",
           "/optimized": "Optimized image (≤1200px, auto WebP/AVIF)",
           "/image-optimized.jpg": "Same as /optimized with file extension",
-          "/info": "JSON metadata for today's APOD",
+          "/thumb": "Tiny blurred thumbnail (32px WebP, ~1KB)",
+          "/thumb.jpg": "Same as /thumb with file extension",
+          "/info": "JSON metadata for today's APOD (includes image dimensions)",
           "/about": "Plain-text description and attribution",
         };
 
         try {
           const apod = await fetchApod(log, apiKey);
+          const imageUrl = apod.media_type === "image" ? (apod.hdurl || apod.url) : null;
+          const dimensions = imageUrl ? await fetchImageDimensions(log, imageUrl) : null;
 
           res = new Response(
             JSON.stringify({
@@ -289,6 +384,8 @@ export default {
               url: apod.url,
               hdurl: apod.hdurl ?? null,
               copyright: apod.copyright ?? null,
+              width: dimensions?.width ?? null,
+              height: dimensions?.height ?? null,
               endpoints,
             }, null, 2),
             { headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
@@ -331,7 +428,9 @@ export default {
           "    /image-sd.jpg        Standard resolution (with extension)",
           "    /optimized           Optimized (≤1200px, auto WebP/AVIF)",
           "    /image-optimized.jpg Optimized (with extension)",
-          "    /info                JSON metadata",
+          "    /thumb               Tiny blurred thumbnail (32px WebP)",
+          "    /thumb.jpg           Thumbnail (with extension)",
+          "    /info                JSON metadata (with dimensions)",
           "    /about               This page",
           "",
           "  Homepage: https://nasapicture.com",
@@ -345,7 +444,7 @@ export default {
         });
       } else {
         res = new Response(
-          JSON.stringify({ error: "Not found. Routes: /, /sd, /optimized, /info, /about" }),
+          JSON.stringify({ error: "Not found. Routes: /, /sd, /optimized, /thumb, /info, /about" }),
           { status: 404, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
         );
       }
