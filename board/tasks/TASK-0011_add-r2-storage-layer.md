@@ -2,6 +2,7 @@
 type: task
 status: todo
 created: 2026-04-01
+parent: EPIC-0003
 blocked-by: TASK-0010
 ---
 
