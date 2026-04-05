@@ -1,4 +1,4 @@
-name = "apod-proxy"
+name = "nasa-picture-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-09-25"
 
