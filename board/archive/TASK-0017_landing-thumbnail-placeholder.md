@@ -1,6 +1,6 @@
 ---
 type: task
-status: backlog
+status: done
 priority: 2
 blocked_by: TASK-0015, TASK-0016
 parent: EPIC-0001

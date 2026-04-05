@@ -1,6 +1,6 @@
 ---
 type: epic
-status: planning
+status: done
 created: 2026-04-03
 ---
 
