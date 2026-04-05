@@ -9,16 +9,26 @@ APOD Proxy — a Cloudflare Worker that proxies NASA's Astronomy Picture of the 
 ## Commands
 
 ```bash
-npm run dev        # Start API (localhost:8787) + landing (localhost:8788) in background
-npm run deploy     # Deploy to Cloudflare Workers
-npx tsc --noEmit   # Type-check (no build artifact — Wrangler bundles directly)
-npm run api        # API dev server only (no landing page)
-npm run dev:landing # Landing page Vite dev server only
-npm run log        # Tail both API and landing page logs
-npm run log:tail   # Show last 20 lines of both logs
-npm run stop       # Kill dev servers
-npm run build:landing   # Vite production build for landing page
-npm run deploy:landing  # Deploy landing to Cloudflare Pages
+npm run dev            # Start API (localhost:8787) + landing (localhost:8788) in background
+npm run dev:api        # API dev server only (no landing page)
+npm run dev:landing    # Landing page Vite dev server only
+npm run log            # Tail both API and landing page logs (local dev)
+npm run log:tail       # Show last 20 lines of both logs (local dev)
+npm run log:api        # Tail API logs only
+npm run log:api:tail   # Show last 20 lines of API logs
+npm run log:landing    # Tail landing page logs only
+npm run log:landing:tail # Show last 20 lines of landing logs
+npm run log:prod       # Start tailing production Worker logs to file (background)
+npm run log:prod:tail  # Show last 20 lines of production logs
+npm run log:prod:watch # Watch production logs live
+npm run log:prod:stop  # Stop production log tail
+npm run status         # Check if dev servers and prod log are running
+npm run stop           # Kill dev servers
+npx tsc --noEmit       # Type-check (no build artifact, Wrangler bundles directly)
+npm run deploy         # Deploy everything (Worker + landing page)
+npm run deploy:api     # Deploy Worker only
+npm run deploy:landing # Build + deploy landing to Cloudflare Pages
+npm run build:landing  # Vite production build for landing page
 ```
 
 ## Architecture
@@ -28,18 +38,21 @@ Single-file Worker (`src/index.ts`) with these routes (plus `.jpg` aliases for e
 - `GET /` — proxies today's HD APOD image (falls back to standard if unavailable)
 - `GET /sd` — proxies the standard-res version
 - `GET /optimized` — optimized image (≤1200px, auto WebP/AVIF via Cloudflare Image Transformations)
-- `GET /info` — returns JSON metadata
+- `GET /thumb` — tiny blurred thumbnail (32px WebP, ~1KB via Cloudflare Image Transformations)
+- `GET /info` — returns JSON metadata (includes image width/height)
 - `GET /about` — plain-text description and attribution
 
 Caching uses the Workers Cache API (`caches.default`) with a two-tier strategy — no KV, D1, or cron:
 - **Primary cache** (6h TTL): APOD metadata keyed by ET date, image bytes keyed by NASA URL
 - **Stale fallback** (24h TTL): same data under a `:stale` suffixed key, served when NASA's API is down or rate-limited
 
-Cache keys are date-based in `America/New_York` timezone, so they roll over at midnight ET.
+Cache keys are date-based in `America/New_York` timezone, so they roll over at midnight ET. Cache key URLs must use a zone-scoped hostname (`https://api.nasapicture.com/_cache/...`), not synthetic hostnames -- `caches.default` silently drops writes for unknown hosts.
+
+Concurrent requests for the same APOD date are coalesced via an in-flight promise map to avoid thundering herd on cold cache.
 
 The `findLatestImage` function walks backwards from today up to `MAX_LOOKBACK_DAYS` (7) to skip video APODs.
 
-The landing page (`landing/`) is built with Vite and SCSS, served at `nasapicture.com` via Cloudflare Pages. Source is `landing/index.html` with styles in `landing/src/styles/` (8 SCSS partials). The Worker serves `api.nasapicture.com` and `get.nasapicture.com`.
+The landing page (`landing/`) is built with Vite and SCSS, served at `nasapicture.com` via Cloudflare Pages. Source is `landing/index.html` with styles in `landing/src/styles/` (SCSS partials). The landing page fetches `/info` and `/thumb` in parallel to pre-size the image container and show a blurred placeholder while the full image loads. The Worker serves `api.nasapicture.com` and `get.nasapicture.com`.
 
 ## Environment
 
