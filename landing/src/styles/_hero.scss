@@ -32,8 +32,11 @@
 }
 
 .hero-tagline {
-  flex: 1;
+  position: absolute;
+  left: 0;
+  right: 0;
   text-align: center;
+  pointer-events: none;
   font-family: var(--font-sans);
   font-size: 0.8rem;
   line-height: 0.8em;
