@@ -33,7 +33,7 @@
 
 .hero-tagline {
   flex: 1;
-  text-align: right;
+  text-align: center;
   font-family: var(--font-sans);
   font-size: 0.8rem;
   line-height: 0.8em;
@@ -51,7 +51,6 @@
 
   @media (min-width: 768px) {
     font-size: 0.9rem;
-    text-align: center;
   }
 }
 
@@ -112,6 +111,11 @@
   color: var(--silver-dimmest);
   letter-spacing: 0.03em;
   max-width: 24em;
+}
+
+.hero-stale-notice {
+  font-style: italic;
+  color: var(--silver-dimmest);
 }
 
 .hero-img {

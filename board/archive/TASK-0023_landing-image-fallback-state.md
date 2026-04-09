@@ -1,6 +1,6 @@
 ---
 type: task
-status: todo
+status: done
 created: 2026-04-08
 parent: EPIC-0002
 ---

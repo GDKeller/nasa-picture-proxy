@@ -4765,3 +4765,2225 @@ ce14a01 refactor: extract npm scripts to shell files and rename project
 Based on the above changes, create a single git commit.
 
 You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:14Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage and commit changes
+
+```bash
+git add landing/index.html landing/src/styles/_hero.scss .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md && git commit -m "$(cat <<'EOF'
+feat(landing): add dev feature flags and refine fallback placeholder
+EOF
+)"
+```
+
+```text
+[dev 74fea9c] feat(landing): add dev feature flags and refine fallback placeholder
+ 3 files changed, 4796 insertions(+), 11 deletions(-)
+ create mode 100644 .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:17Z)**_
+
+Committed `74fea9c`.
+
+---
+
+_**User (2026-04-09 12:37:42Z)**_
+
+add a feature flag for displaying a previous day's image as fallback
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:46Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+190	    document.querySelectorAll('.usage-url').forEach(el => {
+191	      el.childNodes.forEach(node => {
+192	        if (node.nodeType === Node.TEXT_NODE) {
+193	          node.textContent = defined_replace(node.textContent);
+194	        }
+195	      });
+196	    });
+197	
+198	    // Dev: force fallback state
+199	    if (devFlag === 'fallback') showFallback();
+200	
+201	    // Fetch metadata + thumbnail in parallel
+202	    const infoPromise = devFlag === 'fallback'
+203	      ? Promise.resolve(null)
+204	      : fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
+205	    const thumbPromise = devFlag === 'fallback'
+206	      ? Promise.resolve(null)
+207	      : fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
+208	
+209	    Promise.all([infoPromise, thumbPromise]).then(([data, thumbUrl]) => {
+210	      if (data && data.error) {
+211	        showFallback();
+212	        return;
+213	      }
+214	
+[result-id: r15]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:50Z)**_
+
+This flag should show a previous day's image with some kind of disclaimer, simulating the future R2 fallback tier from TASK-0023. I'll use `?dev=stale` and have it fetch a known past date's image from the API.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:52Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:57Z)**_
+
+Now I need to add a stale banner element and wire up the flag. Let me also check the current showFallback and image load flow to find the right place.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:37:57Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+60	    <section class="hero" aria-labelledby="site-heading">
+61	      <figure class="hero-image-area">
+62	        <div class="hero-img-wrapper" id="hero-img-wrapper">
+63	          <img src="https://api.nasapicture.com/optimized" alt="NASA Astronomy Picture of the Day" class="hero-img"
+64	            id="hero-img" loading="eager" fetchpriority="high">
+65	        </div>
+66	        <figcaption class="hero-caption" id="hero-caption">
+67	          <p class="hero-caption-title" id="caption-title"></p>
+68	          <time class="hero-caption-date" id="caption-date"></time>
+69	        </figcaption>
+70	      </figure>
+71	    </section>
+[result-id: r16]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:01Z)**_
+
+For the stale flag: load the real image normally but show a disclaimer banner indicating it's from a previous day. I'll add a function to show the stale notice and modify the `/info` response handling.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:04Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:09Z)**_
+
+Now wire up the stale flag in the info/thumb fetch section:
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:11Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:15Z)**_
+
+Now add the stale notice trigger after the caption is set, when the date doesn't match today:
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:16Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+218	
+219	    Promise.all([infoPromise, thumbPromise]).then(([data, thumbUrl]) => {
+220	      if (data && data.error) {
+221	        showFallback();
+222	        return;
+223	      }
+224	
+225	      if (data) {
+226	        // Set caption
+227	        if (data.title) {
+228	          img.alt = data.title;
+229	          document.getElementById('caption-title').textContent = data.title;
+230	          const dateEl = document.getElementById('caption-date');
+231	          dateEl.textContent = data.date;
+232	          dateEl.setAttribute('datetime', data.date);
+233	          dateEl.title = 'NASA publishes on Eastern Time';
+234	          document.getElementById('hero-caption').classList.add('visible');
+235	        }
+236	
+237	        // Pre-size container with aspect ratio from dimensions
+238	        if (data.width && data.height) {
+239	          wrapper.style.aspectRatio = `${data.width} / ${data.height}`;
+240	        }
+241	      }
+242	
+243	      // Show scaled-up thumbnail as placeholder
+244	      if (thumbUrl) {
+245	        wrapper.style.backgroundImage = `url(${thumbUrl})`;
+246	        wrapper.classList.add('has-thumb');
+247	      }
+[result-id: r17]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:21Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:24Z)**_
+
+Now add the stale notice styles:
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:27Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_hero.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:38:32Z)**_
+
+Try `http://localhost:8788/?dev=stale` — you should see the current image with a notice above it saying it's from a previous day. Since today's APOD is actually a video and the walkback landed on April 7, it should trigger naturally too (without the flag) since the date won't match today.
+
+---
+
+_**User (2026-04-09 12:40:18Z)**_
+
+I think it should go below the image, below the date (the most contextual place - next to the date which will show not today's date). also it looks like a button and shouldnt
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:40:25Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:40:31Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_hero.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:40:36Z)**_
+
+Moved it inside the caption (below the date) and stripped the border/background so it reads as a quiet note, not a button. Refresh to check.
+
+---
+
+_**User (2026-04-09 12:42:07Z)**_
+
+its too verbose. they can see the day for the image. it should be something like "Today's image can't be retrieved, past image being shown" I dont think that's exactly correct but close
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:12Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:15Z)**_
+
+And since we no longer need the `date` param:
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:16Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:20Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated. All occurrences were successfully replaced.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:22Z)**_
+
+Refresh to check.
+
+---
+
+_**User (2026-04-09 12:42:50Z)**_
+
+should we put it on the same line as the date? I dont want it to feel broken when this happens. its not an "error" its just letting the viewer know
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:54Z)**_
+
+
+
+Good call. Putting it inline with the date makes it feel informational, not alarming.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:42:56Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:43:01Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_hero.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:43:05Z)**_
+
+It'll inherit the font/size from `.hero-caption-date` and just add italic + dimmer color. Should read like "2026-04-07 · Showing a recent image". Refresh to check.
+
+---
+
+_**User (2026-04-09 12:43:43Z)**_
+
+it could be "today's image unavailable, showing a recent image". or the reverse: "showing a recent image, today's image unavailable"
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:43:46Z)**_
+
+
+
+I like the second one better, it leads with what the user is seeing rather than the problem.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:43:47Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:43:50Z)**_
+
+Refresh to check. If you'd prefer leading with the problem instead, say the word.
+
+---
+
+_**User (2026-04-09 12:44:43Z)**_
+
+i like it. now the question of do we outright show this text, or instead show a little icon when this happens and click/hover unfurls the text? I dont like the idea of "hiding" it but it would be less intrusive
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:44:51Z)**_
+
+
+
+I'd lean toward just showing it. It's already subtle (inline, italic, dimmed), and hiding it behind an icon adds interaction complexity for a one-line message that most people will just glance past. An icon that needs clicking/hovering also risks feeling more mysterious than the thing it's trying to explain.
+
+But it's your call. Want to keep it as-is, or try the icon approach?
+
+---
+
+_**User (2026-04-09 12:45:16Z)**_
+
+ok makes sense. did we verify that silver-dimmest over the void background passes contrast checkers?
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:45:30Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Calculate WCAG contrast ratio
+
+```bash
+python3 -c "
+# silver-dimmest: #636a73, void: #05070c
+# Calculate WCAG contrast ratio
+def luminance(r, g, b):
+    components = []
+    for c in (r, g, b):
+        c = c / 255.0
+        if c <= 0.04045:
+            components.append(c / 12.92)
+        else:
+            components.append(((c + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * components[0] + 0.7152 * components[1] + 0.0722 * components[2]
+
+fg = luminance(0x63, 0x6a, 0x73)
+bg = luminance(0x05, 0x07, 0x0c)
+
+lighter = max(fg, bg)
+darker = min(fg, bg)
+ratio = (lighter + 0.05) / (darker + 0.05)
+print(f'silver-dimmest (#636a73) on void (#05070c): {ratio:.2f}:1')
+print(f'WCAG AA normal text (4.5:1): {\"PASS\" if ratio >= 4.5 else \"FAIL\"}')
+print(f'WCAG AA large text (3:1): {\"PASS\" if ratio >= 3.0 else \"FAIL\"}')
+"
+```
+
+```text
+silver-dimmest (#636a73) on void (#05070c): 3.68:1
+WCAG AA normal text (4.5:1): FAIL
+WCAG AA large text (3:1): PASS
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:45:34Z)**_
+
+Fails AA for normal text (3.68:1, needs 4.5:1). It passes for large text only. The stale notice is small text, so we should use `--silver-dimmer` instead.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:45:40Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Check silver-dimmer contrast
+
+```bash
+python3 -c "
+def luminance(r, g, b):
+    components = []
+    for c in (r, g, b):
+        c = c / 255.0
+        if c <= 0.04045:
+            components.append(c / 12.92)
+        else:
+            components.append(((c + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * components[0] + 0.7152 * components[1] + 0.0722 * components[2]
+
+fg = luminance(0x95, 0x9B, 0xA3)
+bg = luminance(0x05, 0x07, 0x0c)
+ratio = (max(fg, bg) + 0.05) / (min(fg, bg) + 0.05)
+print(f'silver-dimmer (#959BA3) on void (#05070c): {ratio:.2f}:1')
+print(f'WCAG AA normal text (4.5:1): {\"PASS\" if ratio >= 4.5 else \"FAIL\"}')
+"
+```
+
+```text
+silver-dimmer (#959BA3) on void (#05070c): 7.19:1
+WCAG AA normal text (4.5:1): PASS
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:45:45Z)**_
+
+`--silver-dimmer` passes comfortably at 7.19:1.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:45:46Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_hero.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:45:50Z)**_
+
+Good catch. `--silver-dimmest` was 3.68:1 (fails AA), now using `--silver-dimmer` at 7.19:1. The variables file even notes that `--silver-dimmest` doesn't have sufficient contrast for text.
+
+---
+
+_**User (2026-04-09 12:46:43Z)**_
+
+so what are we using dimmest for
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:46:48Z)**_
+
+
+
+Looking at the variables file, the comment says "For non-text elements, doesn't have sufficient contrast for text." So it's for things like borders, decorative elements, icons, dividers, etc.
+
+Let me check if it's being used on text anywhere else in the codebase.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:46:49Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ pattern `silver-dimmest`
+
+```text
+landing/src/styles/_hero.scss:112:  color: var(--silver-dimmest);
+landing/src/styles/_focus-mode.scss:69:    color: var(--silver-dimmest);
+landing/src/styles/_focus-mode.scss:72:      color: var(--silver-dimmest);
+landing/src/styles/_variables.scss:11:  --silver-dimmest: #636a73;  // For non-text elements, doesn't have suffucient contrast for text
+[result-id: r18]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:46:53Z)**_
+
+It's used as text color in two places:
+
+1. `.hero-fallback-sub` (the fallback placeholder sub-message)
+2. `.focus-mode` (two instances)
+
+The fallback sub-message is a legit accessibility issue. Want me to bump those to `--silver-dimmer` as well?
+
+---
+
+_**User (2026-04-09 12:47:17Z)**_
+
+what during focus-mode is it on
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:47:23Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_focus-mode.scss`
+
+```text
+60	    opacity: 1;
+61	    pointer-events: auto;
+62	  }
+63	
+64	  .hero-img {
+65	    max-height: 85vh;
+66	  }
+67	
+68	  .focus-toggle {
+69	    color: var(--silver-dimmest);
+70	
+71	    .label {
+72	      color: var(--silver-dimmest);
+73	    }
+74	
+75	    
+76	    &:hover {
+77	      color: var(--white);
+78	      transition: color 0.2s ease-in-out;
+79	      
+[result-id: r19]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:47:28Z)**_
+
+It's the "Focus" toggle button and its label. Those are interactive UI elements, not body text, so they're borderline. But since it's a button with a text label, it should still meet AA. The hover state bumps to `--white` so it's fine there, but the resting state at 3.68:1 fails.
+
+Want me to bump the focus toggle to `--silver-dimmer` too, along with the fallback sub-message?
+
+---
+
+_**User (2026-04-09 12:52:02Z)**_
+
+no i chnaged the value of silver-dimmest to be AA compliant for normal text. we can use it in the places now
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:52:07Z)**_
+
+
+
+Got it. Let me update the stale notice back to `--silver-dimmest` since it's now AA compliant.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:52:08Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_hero.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:52:11Z)**_
+
+And we should update the comment in variables since it's no longer true.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:52:12Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:52:15Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_variables.scss`
+
+```text
+1	:root {
+2	  --void: #05070c;
+3	  --void-mid: #090A11;
+4	  --void-up: #10121E;
+5	  --nasa-blue: #0032A0;
+6	  --nasa-blue-light: #4d7fd9;
+7	  --nasa-red: #e4002b;
+8	  --silver: #eeeff2;
+9	  --silver-dim: #b8bcc6;
+10	  --silver-dimmer: #959BA3;
+11	  --silver-dimmest: #717881;
+12	  --white: #e8eaed;
+13	  --border: rgba(255, 255, 255, 0.06);
+14	  --border-bright: rgba(255, 255, 255, 0.12);
+15	  --font-serif: 'source-serif-4-display', serif;
+16	  --font-sans: 'source-sans-3', sans-serif;
+17	  --font-mono: 'source-code-pro', monospace;
+18	  --font-weight-light: 300;
+19	  --font-weight-regular: 400;
+20	  --font-weight-medium: 500;
+21	  --font-weight-semibold: 600;
+22	  --font-weight-bold: 700;
+23	}
+24	
+[result-id: r20]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:52:19Z)**_
+
+You already updated it to `#717881` and removed the comment. All set.
+
+---
+
+_**User (2026-04-09 12:53:26Z)**_
+
+there's an issue with the "focus" icon and label. when i hover I dont get a "click" icon. i see it very briefly when i actually click, but not on hover in either state
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:53:30Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_focus-mode.scss`
+
+```text
+1	.focus-toggle {
+2	  position: absolute;
+3	  top: 1.25rem;
+4	  right: 1.2rem;
+5	  z-index: 60;
+6	  background: none;
+7	  flex-direction: column;
+8	  border: none;
+9	  color: var(--silver-dimmer);
+10	  cursor: pointer;
+11	  display: flex;
+12	  align-items: center;
+13	  padding: 0.3rem;
+14	  gap: 0.25rem;
+15	  transition: color 0.8s ease-in-out;
+16	
+17	  @media (min-width: 640px) {
+18	    top: 1.6rem;
+19	    right: 2.5rem;
+20	  }
+21	
+22	  svg {
+23	    width: 1rem;
+24	    height: 1rem;
+25	  }
+26	
+27	  .label {
+28	    color: var(--silver-dimmer);
+29	    font-size: 0.5rem;
+30	    letter-spacing: 0.03em;
+31	    transition: color 0.8s ease-in-out;
+32	  }
+33	
+34	  &:hover {
+35	    color: var(--white);
+36	    transition: color 0.2s ease-in-out;
+37	
+38	    .label {
+39	      color: var(--white);
+40	      transition: color 0.2s ease-in-out;
+41	    }
+42	  }
+43	}
+44	
+45	.focus-overlay {
+46	  position: fixed;
+47	  background: rgba(0, 0, 0, 0.85);
+48	  z-index: 50;
+49	  opacity: 0;
+50	  top: 0;
+51	  left: 0;
+52	  width: 100vw;
+53	  height: 100vh;
+54	  pointer-events: none;
+55	  transition: opacity 1.5s ease-in-out;
+56	}
+57	
+58	body.focus-mode {
+59	  .focus-overlay {
+60	    opacity: 1;
+61	    pointer-events: auto;
+62	  }
+63	
+64	  .hero-img {
+65	    max-height: 85vh;
+66	  }
+67	
+68	  .focus-toggle {
+69	    color: var(--silver-dimmest);
+70	
+71	    .label {
+72	      color: var(--silver-dimmest);
+73	    }
+74	
+75	    
+76	    &:hover {
+77	      color: var(--white);
+78	      transition: color 0.2s ease-in-out;
+79	      
+80	      .label {
+81	        color: var(--white);
+82	        transition: color 0.2s ease-in-out;
+83	      }
+84	    }
+85	  }
+86	}
+87	
+[result-id: r21]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:53:37Z)**_
+
+The button has `cursor: pointer` on line 10, so it should show a pointer. The issue is likely the `.focus-overlay` — when focus mode is active, the overlay covers the full viewport at `z-index: 50` with `pointer-events: auto`, sitting below the toggle at `z-index: 60`. But the overlay might be intercepting the hover state. 
+
+Actually, the more likely cause: the `.label` span inside the button doesn't inherit `cursor: pointer`. Some browsers reset cursor on child elements.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:53:39Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:53:42Z)**_
+
+Try hovering now — does the pointer show on both the icon and the label?
+
+---
+
+_**User (2026-04-09 12:55:20Z)**_
+
+it flickers really quickly, and i dont really ever see the clicker pointer
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:55:28Z)**_
+
+_**Agent (claude-opus-4-6 2026-04-09 12:55:29Z)**_
+
+The SVG and its child paths likely aren't inheriting the cursor. Let me force it on all descendants.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:55:30Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_focus-mode.scss`
+
+```text
+1	.focus-toggle {
+2	  position: absolute;
+3	  top: 1.25rem;
+4	  right: 1.2rem;
+5	  z-index: 60;
+6	  background: none;
+7	  flex-direction: column;
+8	  border: none;
+9	  color: var(--silver-dimmer);
+10	  cursor: pointer;
+11	  display: flex;
+12	  align-items: center;
+13	  padding: 0.3rem;
+14	  gap: 0.25rem;
+15	  transition: color 0.8s ease-in-out;
+[result-id: r22]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:55:35Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:55:38Z)**_
+
+Try hovering now.
+
+---
+
+_**User (2026-04-09 12:55:59Z)**_
+
+nope, no change
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:03Z)**_
+
+
+
+Let me check if something is overlapping the button. Can I take a screenshot via the browser tools to inspect what's on top?
+
+Actually, let me check if there's an element with higher z-index or if the header/other elements are covering the button area.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:04Z)**_
+
+<tool-use data-tool-type="search" data-tool-name="Grep"><details>
+<summary>Tool use: **Grep**</summary>
+ pattern `z-index`
+
+```text
+landing/src/styles/_focus-mode.scss:5:  z-index: 60;
+landing/src/styles/_focus-mode.scss:55:  z-index: 50;
+landing/src/styles/_hero.scss:67:  z-index: 60;
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:08Z)**_
+
+`.hero-img-wrapper` is also `z-index: 60`. Let me check the header positioning too.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:08Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_header.scss`
+
+```text
+1	.site-header {
+2	  display: flex;
+3	  justify-content: space-between;
+4	  align-items: baseline;
+5	  padding: 1.25rem 1.2rem;
+6	  opacity: 0;
+7	  animation: fade-in 0.8s ease 0.3s forwards;
+8	
+9	  @media (min-width: 640px) {
+10	    padding: 2rem 2.5rem;
+11	  }
+12	}
+13	
+14	.logo {
+15	  align-items: center;
+16	  display: flex;
+17	  flex: 1;
+18	  letter-spacing: 0.04em;
+19	  line-height: 0.8em;
+20	  position: relative;
+21	  font-family: var(--font-sans);
+22	  font-weight: var(--font-weight-regular);
+23	  font-size: 1rem;
+24	  color: var(--silver-dimmer);
+25	  text-decoration: none;
+26	
+27	  @media (min-width: 640px) {
+28	    font-size: 1rem;
+29	  }
+30	
+31	  @media (min-width: 768px) {
+32	    font-size: 0.8rem;
+33	  }
+34	}
+35	
+36	.site-nav {
+37	  flex: 1;
+38	  display: flex;
+39	  justify-content: flex-end;
+40	  font-family: var(--font-mono);
+41	  font-size: 0.7rem;
+42	  gap: 1.25rem;
+43	  margin: auto 0;
+44	}
+45	
+[result-id: r23]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:13Z)**_
+
+The `.site-nav` is an empty `<nav>` with `flex: 1` on the right side of the header. It's occupying space in the same area as the focus toggle button. Since the toggle is `position: absolute` and the nav is in the normal flow, the nav's box could be sitting on top.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:14Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/index.html`
+
+```text
+52	  <header class="site-header">
+53	    <a href="/" class="logo">nasapicture.com</a>
+54	    <h1 id="site-heading" class="hero-tagline">Astronomy Picture of the Day</h1>
+55	    <nav class="site-nav" aria-label="Site navigation">
+56	    </nav>
+57	  </header>
+58	
+[result-id: r24]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:18Z)**_
+
+That empty `<nav>` with `flex: 1` is stretching over the top-right area where the focus toggle lives. It has no z-index but it's in normal flow, sitting on top of the absolutely-positioned button. The nav is intercepting pointer events.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:20Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_header.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:24Z)**_
+
+Also clean up the redundant cursor rules since the real issue was the nav overlay:
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:26Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:56:30Z)**_
+
+The empty `.site-nav` with `flex: 1` was stretching across the top-right corner, blocking pointer events from reaching the focus toggle underneath. Added `pointer-events: none` to the nav. Try hovering now.
+
+---
+
+_**User (2026-04-09 12:57:23Z)**_
+
+a nav with pointer events none is silly. theres actually not anything in the site nav, I dont think we need it.
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:57:26Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/index.html has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:57:32Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_header.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:57:35Z)**_
+
+Removed the empty nav and its styles. Try hovering the focus toggle now.
+
+---
+
+_**User (2026-04-09 12:58:22Z)**_
+
+no actually the issue persists. and the title got pushed right (should be in the center) [Image #1]
+
+_**User (2026-04-09 12:58:22Z)**_
+
+[Image source: /Users/grant/.claude/image-cache/9a3ef3d9-69c2-4540-950a-071b8b6215fe/1.png]
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:26Z)**_
+
+
+
+The nav was acting as the right-side flex spacer to center the title. Let me fix the centering and investigate the cursor issue properly.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:26Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_header.scss`
+
+```text
+1	.site-header {
+2	  display: flex;
+3	  justify-content: space-between;
+4	  align-items: baseline;
+5	  padding: 1.25rem 1.2rem;
+6	  opacity: 0;
+7	  animation: fade-in 0.8s ease 0.3s forwards;
+8	
+9	  @media (min-width: 640px) {
+10	    padding: 2rem 2.5rem;
+11	  }
+12	}
+13	
+14	.logo {
+15	  align-items: center;
+16	  display: flex;
+17	  flex: 1;
+18	  letter-spacing: 0.04em;
+19	  line-height: 0.8em;
+20	  position: relative;
+21	  font-family: var(--font-sans);
+22	  font-weight: var(--font-weight-regular);
+23	  font-size: 1rem;
+24	  color: var(--silver-dimmer);
+25	  text-decoration: none;
+26	
+27	  @media (min-width: 640px) {
+28	    font-size: 1rem;
+29	  }
+30	
+31	  @media (min-width: 768px) {
+32	    font-size: 0.8rem;
+33	  }
+34	}
+35	
+36	
+[result-id: r25]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:31Z)**_
+
+The header is `flex` with `justify-content: space-between`. Logo has `flex: 1`, the tagline needs a matching spacer on the right. Instead of the empty nav, I'll just make the tagline centered with `flex: 1` and `text-align: center`.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:32Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_hero.scss`
+
+```text
+35	  flex: 1;
+36	  text-align: right;
+37	  font-family: var(--font-sans);
+38	  font-size: 0.8rem;
+39	  line-height: 0.8em;
+40	  font-weight: var(--font-weight-medmium);
+41	  color: var(--silver-dimmer);
+42	  white-space: nowrap;
+43	  letter-spacing: 0.05em;
+44	  word-spacing: 0.1em;
+45	  opacity: 0;
+46	  animation: fade-in 0.8s ease 0.3s forwards;
+47	
+48	  @media (min-width: 640px) {
+49	    font-size: 0.8rem;
+50	  }
+51	
+52	  @media (min-width: 768px) {
+53	    font-size: 0.9rem;
+54	    text-align: center;
+55	  }
+56	}
+[result-id: r26]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:39Z)**_
+
+The tagline has `text-align: right` (mobile) and `text-align: center` at 768px+. With the nav gone, `flex: 1` on both logo and tagline splits the space evenly, but the tagline text aligns right on mobile and center on desktop. Without the nav as a third flex child, there's no right-side counterweight.
+
+Simplest fix: make the tagline `text-align: center` at all sizes and it'll center in its flex area.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:43Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_hero.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:52Z)**_
+
+Now for the cursor issue, since it's not the nav, let me check what element is actually on top of the focus button. Could you open DevTools and hover the focus icon, then check what element the inspector highlights? Or I can try bumping the z-index higher.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:53Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_focus-mode.scss`
+
+```text
+<identical to result [r22] from your Read call earlier — refer to that output>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:58:58Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:59:02Z)**_
+
+Try refreshing. Does the centering look right, and does the cursor show on the focus button now?
+
+---
+
+_**User (2026-04-09 12:59:45Z)**_
+
+centering still off. no change to focus toggle
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 12:59:49Z)**_
+
+
+
+The two-item flex with `space-between` won't center the tagline. Let me rethink the header layout, and use DevTools to inspect what's blocking the toggle.
+
+_**Agent (claude-opus-4-6 2026-04-09 12:59:50Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ToolSearch"><details>
+<summary>Tool use: **ToolSearch**</summary>
+
+**Input:**
+
+- max_results: `5`
+- query: `chrome-devtools`
+
+**Result:**
+
+```
+
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 12:59:55Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ToolSearch"><details>
+<summary>Tool use: **ToolSearch**</summary>
+
+**Input:**
+
+- max_results: `3`
+- query: `select:mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot,mcp__plugin_chrome-devtools-mcp_chrome-devtools__select_page,mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages`
+
+**Result:**
+
+```
+
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:00Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages**</summary>
+
+```text
+## Pages
+1: about:blank [selected]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:04Z)**_
+
+The landing page isn't open in the DevTools-connected browser. Could you navigate to `http://localhost:8788/` in Chrome? Or I can do it:
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:05Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ToolSearch"><details>
+<summary>Tool use: **ToolSearch**</summary>
+
+**Input:**
+
+- max_results: `1`
+- query: `select:mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page`
+
+**Result:**
+
+```
+
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:10Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page**</summary>
+
+```text
+Successfully navigated to http://localhost:8788/.
+## Pages
+1: http://localhost:8788/ [selected]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:45Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script**</summary>
+
+```text
+Script ran on page and returned:
+```json
+{"toggleRect":{"top":25.59375,"left":1427.4140625,"width":32.5859375,"height":38.59375},"topElement":{"tag":"path","id":"","className":{},"zIndex":"auto"},"toggleZIndex":"100","togglePosition":"absolute"}
+```
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:49Z)**_
+
+The top element at the toggle's center is the SVG `<path>` inside the button. The SVG path has `z-index: auto` and doesn't inherit `cursor: pointer` from the button. That's the issue. The SVG paths are intercepting the cursor.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:50Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_focus-mode.scss`
+
+```text
+1	.focus-toggle {
+2	  position: absolute;
+3	  top: 1.25rem;
+4	  right: 1.2rem;
+5	  z-index: 100;
+6	  background: none;
+7	  flex-direction: column;
+8	  border: none;
+9	  color: var(--silver-dimmer);
+10	  cursor: pointer;
+11	  display: flex;
+12	  align-items: center;
+13	  padding: 0.3rem;
+14	  gap: 0.25rem;
+15	  transition: color 0.8s ease-in-out;
+16	
+17	  @media (min-width: 640px) {
+18	    top: 1.6rem;
+19	    right: 2.5rem;
+20	  }
+[result-id: r27]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:00:55Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:01:00Z)**_
+
+The SVG paths were capturing pointer events, overriding the button's `cursor: pointer`. Now they'll pass events through to the button. Refresh and try hovering.
+
+---
+
+_**User (2026-04-09 13:01:34Z)**_
+
+I'm actually seeing this issue on all links on the site, everywhere
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 13:01:38Z)**_
+
+
+
+That's a global issue then. Let me check the reset stylesheet.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:01:38Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_reset.scss`
+
+```text
+1	*,
+2	*::before,
+3	*::after {
+4	  box-sizing: border-box;
+5	  margin: 0;
+6	  padding: 0;
+7	}
+8	
+9	html {
+10	  scroll-behavior: smooth;
+11	}
+12	
+13	body {
+14	  font-family: var(--font-sans);
+15	  font-weight: var(--font-weight-regular);
+16	  color: var(--silver);
+17	  background: var(--void);
+18	  -webkit-font-smoothing: antialiased;
+19	}
+20	
+[result-id: r28]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:01:44Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script**</summary>
+
+```text
+Script ran on page and returned:
+```json
+{"cursor":"pointer","tag":"A","href":"http://localhost:8788/"}
+```
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:01:48Z)**_
+
+Computed cursor is `pointer` on links. Let me check if something is sitting on top of all interactive elements.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:02:02Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script**</summary>
+
+```text
+Script ran on page and returned:
+```json
+[{"label":"logo","topElement":{"tag":"A","id":"","className":"logo"},"isSelf":true},{"label":"footer-link","topElement":null,"isSelf":false},{"label":"endpoint-row","topElement":null,"isSelf":false},{"label":"usage-url","topElement":null,"isSelf":false}]
+```
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:02:06Z)**_
+
+
+
+Elements below the fold return `null` from `elementFromPoint` (they're offscreen). The logo works fine. Let me scroll down and check, and also check if this is a new issue or pre-existing.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:02:26Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script**</summary>
+
+```text
+Script ran on page and returned:
+```json
+{"display":"block","opacity":"0","pointerEvents":"none","position":"fixed","width":"1500px","height":"793px","zIndex":"50"}
+```
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:02:30Z)**_
+
+Overlay is `pointer-events: none` when inactive, so that's not it. Let me check if the star animation or any other full-page element is covering things.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:02:33Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script**</summary>
+
+```text
+Script ran on page and returned:
+```json
+[{"tag":"DIV","id":"focus-overlay","className":"focus-overlay","position":"fixed","zIndex":"50","pointerEvents":"none","size":"1500x793"}]
+```
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:02:39Z)**_
+
+No full-page overlay blocking things. This might actually be a browser/OS-level issue, or it could be pre-existing. Let me check if the cursor issue existed before our changes.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:03:06Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stash changes to test if cursor issue is pre-existing
+
+`git stash && echo "--- stashed ---"`
+
+```text
+Saved working directory and index state WIP on dev: 74fea9c feat(landing): add dev feature flags and refine fallback placeholder
+--- stashed ---
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:03:11Z)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page"><details>
+<summary>Tool use: **mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page**</summary>
+
+```text
+Successfully reloaded the page.
+## Pages
+1: http://localhost:8788/ [selected]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:03:15Z)**_
+
+Can you check if the cursor issue still exists on the stashed (pre-change) version? If it does, it's a pre-existing issue unrelated to our work.
+
+---
+
+_**User (2026-04-09 13:03:43Z)**_
+
+.... this might be on my end, with my browser. i'm seeing it on other sites too
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 13:03:48Z)**_
+
+
+
+Ha, mystery solved. Let me restore our changes.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:04:24Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Restore stashed changes
+
+`git stash pop`
+
+```text
+Exit code 1
+error: Your local changes to the following files would be overwritten by merge:
+	.specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+Please commit your changes or stash them before you merge.
+Aborting
+On branch dev
+Your branch is ahead of 'origin/dev' by 4 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+The stash entry is kept in case you need it again.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:04:58Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Discard specstory conflict and restore stash
+
+`git checkout -- .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md && git stash pop`
+
+```text
+On branch dev
+Your branch is ahead of 'origin/dev' by 4 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+	modified:   landing/index.html
+	modified:   landing/src/styles/_focus-mode.scss
+	modified:   landing/src/styles/_header.scss
+	modified:   landing/src/styles/_hero.scss
+	modified:   landing/src/styles/_variables.scss
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Dropped refs/stash@{0} (d005e97d46aa23310f659ba774675ac26345e990)
+[result-id: r29]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:02Z)**_
+
+Restored. Let me revert the SVG `pointer-events: none` and the z-index bump since those were chasing a browser-side issue.
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:02Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./landing/src/styles/_focus-mode.scss`
+
+```text
+1	.focus-toggle {
+2	  position: absolute;
+3	  top: 1.25rem;
+4	  right: 1.2rem;
+5	  z-index: 100;
+6	  background: none;
+7	  flex-direction: column;
+8	  border: none;
+9	  color: var(--silver-dimmer);
+10	  cursor: pointer;
+11	  display: flex;
+12	  align-items: center;
+13	  padding: 0.3rem;
+14	  gap: 0.25rem;
+15	  transition: color 0.8s ease-in-out;
+16	
+17	  @media (min-width: 640px) {
+18	    top: 1.6rem;
+19	    right: 2.5rem;
+20	  }
+21	
+22	  svg, svg * {
+23	    width: 1rem;
+24	    height: 1rem;
+25	    pointer-events: none;
+26	  }
+27	
+28	  .label {
+29	    color: var(--silver-dimmer);
+30	    font-size: 0.5rem;
+31	    letter-spacing: 0.03em;
+32	    transition: color 0.8s ease-in-out;
+33	    cursor: pointer;
+34	  }
+35	
+36	  &:hover {
+37	    color: var(--white);
+38	    transition: color 0.2s ease-in-out;
+39	    cursor: pointer;
+40	
+41	    .label {
+42	      color: var(--white);
+43	      transition: color 0.2s ease-in-out;
+44	    }
+45	  }
+46	}
+47	
+48	.focus-overlay {
+49	  position: fixed;
+50	  background: rgba(0, 0, 0, 0.85);
+51	  z-index: 50;
+52	  opacity: 0;
+53	  top: 0;
+54	  left: 0;
+55	  width: 100vw;
+56	  height: 100vh;
+57	  pointer-events: none;
+58	  transition: opacity 1.5s ease-in-out;
+59	}
+60	
+61	body.focus-mode {
+62	  .focus-overlay {
+63	    opacity: 1;
+64	    pointer-events: auto;
+65	  }
+66	
+67	  .hero-img {
+68	    max-height: 85vh;
+69	  }
+70	
+71	  .focus-toggle {
+72	    color: var(--silver-dimmest);
+73	
+74	    .label {
+75	      color: var(--silver-dimmest);
+76	    }
+77	
+78	    
+79	    &:hover {
+80	      color: var(--white);
+81	      transition: color 0.2s ease-in-out;
+82	      
+83	      .label {
+84	        color: var(--white);
+85	        transition: color 0.2s ease-in-out;
+86	      }
+87	    }
+88	  }
+89	}
+90	
+[result-id: r30]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:07Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:08Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:09Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/landing/src/styles/_focus-mode.scss has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:14Z)**_
+
+Good, Zen browser quirk. I've reverted all the cursor-chasing changes back to the original focus-mode styles. Our actual changes (dev flags, fallback, stale notice, walkback fix) are all intact.
+
+---
+
+_**User (2026-04-09 13:05:54Z)**_
+
+ok double check our changes
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 13:05:58Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Check changed files
+
+`git diff --stat`
+
+```text
+ ...09_12-12-31Z-command-message-commit-commands.md | 1653 ++++++++++++++++++++
+ landing/index.html                                 |   25 +-
+ landing/src/styles/_header.scss                    |    9 -
+ landing/src/styles/_hero.scss                      |    8 +-
+ landing/src/styles/_variables.scss                 |    2 +-
+ 5 files changed, 1680 insertions(+), 17 deletions(-)
+[result-id: r31]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:04Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Show diff of landing changes
+
+`git diff -- landing/index.html landing/src/styles/_hero.scss landing/src/styles/_header.scss landing/src/styles/_variables.scss`
+
+```text
+diff --git a/landing/index.html b/landing/index.html
+index a2c8dda..069c32c 100644
+--- a/landing/index.html
++++ b/landing/index.html
+@@ -52,8 +52,6 @@
+   <header class="site-header">
+     <a href="/" class="logo">nasapicture.com</a>
+     <h1 id="site-heading" class="hero-tagline">Astronomy Picture of the Day</h1>
+-    <nav class="site-nav" aria-label="Site navigation">
+-    </nav>
+   </header>
+ 
+   <main>
+@@ -151,6 +149,7 @@
+ 
+     // Dev feature flags via query params (localhost only)
+     // ?dev=fallback  — force the "no image available" fallback state
++    // ?dev=stale     — simulate showing a previous day's image as fallback
+     const devFlag = location.hostname === 'localhost'
+       ? new URLSearchParams(location.search).get('dev')
+       : null;
+@@ -195,14 +194,24 @@
+       });
+     });
+ 
+-    // Dev: force fallback state
++    function showStaleNotice() {
++      const dateEl = document.getElementById('caption-date');
++      if (dateEl.querySelector('.hero-stale-notice')) return;
++      const notice = document.createElement('span');
++      notice.className = 'hero-stale-notice';
++      notice.textContent = " · Showing a recent image, today's is unavailable";
++      dateEl.appendChild(notice);
++    }
++
++    // Dev: force fallback/stale state
+     if (devFlag === 'fallback') showFallback();
+ 
+     // Fetch metadata + thumbnail in parallel
+-    const infoPromise = devFlag === 'fallback'
++    const skipFetch = devFlag === 'fallback';
++    const infoPromise = skipFetch
+       ? Promise.resolve(null)
+       : fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
+-    const thumbPromise = devFlag === 'fallback'
++    const thumbPromise = skipFetch
+       ? Promise.resolve(null)
+       : fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
+ 
+@@ -228,6 +237,12 @@
+         if (data.width && data.height) {
+           wrapper.style.aspectRatio = `${data.width} / ${data.height}`;
+         }
++
++        // Show stale notice if image is from a previous day
++        const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
++        if (devFlag === 'stale' || data.date !== todayET) {
++          showStaleNotice();
++        }
+       }
+ 
+       // Show scaled-up thumbnail as placeholder
+diff --git a/landing/src/styles/_header.scss b/landing/src/styles/_header.scss
+index 7afbcb7..ac4758e 100644
+--- a/landing/src/styles/_header.scss
++++ b/landing/src/styles/_header.scss
+@@ -33,12 +33,3 @@
+   }
+ }
+ 
+-.site-nav {
+-  flex: 1;
+-  display: flex;
+-  justify-content: flex-end;
+-  font-family: var(--font-mono);
+-  font-size: 0.7rem;
+-  gap: 1.25rem;
+-  margin: auto 0;
+-}
+diff --git a/landing/src/styles/_hero.scss b/landing/src/styles/_hero.scss
+index 236ebc1..b9fcdfb 100644
+--- a/landing/src/styles/_hero.scss
++++ b/landing/src/styles/_hero.scss
+@@ -33,7 +33,7 @@
+ 
+ .hero-tagline {
+   flex: 1;
+-  text-align: right;
++  text-align: center;
+   font-family: var(--font-sans);
+   font-size: 0.8rem;
+   line-height: 0.8em;
+@@ -51,7 +51,6 @@
+ 
+   @media (min-width: 768px) {
+     font-size: 0.9rem;
+-    text-align: center;
+   }
+ }
+ 
+@@ -114,6 +113,11 @@
+   max-width: 24em;
+ }
+ 
++.hero-stale-notice {
++  font-style: italic;
++  color: var(--silver-dimmest);
++}
++
+ .hero-img {
+   display: block;
+   max-width: 100%;
+diff --git a/landing/src/styles/_variables.scss b/landing/src/styles/_variables.scss
+index f368b6c..24e9a6b 100644
+--- a/landing/src/styles/_variables.scss
++++ b/landing/src/styles/_variables.scss
+@@ -8,7 +8,7 @@
+   --silver: #eeeff2;
+   --silver-dim: #b8bcc6;
+   --silver-dimmer: #959BA3;
+-  --silver-dimmest: #636a73;  // For non-text elements, doesn't have suffucient contrast for text
++  --silver-dimmest: #717881;
+   --white: #e8eaed;
+   --border: rgba(255, 255, 255, 0.06);
+   --border-bright: rgba(255, 255, 255, 0.12);
+[result-id: r32]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:13Z)**_
+
+Looks clean. The diff since last commit:
+
+1. **Dev flags**: Added `?dev=stale` flag, refactored `skipFetch` variable
+2. **Stale notice**: `showStaleNotice()` appends " · Showing a recent image, today's is unavailable" inline with the date. Triggers when `data.date !== todayET` or `?dev=stale`
+3. **Removed empty nav**: Deleted `<nav class="site-nav">` from HTML and `.site-nav` styles from `_header.scss`
+4. **Centering fix**: `.hero-tagline` now `text-align: center` at all breakpoints (was `right` on mobile)
+5. **Variables**: `--silver-dimmest` updated to `#717881` (AA compliant), comment removed
+6. **Stale notice style**: Italic, `--silver-dimmest` color, inherits font from parent `<time>`
+
+No unintended changes, no leftover cursor-debugging artifacts. The `_focus-mode.scss` is back to its original state.
+
+---
+
+_**User (2026-04-09 13:06:31Z)**_
+
+<command-message>board:update</command-message>
+<command-name>/board:update</command-name>
+
+_**User (2026-04-09 13:06:31Z)**_
+
+Base directory for this skill: /Users/grant/Documents/Projects/BoardPM/plugin/skills/update
+
+# Board Update
+
+Analyze the codebase and git history to automatically reconcile the project board with reality. The system spec is bundled with the plugin at `/Users/grant/Documents/Projects/BoardPM/plugin/spec/board-system-spec.md`.
+
+## Board Data
+
+Pre-loaded active board data:
+
+filepath	type	status	priority	blocked_by	parent	title
+./board/tasks/TASK-0003_nasa-data-insignia.md	task	todo	-	-	-	Apply for NASA Data Insignia
+./board/tasks/TASK-0011_add-r2-storage-layer.md	task	todo	-	-	EPIC-0003	Add R2 storage layer for APOD image archiving
+./board/tasks/TASK-0018_fix-walkback-error-handling.md	task	todo	-	-	EPIC-0004	Fix findLatestImage walkback error handling
+./board/tasks/TASK-0019_serve-video-thumbnail.md	task	todo	-	-	EPIC-0004	Serve video APOD thumbnail instead of walking back
+./board/tasks/TASK-0020_html-scraping-fallback.md	task	todo	-	-	EPIC-0003	HTML scraping fallback for NASA API outages
+./board/tasks/TASK-0021_cron-cache-warming.md	task	todo	-	-	EPIC-0003	Automated daily cache warming via Cron Trigger
+./board/tasks/TASK-0022_annotated-image-endpoint.md	task	backlog	-	-	-	Annotated image endpoint with title and explanation
+./board/tasks/TASK-0023_landing-image-fallback-state.md	task	todo	-	-	EPIC-0002	Landing page image fallback state
+./board/planning/EPIC-0002_landing-page-polish.md	epic	planning	-	-	-	Landing Page Polish
+./board/planning/EPIC-0003_infrastructure-and-devops.md	epic	planning	-	-	-	Infrastructure and DevOps
+./board/planning/EPIC-0004_video-apod-resilience.md	epic	planning	-	-	-	Video APOD Resilience
+./board/planning/NOTE-0005_add-individual-metadata-routes.md	note	inbox	-	-	-	Add individual metadata routes
+./board/planning/NOTE-0006_add-why-is-this-needed-section.md	note	inbox	-	-	-	Add a "Why Is This Needed" Section That Explains the APOD API
+./board/planning/NOTE-0008_generate-daily-og-image.md	note	inbox	-	-	-	Generate a daily OG image
+./board/planning/NOTE-0010_auto-refresh-landing-page-on-rollover.md	note	inbox	-	-	-	Auto-refresh landing page on APOD rollover
+./board/planning/NOTE-0014_add-gh-action-auto-deploy-on-merge.md	note	inbox	-	-	-	Add GitHub Action to auto-deploy to Cloudflare on PR merge into main
+./board/planning/NOTE-0016_local-timezone-apod-rollover.md	note	inbox	-	-	-	Local timezone APOD rollover
+./board/planning/NOTE-0017_landing-page-critique-apr-2026.md	note	inbox	-	-	-	Landing page design critique (April 2026)
+./board/planning/NOTE-0020_serve-og-html-to-social-crawlers.md	note	inbox	-	-	-	Serve OG HTML to social crawlers on api.nasapicture.com
+./board/planning/NOTE-0021_user-facing-gallery-archive.md	note	inbox	-	-	-	Add a user-facing gallery of past APOD images
+
+Archive counts:
+
+filepath	type	status	priority	blocked_by	parent	title
+./board/tasks/TASK-0003_nasa-data-insignia.md	task	todo	-	-	-	Apply for NASA Data Insignia
+./board/tasks/TASK-0011_add-r2-storage-layer.md	task	todo	-	-	EPIC-0003	Add R2 storage layer for APOD image archiving
+./board/tasks/TASK-0018_fix-walkback-error-handling.md	task	todo	-	-	EPIC-0004	Fix findLatestImage walkback error handling
+./board/tasks/TASK-0019_serve-video-thumbnail.md	task	todo	-	-	EPIC-0004	Serve video APOD thumbnail instead of walking back
+./board/tasks/TASK-0020_html-scraping-fallback.md	task	todo	-	-	EPIC-0003	HTML scraping fallback for NASA API outages
+./board/tasks/TASK-0021_cron-cache-warming.md	task	todo	-	-	EPIC-0003	Automated daily cache warming via Cron Trigger
+./board/tasks/TASK-0022_annotated-image-endpoint.md	task	backlog	-	-	-	Annotated image endpoint with title and explanation
+./board/tasks/TASK-0023_landing-image-fallback-state.md	task	todo	-	-	EPIC-0002	Landing page image fallback state
+./board/planning/EPIC-0002_landing-page-polish.md	epic	planning	-	-	-	Landing Page Polish
+./board/planning/EPIC-0003_infrastructure-and-devops.md	epic	planning	-	-	-	Infrastructure and DevOps
+./board/planning/EPIC-0004_video-apod-resilience.md	epic	planning	-	-	-	Video APOD Resilience
+./board/planning/NOTE-0005_add-individual-metadata-routes.md	note	inbox	-	-	-	Add individual metadata routes
+./board/planning/NOTE-0006_add-why-is-this-needed-section.md	note	inbox	-	-	-	Add a "Why Is This Needed" Section That Explains the APOD API
+./board/planning/NOTE-0008_generate-daily-og-image.md	note	inbox	-	-	-	Generate a daily OG image
+./board/planning/NOTE-0010_auto-refresh-landing-page-on-rollover.md	note	inbox	-	-	-	Auto-refresh landing page on APOD rollover
+./board/planning/NOTE-0014_add-gh-action-auto-deploy-on-merge.md	note	inbox	-	-	-	Add GitHub Action to auto-deploy to Cloudflare on PR merge into main
+./board/planning/NOTE-0016_local-timezone-apod-rollover.md	note	inbox	-	-	-	Local timezone APOD rollover
+./board/planning/NOTE-0017_landing-page-critique-apr-2026.md	note	inbox	-	-	-	Landing page design critique (April 2026)
+./board/planning/NOTE-0020_serve-og-html-to-social-crawlers.md	note	inbox	-	-	-	Serve OG HTML to social crawlers on api.nasapicture.com
+./board/planning/NOTE-0021_user-facing-gallery-archive.md	note	inbox	-	-	-	Add a user-facing gallery of past APOD images
+
+# Archive counts (type	count)
+TASK	19
+EPIC	1
+NOTE	17
+
+## Steps
+
+### 1. Review Board State
+
+Parse the pre-loaded board data above. Identify:
+- All items with `status: backlog` or `status: current` (candidates for completion)
+- Epics and their child tasks (via `parent` field)
+- Blocked items and their blockers
+- Items with terminal status (`done`, `processed`) that should be archived
+- Items missing a required `status` field (all types except `reference`)
+
+### 2. Gather Codebase Context
+
+- Run `git log --oneline` for recent commits (last 30) to understand what work has been done
+- Only Read full file bodies for tasks whose status is `backlog` or `current` AND whose title suggests overlap with recent commits
+- Use the context budget escalation (Glob → Grep → Read with limit → Full read) for any additional lookups
+
+### 3. Detect Completed Work
+
+For each task with `status: backlog` or `status: current`, check if the work described has already been done:
+
+- Look at recent commits for evidence the work was completed
+- Check the codebase for the feature/fix the task describes
+- If the work is done, flag it for status update to `done`
+
+### 4. Detect New Work Needed
+
+Scan for things that should become tasks but aren't tracked yet:
+
+- Check recent commits for TODOs or FIXMEs introduced in code
+- Look at open epics — are there obvious next steps not yet captured as tasks?
+- Check if any `blocked_by` dependencies have been resolved (unblocking tasks)
+
+### 5. Update Epic Progress
+
+For each active epic:
+
+- Check if all child tasks are `done` — if so, flag the epic as `done`
+- Check if any child tasks are `current` — if so, the epic should be `current`
+- Update the task list in the epic body if tasks have been added/removed
+
+### 6. Check for Stale Items
+
+- Tasks marked `current` but with no related commits in the last 30 days
+- Epics in `planning` with no child tasks
+- Resources stuck in `inbox` or `processing`
+
+### 7. Present Changes
+
+Present ALL proposed changes as a single summary before making any edits:
+
+```
+## Board Update Proposal
+
+### Status Changes → Archive
+- TASK-0003: backlog → done → **archive** (cache-decoded-image: implemented in commit a1b2c3d)
+- EPIC-0001: planning → current (has active child tasks)
+- NOTE-0002: already processed → **archive**
+
+### New Tasks Suggested
+- "Fix FIXME in preprocessing.rs line 42" (found in recent commit)
+
+### Missing Status
+- TASK-0025: no status field (required for tasks)
+
+### Stale Items
+- TASK-0007: marked current but no activity in 45 days
+
+### Unblocked
+- TASK-0005: blocker TASK-0003 is now done
+```
+
+**Terminal-status items must be archived atomically.** When a status change results in a terminal status (`done` for tasks/epics, `processed` for resources/notes), the archiving step is bundled into the same proposal line — not presented as a separate action. Items already at a terminal status but not yet archived should also appear with an **archive** tag.
+
+ADRs are the sole exception — they are never archived regardless of status.
+
+**Avoid redundant invocations** — if this skill was already invoked earlier in the session and the board has not been modified since, reuse the previous board data instead of invoking again.
+
+Ask the user to approve, reject, or cherry-pick which changes to apply. Then execute only the approved changes:
+
+- **Status updates + archive**: For items reaching a terminal status, update the status field first, then immediately run `bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/archive-batch.sh ./board <file>` in the same step. Never leave an item with a terminal status outside `archive/`.
+- **Status updates (non-terminal)**: Use `/board:board-edit` to update status fields
+- **New tasks**: Invoke `/board:board-add` for each approved new task
+- **Archive-only** (items already at terminal status): Run `bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/archive-batch.sh ./board <file1> <file2> ...` directly
+
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:35Z)**_
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:36Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Recent commits
+
+`git log --oneline -30`
+
+```text
+74fea9c feat(landing): add dev feature flags and refine fallback placeholder
+997371e fix(api,landing): resilient walkback and image fallback state
+885cb10 docs(board): add video resilience epic, new tasks, and archive notes
+3b0c069 docs(board): add NOTE-0020 social crawler OG and NOTE-0021 gallery archive
+3013b5c chore(board): add completed TASK-0012 static favicon bundle
+f6e1e29 feat(landing): add favicon bundle, OG image, and SEO improvements
+5a8c0fa docs(board): flesh out NOTE-0005 metadata routes and NOTE-0014 auto-deploy plans
+91337d6 docs(board): flesh out NOTE-0010 auto-refresh rollover implementation plan
+91e53a1 chore(board): archive EPIC-0001 and completed image optimization tasks
+ce14a01 refactor: extract npm scripts to shell files and rename project
+883e143 chore: refine npm scripts and update CLAUDE.md for current architecture
+e597994 fix(api): use zone-scoped cache keys and deduplicate concurrent requests
+44b4816 feat(landing): add thumbnail placeholder, pre-sized container, and UI polish
+3cec7ad feat(api): add /thumb route and image dimensions to /info
+ec28f60 chore(board): add epics and re-parent tasks under epic hierarchy
+9e698db chore(board): archive completed Vite tasks, add thumbnail placeholder tasks
+32156e3 chore(board): add NOTE-0018 thumbnail placeholder and NOTE-0019 pre-sized container
+f261277 docs: update CLAUDE.md to match current implementation and add design critique
+a0f724b style(landing): refine spacing, typography, and color hierarchy
+5bcbef8 chore: organize specstory history into year/month directories
+8d8f2e3 feat(landing): add Vite build toolchain and extract styles to SCSS
+aa08f42 chore(board): extract Vite tasks from NOTE-0015 and archive
+c87edc2 fix(landing): keep focus toggle above overlay in focus mode
+e4c9f94 fix(api): add stale-while-error caching to prevent OG image 429s
+8b5833d chore: add specstory history and board planning notes
+8436587 Merge pull request #3 from GDKeller/dev
+614adbe Merge branch 'main' into dev
+47d0ad2 chore(board): archive completed TASK-0010
+cc1c24a feat(api): add /optimized endpoint with Cloudflare Image Transformations
+c26cfb8 fix: allow HEAD requests and use SD image for OG metadata
+[result-id: r33]
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:40Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/tasks/TASK-0018_fix-walkback-error-handling.md`
+
+```text
+File unchanged since last read. The content from the earlier Read tool_result in this conversation is still current — refer to that instead of re-reading.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:41Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./board/tasks/TASK-0023_landing-image-fallback-state.md`
+
+```text
+File unchanged since last read. The content from the earlier Read tool_result in this conversation is still current — refer to that instead of re-reading.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:06:47Z)**_
+
+## Board Update Proposal
+
+### Status Changes → Archive
+- **TASK-0018**: todo → done → **archive** — `findLatestImage` walkback now wraps `fetchApod` in try/catch, implemented in commit `997371e`
+- **TASK-0023**: todo → done → **archive** — Landing page fallback placeholder and stale notice implemented in commits `997371e` and `74fea9c`
+
+### Epic Progress
+- **EPIC-0004**: remains `planning` (TASK-0019 still todo)
+- **EPIC-0002**: remains `planning` (multiple items still open)
+
+### No New Tasks, Stale Items, or Unblocked Items detected
+
+Approve, reject, or cherry-pick?
+
+---
+
+_**User (2026-04-09 13:07:56Z)**_
+
+approve
+
+---
+
+_**Agent (claude-opus-4-6 2026-04-09 13:08:01Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/tasks/TASK-0018_fix-walkback-error-handling.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:08:02Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/board/tasks/TASK-0023_landing-image-fallback-state.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:08:22Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Archive completed tasks
+
+`bash /Users/grant/Documents/Projects/BoardPM/plugin/scripts/archive-batch.sh ./board board/tasks/TASK-0018_fix-walkback-error-handling.md board/tasks/TASK-0023_landing-image-fallback-state.md`
+
+```text
+Archived:
+  TASK-0018_fix-walkback-error-handling.md
+  TASK-0023_landing-image-fallback-state.md
+
+Total: 2 archived, 0 skipped
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-6 2026-04-09 13:08:27Z)**_
+
+Done. TASK-0018 and TASK-0023 marked done and archived.
+
+---
+
+_**User (2026-04-09 13:09:48Z)**_
+
+<command-message>commit-commands:commit</command-message>
+<command-name>/commit-commands:commit</command-name>
+
+_**User (2026-04-09 13:09:48Z)**_
+
+## Context
+
+- Current git status: On branch dev
+Your branch is ahead of 'origin/dev' by 4 commits.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	renamed:    board/tasks/TASK-0018_fix-walkback-error-handling.md -> board/archive/TASK-0018_fix-walkback-error-handling.md
+	renamed:    board/tasks/TASK-0023_landing-image-fallback-state.md -> board/archive/TASK-0023_landing-image-fallback-state.md
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+	modified:   board/archive/TASK-0018_fix-walkback-error-handling.md
+	modified:   board/archive/TASK-0023_landing-image-fallback-state.md
+	modified:   landing/index.html
+	modified:   landing/src/styles/_header.scss
+	modified:   landing/src/styles/_hero.scss
+	modified:   landing/src/styles/_variables.scss
+- Current git diff (staged and unstaged changes): <persisted-output>
+Output too large (74.1KB). Full output saved to: /Users/grant/.claude/projects/-Users-grant-code-nasa-apod/9a3ef3d9-69c2-4540-950a-071b8b6215fe/tool-results/bv7k9cyec.txt
+
+Preview (first 2KB):
+diff --git a/.specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md b/.specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+index 7acc3e8..ba6e609 100644
+--- a/.specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
++++ b/.specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
+@@ -4765,3 +4765,2118 @@ ce14a01 refactor: extract npm scripts to shell files and rename project
+ Based on the above changes, create a single git commit.
+ 
+ You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
++
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-09 12:37:14Z)**_
++
++<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
++<summary>Tool use: **Bash**</summary>
++Stage and commit changes
++
++```bash
++git add landing/index.html landing/src/styles/_hero.scss .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md && git commit -m "$(cat <<'EOF'
++feat(landing): add dev feature flags and refine fallback placeholder
++EOF
++)"
++```
++
++```text
++[dev 74fea9c] feat(landing): add dev feature flags and refine fallback placeholder
++ 3 files changed, 4796 insertions(+), 11 deletions(-)
++ create mode 100644 .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md
++```
++</details></tool-use>
++
++_**Agent (claude-opus-4-6 2026-04-09 12:37:17Z)**_
++
++Committed `74fea9c`.
++
++---
++
++_**User (2026-04-09 12:37:42Z)**_
++
++add a feature flag for displaying a previous day's image as fallback
++
++---
++
++_**Agent (claude-opus-4-6 2026-04-09 12:37:46Z)**_
++
++<tool-use data-tool-type="read" data-tool-name="Read"><details>
++<summary>Tool use: **Read**</summary>
++ `./landing/index.html`
++
++```text
++190	    document.querySelectorAll('.usage-url').forEach(el => {
++191	      el.childNodes.forEach(node => {
+...
+</persisted-output>
+- Current branch: dev
+- Recent commits: 74fea9c feat(landing): add dev feature flags and refine fallback placeholder
+997371e fix(api,landing): resilient walkback and image fallback state
+885cb10 docs(board): add video resilience epic, new tasks, and archive notes
+3b0c069 docs(board): add NOTE-0020 social crawler OG and NOTE-0021 gallery archive
+3013b5c chore(board): add completed TASK-0012 static favicon bundle
+f6e1e29 feat(landing): add favicon bundle, OG image, and SEO improvements
+5a8c0fa docs(board): flesh out NOTE-0005 metadata routes and NOTE-0014 auto-deploy plans
+91337d6 docs(board): flesh out NOTE-0010 auto-refresh rollover implementation plan
+91e53a1 chore(board): archive EPIC-0001 and completed image optimization tasks
+ce14a01 refactor: extract npm scripts to shell files and rename project
+
+## Your task
+
+Based on the above changes, create a single git commit.
+
+You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
