@@ -1,6 +1,6 @@
 ---
 type: note
-status: inbox
+status: processed
 created: 2026-03-30
 ---
 
