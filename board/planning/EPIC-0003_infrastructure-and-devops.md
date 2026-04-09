@@ -20,6 +20,14 @@ R2 archiving also unblocks NOTE-0016 (local timezone rollover), since serving a 
 
 Blocked by TASK-0010.
 
+### TASK-0020: HTML scraping fallback for NASA API outages
+
+When the NASA API returns non-200 and stale cache is empty, scrape the APOD webpage (`apod.nasa.gov/apod/`) as a last-resort data source. Regex extraction, populates both cache tiers. Only fires when all other sources are exhausted.
+
+### TASK-0021: Automated daily cache warming via Cron Trigger
+
+Add a `scheduled()` handler with a cron trigger to warm the edge cache after APOD rollover. Calls `findLatestImage`, `fetchImageCached`, and `fetchImageDimensions` to populate metadata and image bytes proactively.
+
 ### NOTE-0014: Add GitHub Action to auto-deploy on merge to main
 
 Workflow triggered on push to `main`. Runs type-check (`npx tsc --noEmit`) as a gate, then `npm run deploy`. Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as repository secrets.
@@ -27,7 +35,9 @@ Workflow triggered on push to `main`. Runs type-check (`npx tsc --noEmit`) as a 
 ## Sequence
 
 1. R2 storage layer (TASK-0011) -- larger effort, independent of deploy automation
-2. GitHub Action (NOTE-0014) -- small, can be done anytime
+2. HTML scraping fallback (TASK-0020) -- resilience, no dependencies
+3. Cron cache warming (TASK-0021) -- resilience, benefits from TASK-0020 being in place
+4. GitHub Action (NOTE-0014) -- small, can be done anytime
 
 ## Cross-EPIC Dependencies
 
