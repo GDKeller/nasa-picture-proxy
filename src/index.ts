@@ -264,6 +264,7 @@ function baseHeaders(origin: string, headers: Record<string, string> = {}): Reco
   return {
     "Access-Control-Allow-Origin": "*",
     "Cache-Control": `public, max-age=${CACHE_TTL}`,
+    "X-Content-Type-Options": "nosniff",
     "Link": [
       `<${origin}/>; rel="alternate"; type="image/*"; title="HD image"`,
       `<${origin}/sd>; rel="alternate"; type="image/*"; title="SD image"`,
