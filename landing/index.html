@@ -151,6 +151,24 @@
 
     function onImageReady() { img.classList.add('loaded'); }
 
+    function showFallback() {
+      if (wrapper.querySelector('.hero-fallback')) return;
+      img.style.display = 'none';
+      wrapper.style.backgroundImage = 'none';
+      wrapper.classList.remove('has-thumb');
+      const fallback = document.createElement('div');
+      fallback.className = 'hero-fallback';
+      const msg = document.createElement('p');
+      msg.className = 'hero-fallback-message';
+      msg.textContent = "Today's image isn't available right now";
+      const sub = document.createElement('p');
+      sub.className = 'hero-fallback-sub';
+      sub.textContent = "NASA's Astronomy Picture of the Day updates daily, check back soon";
+      fallback.appendChild(msg);
+      fallback.appendChild(sub);
+      wrapper.appendChild(fallback);
+    }
+
     const defined_replace = (str) => str.replace(PROD_BASE, API_BASE);
     img.src = defined_replace(img.src);
     document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
@@ -172,6 +190,11 @@
     const thumbPromise = fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
 
     Promise.all([infoPromise, thumbPromise]).then(([data, thumbUrl]) => {
+      if (data && data.error) {
+        showFallback();
+        return;
+      }
+
       if (data) {
         // Set caption
         if (data.title) {
@@ -203,6 +226,8 @@
       }
       onImageReady();
     });
+
+    img.addEventListener('error', () => showFallback());
 
     // Copy on click
     document.querySelectorAll('.usage-url[data-copy]').forEach(el => {

@@ -121,20 +121,27 @@ async function fetchApodFromNasa(
 }
 
 async function findLatestImage(log: string[], apiKey: string): Promise<ApodResponse> {
-  let videoStreak = 0;
+  let videos = 0;
+  let errors = 0;
 
   for (let i = 0; i <= MAX_LOOKBACK_DAYS; i++) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const date = d.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
-    const apod = await fetchApod(log, apiKey, date);
-    if (apod.media_type === "image") return apod;
-    videoStreak++;
+    try {
+      const apod = await fetchApod(log, apiKey, date);
+      if (apod.media_type === "image") return apod;
+      videos++;
+    } catch (err) {
+      errors++;
+      const msg = err instanceof Error ? err.message : "unknown";
+      log.push(`  [findLatestImage] ${date} → error, skipping (${msg})`);
+    }
   }
 
   throw new Error(
-    `Today's APOD is a video, and the last ${videoStreak} days have been too — no image available`
+    `No image found in last ${MAX_LOOKBACK_DAYS + 1} days (${videos} videos, ${errors} errors)`
   );
 }
 
@@ -392,7 +399,10 @@ export default {
         };
 
         try {
-          const apod = await fetchApod(log, apiKey);
+          const todayApod = await fetchApod(log, apiKey);
+          const apod = todayApod.media_type === "image"
+            ? todayApod
+            : await findLatestImage(log, apiKey);
           const imageUrl = apod.media_type === "image" ? (apod.hdurl || apod.url) : null;
           const dimensions = imageUrl ? await fetchImageDimensions(log, imageUrl) : null;
 
