@@ -21,6 +21,7 @@ Address the design critique findings (NOTE-0017, scored 25/40) and add content a
 - **Minor**: `--font-weight-medmium` typo, empty `<nav>`, `/optimized` missing from endpoint list, usage row animation delay.
 
 ### Behavior
+- **TASK-0023**: Image fallback state. When the API is down and the image can't load, show a styled placeholder instead of a black void. Future tier: fall back to R2-archived image (requires TASK-0011).
 - **NOTE-0010**: Auto-refresh on APOD rollover. Poll `/info` every 15-30min (only when tab visible), compare date, fade-transition to new image/caption on change.
 - **NOTE-0016**: Local timezone rollover (nice-to-have). `?tz=` param on API, detect via `Intl.DateTimeFormat` on landing page. Timezones behind ET are straightforward; ahead-of-ET needs fallback (which `findLatestImage` already handles). Ties to EPIC-0003 (R2 archiving makes timezone-shifted "yesterday" trivial).
 

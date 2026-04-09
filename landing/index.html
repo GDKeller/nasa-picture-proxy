@@ -52,8 +52,6 @@
   <header class="site-header">
     <a href="/" class="logo">nasapicture.com</a>
     <h1 id="site-heading" class="hero-tagline">Astronomy Picture of the Day</h1>
-    <nav class="site-nav" aria-label="Site navigation">
-    </nav>
   </header>
 
   <main>
@@ -149,10 +147,39 @@
     const wrapper = document.getElementById('hero-img-wrapper');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Dev feature flags via query params (localhost only)
+    // ?dev=fallback  — force the "no image available" fallback state
+    // ?dev=stale     — simulate showing a previous day's image as fallback
+    const devFlag = location.hostname === 'localhost'
+      ? new URLSearchParams(location.search).get('dev')
+      : null;
+
     function onImageReady() { img.classList.add('loaded'); }
 
+    function showFallback() {
+      if (wrapper.querySelector('.hero-fallback')) return;
+      img.style.display = 'none';
+      wrapper.style.backgroundImage = 'none';
+      wrapper.classList.remove('has-thumb');
+      const fallback = document.createElement('div');
+      fallback.className = 'hero-fallback';
+      const msg = document.createElement('p');
+      msg.className = 'hero-fallback-message';
+      msg.textContent = "Image not available";
+      const sub = document.createElement('p');
+      sub.className = 'hero-fallback-sub';
+      sub.textContent = "A problem has occurred while retrieving this image.";
+      fallback.appendChild(msg);
+      fallback.appendChild(sub);
+      wrapper.appendChild(fallback);
+    }
+
     const defined_replace = (str) => str.replace(PROD_BASE, API_BASE);
-    img.src = defined_replace(img.src);
+    if (devFlag === 'fallback') {
+      img.removeAttribute('src');
+    } else {
+      img.src = defined_replace(img.src);
+    }
     document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
       a.href = defined_replace(a.href);
     });
@@ -167,11 +194,33 @@
       });
     });
 
+    function showStaleNotice() {
+      const dateEl = document.getElementById('caption-date');
+      if (dateEl.querySelector('.hero-stale-notice')) return;
+      const notice = document.createElement('span');
+      notice.className = 'hero-stale-notice';
+      notice.textContent = " · Showing a recent image, today's is unavailable";
+      dateEl.appendChild(notice);
+    }
+
+    // Dev: force fallback/stale state
+    if (devFlag === 'fallback') showFallback();
+
     // Fetch metadata + thumbnail in parallel
-    const infoPromise = fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
-    const thumbPromise = fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
+    const skipFetch = devFlag === 'fallback';
+    const infoPromise = skipFetch
+      ? Promise.resolve(null)
+      : fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
+    const thumbPromise = skipFetch
+      ? Promise.resolve(null)
+      : fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
 
     Promise.all([infoPromise, thumbPromise]).then(([data, thumbUrl]) => {
+      if (data && data.error) {
+        showFallback();
+        return;
+      }
+
       if (data) {
         // Set caption
         if (data.title) {
@@ -188,6 +237,12 @@
         if (data.width && data.height) {
           wrapper.style.aspectRatio = `${data.width} / ${data.height}`;
         }
+
+        // Show stale notice if image is from a previous day
+        const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        if (devFlag === 'stale' || data.date !== todayET) {
+          showStaleNotice();
+        }
       }
 
       // Show scaled-up thumbnail as placeholder
@@ -203,6 +258,8 @@
       }
       onImageReady();
     });
+
+    img.addEventListener('error', () => showFallback());
 
     // Copy on click
     document.querySelectorAll('.usage-url[data-copy]').forEach(el => {
