@@ -149,6 +149,12 @@
     const wrapper = document.getElementById('hero-img-wrapper');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Dev feature flags via query params (localhost only)
+    // ?dev=fallback  — force the "no image available" fallback state
+    const devFlag = location.hostname === 'localhost'
+      ? new URLSearchParams(location.search).get('dev')
+      : null;
+
     function onImageReady() { img.classList.add('loaded'); }
 
     function showFallback() {
@@ -160,17 +166,21 @@
       fallback.className = 'hero-fallback';
       const msg = document.createElement('p');
       msg.className = 'hero-fallback-message';
-      msg.textContent = "Today's image isn't available right now";
+      msg.textContent = "Image not available";
       const sub = document.createElement('p');
       sub.className = 'hero-fallback-sub';
-      sub.textContent = "NASA's Astronomy Picture of the Day updates daily, check back soon";
+      sub.textContent = "A problem has occurred while retrieving this image.";
       fallback.appendChild(msg);
       fallback.appendChild(sub);
       wrapper.appendChild(fallback);
     }
 
     const defined_replace = (str) => str.replace(PROD_BASE, API_BASE);
-    img.src = defined_replace(img.src);
+    if (devFlag === 'fallback') {
+      img.removeAttribute('src');
+    } else {
+      img.src = defined_replace(img.src);
+    }
     document.querySelectorAll(`a[href^="${PROD_BASE}"]`).forEach(a => {
       a.href = defined_replace(a.href);
     });
@@ -185,9 +195,16 @@
       });
     });
 
+    // Dev: force fallback state
+    if (devFlag === 'fallback') showFallback();
+
     // Fetch metadata + thumbnail in parallel
-    const infoPromise = fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
-    const thumbPromise = fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
+    const infoPromise = devFlag === 'fallback'
+      ? Promise.resolve(null)
+      : fetch(`${API_BASE}/info`).then(r => r.json()).catch(() => null);
+    const thumbPromise = devFlag === 'fallback'
+      ? Promise.resolve(null)
+      : fetch(`${API_BASE}/thumb`).then(r => r.blob()).then(b => URL.createObjectURL(b)).catch(() => null);
 
     Promise.all([infoPromise, thumbPromise]).then(([data, thumbUrl]) => {
       if (data && data.error) {

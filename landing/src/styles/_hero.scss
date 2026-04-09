@@ -79,21 +79,21 @@
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  min-height: 40vh;
+  min-height: 50vh;
   aspect-ratio: 3 / 2;
-  max-width: 720px;
+  max-width: 960px;
   border: 1px solid var(--border);
   background: linear-gradient(
     165deg,
-    rgba(255, 255, 255, 0.015) 0%,
+    rgba(255, 255, 255, 0.008) 0%,
     transparent 50%,
-    rgba(255, 255, 255, 0.01) 100%
+    rgba(255, 255, 255, 0.005) 100%
   );
   text-align: center;
   padding: 2rem;
 
   @media (min-width: 768px) {
-    min-height: 50vh;
+    min-height: 60vh;
   }
 }
 
@@ -103,6 +103,7 @@
   font-weight: var(--font-weight-regular);
   color: var(--silver-dim);
   letter-spacing: 0.02em;
+  margin-bottom: 1rem;
 }
 
 .hero-fallback-sub {
@@ -110,7 +111,7 @@
   font-size: 0.8rem;
   color: var(--silver-dimmest);
   letter-spacing: 0.03em;
-  max-width: 28ch;
+  max-width: 24em;
 }
 
 .hero-img {
