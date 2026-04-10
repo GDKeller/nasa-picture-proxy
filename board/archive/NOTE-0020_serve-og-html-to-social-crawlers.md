@@ -1,7 +1,9 @@
 ---
 type: note
-status: inbox
+status: processed
 created: 2026-04-06
+processed: 2026-04-09
+spawned: [TASK-0034, EPIC-0005]
 ---
 
 # Serve OG HTML to social crawlers on api.nasapicture.com

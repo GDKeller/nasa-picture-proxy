@@ -1,8 +1,10 @@
 ---
 type: note
-status: inbox
+status: processed
 created: 2026-04-01
 updated: 2026-04-05
+processed: 2026-04-09
+spawned: [TASK-0032]
 ---
 
 # Add GitHub Action to auto-deploy to Cloudflare on PR merge into main

@@ -1,7 +1,9 @@
 ---
 type: note
-status: inbox
+status: processed
 created: 2026-04-01
+processed: 2026-04-09
+spawned: [TASK-0031]
 ---
 
 # Local timezone APOD rollover

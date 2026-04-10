@@ -1,7 +1,9 @@
 ---
 type: note
-status: inbox
+status: processed
 created: 2026-03-31
+processed: 2026-04-09
+spawned: [TASK-0028]
 ---
 
 # Auto-refresh landing page on APOD rollover

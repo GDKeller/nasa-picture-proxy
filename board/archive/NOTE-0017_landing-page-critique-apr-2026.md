@@ -1,8 +1,19 @@
 ---
 type: note
-status: inbox
+status: processed
 created: 2026-04-03T21:30:00-05:00
+processed: 2026-04-09
+spawned: [TASK-0029, TASK-0030]
 ---
+
+> **2026-04-09 processing note:** Several items from this critique were resolved before processing:
+> - [P2] 10rem dead zone → fixed, now `margin-bottom: 3rem` at `_hero.scss:7`
+> - [P3] Image loading empty void → fixed by thumbnail placeholder + pre-sized container (commit `44b4816`)
+> - Empty `<nav>` in header → removed in commit `cb80f4c`
+>
+> Remaining items spawned TASK-0029 (focus toggle markup: the visible "Focus" label shipped but `aria-label` still says "Dim the lights", no `aria-pressed`, tiny label) and TASK-0030 (bug cleanup: `--font-weight-medmium` typo, `/optimized` and `/thumb` missing from endpoint list, caption spread verification).
+>
+> The amber accent color (#e8a838) is intentionally dropped — keeping the monochrome palette for now.
 
 # Landing page design critique (April 2026)
 
