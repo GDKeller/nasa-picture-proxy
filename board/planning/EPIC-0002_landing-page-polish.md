@@ -20,7 +20,10 @@ Address remaining items from the design critique (NOTE-0017) and add content and
 
 ### Behavior
 - **TASK-0028**: Auto-refresh on APOD rollover. Self-correcting countdown + burst polling, fade transition, visibility-change handler. All in `landing/index.html` JS. From NOTE-0010.
-- **TASK-0031**: Local timezone APOD rollover (blocked by TASK-0011). `?tz=` param on API + `Intl.DateTimeFormat` detection on landing. Phase 1 handles west-of-ET without R2; Phase 2 needs the archive. From NOTE-0016.
+- **TASK-0031**: Local timezone APOD rollover (Phase 1 unblocked, Phase 2 blocked by TASK-0011). `?tz=` param on API + `Intl.DateTimeFormat` detection on landing. From NOTE-0016.
+
+### Infrastructure
+- **TASK-0036**: Retrofit landing page dev flags to the shared REFE-0001 convention (localStorage persistence, `?dev=off` clear, shared module at `landing/src/lib/dev-flags.ts`).
 
 ## Already done (from NOTE-0017)
 
