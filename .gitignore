@@ -5,3 +5,8 @@ dist/
 .cache/
 .DS_Store
 logs/
+coverage/
+
+# VSCode AI rules
+.github/instructions/codacy.instructions.md
+

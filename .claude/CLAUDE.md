@@ -25,6 +25,8 @@ npm run log:prod:stop  # Stop production log tail
 npm run status         # Check if dev servers and prod log are running
 npm run stop           # Kill dev servers
 npx tsc --noEmit       # Type-check (no build artifact, Wrangler bundles directly)
+npm test               # Run vitest suite (unit + handler integration)
+npm run test:watch     # Vitest in watch mode
 npm run deploy         # Deploy everything (Worker + landing page)
 npm run deploy:api     # Deploy Worker only
 npm run deploy:landing # Build + deploy landing to Cloudflare Pages

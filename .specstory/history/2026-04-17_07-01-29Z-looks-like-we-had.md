@@ -1326,11 +1326,1278 @@ drwxr-xr-x@ 25 grant  staff   800 Apr 17 00:04 ..
 ```
 </details></tool-use>
 
-_**Agent (claude-opus-4-7 2026-04-17 07:11:06Z)**_
+_**Agent (claude-opus-4-7 2026-04-17 07:11:07Z)**_
 
 <tool-use data-tool-type="shell" data-tool-name="Bash"><details>
 <summary>Tool use: **Bash**</summary>
 Stage specstory changes
 
 `git add .specstory/ && git status --short | head -30`
+
+```text
+ M .gitignore
+D  .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+A  .specstory/history/2026-04-11_06-51-53Z.md
+A  .specstory/history/2026-04-11_20-43-46Z-do-you-have-access.md
+A  .specstory/history/2026-04-11_22-00-40Z-would-it-make-more.md
+A  .specstory/history/2026-04-14_00-16-12Z.md
+A  .specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+M  .specstory/history/2026/04/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+R  .specstory/history/2026-04-04_04-05-53Z-command-message-impeccable-critique.md -> .specstory/history/2026/04/2026-04-04_04-05-53Z-command-message-impeccable-critique.md
+R  .specstory/history/2026-04-04_04-09-12Z-command-message-impeccable-critique.md -> .specstory/history/2026/04/2026-04-04_04-09-12Z-command-message-impeccable-critique.md
+R  .specstory/history/2026-04-04_06-44-56Z-command-name-clear-command.md -> .specstory/history/2026/04/2026-04-04_06-44-56Z-command-name-clear-command.md
+R  .specstory/history/2026-04-04_06-51-15Z-command-name-clear-command.md -> .specstory/history/2026/04/2026-04-04_06-51-15Z-command-name-clear-command.md
+R  .specstory/history/2026-04-04_06-52-29Z-command-name-clear-command.md -> .specstory/history/2026/04/2026-04-04_06-52-29Z-command-name-clear-command.md
+R  .specstory/history/2026-04-05_07-02-19Z-command-name-clear-command.md -> .specstory/history/2026/04/2026-04-05_07-02-19Z-command-name-clear-command.md
+R  .specstory/history/2026-04-05_07-10-13Z-command-name-clear-command.md -> .specstory/history/2026/04/2026-04-05_07-10-13Z-command-name-clear-command.md
+R  .specstory/history/2026-04-06_19-15-47Z-check-my-seo-and.md -> .specstory/history/2026/04/2026-04-06_19-15-47Z-check-my-seo-and.md
+R  .specstory/history/2026-04-09_02-45-39Z-the-picture-isn-t.md -> .specstory/history/2026/04/2026-04-09_02-45-39Z-the-picture-isn-t.md
+R  .specstory/history/2026-04-09_05-05-43Z-so-the-apod-image.md -> .specstory/history/2026/04/2026-04-09_05-05-43Z-so-the-apod-image.md
+R  .specstory/history/2026-04-09_12-12-31Z-command-message-commit-commands.md -> .specstory/history/2026/04/2026-04-09_12-12-31Z-command-message-commit-commands.md
+R  .specstory/history/2026-04-09_13-59-00Z-command-name-exit-command.md -> .specstory/history/2026/04/2026-04-09_13-59-00Z-command-name-exit-command.md
+R  .specstory/history/2026-04-09_13-59-00Z.md -> .specstory/history/2026/04/2026-04-09_13-59-00Z.md
+R  .specstory/history/2026-04-09_16-03-24Z-whats-a-low-hanging.md -> .specstory/history/2026/04/2026-04-09_16-03-24Z-whats-a-low-hanging.md
+A  .specstory/history/2026/04/2026-04-09_18-11-38Z-command-name-clear-command.md
+A  .specstory/history/2026/04/2026-04-09_18-45-30Z-use-teamcreate-to-spawn.md
+A  .specstory/history/2026/04/2026-04-10_02-04-36Z-command-name-clear-command.md
+A  .specstory/history/2026/04/2026-04-10_05-37-43Z-command-name-clear-command.md
+A  .specstory/history/2026/04/2026-04-11_06-51-53Z.md
+ M CLAUDE.md
+ M package-lock.json
+ M package.json
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:11:14Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:11:16Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Commit specstory reorganization
+
+`git commit -m "chore(specstory): organize history into year/month folders"`
+
+```text
+[dev 659e05b] chore(specstory): organize history into year/month folders
+ 26 files changed, 25586 insertions(+), 2399 deletions(-)
+ delete mode 100644 .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
+ create mode 100644 .specstory/history/2026-04-11_06-51-53Z.md
+ create mode 100644 .specstory/history/2026-04-11_20-43-46Z-do-you-have-access.md
+ create mode 100644 .specstory/history/2026-04-11_22-00-40Z-would-it-make-more.md
+ create mode 100644 .specstory/history/2026-04-14_00-16-12Z.md
+ create mode 100644 .specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+ rename .specstory/history/{ => 2026/04}/2026-04-04_04-05-53Z-command-message-impeccable-critique.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-04_04-09-12Z-command-message-impeccable-critique.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-04_06-44-56Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-04_06-51-15Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-04_06-52-29Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-05_07-02-19Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-05_07-10-13Z-command-name-clear-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-06_19-15-47Z-check-my-seo-and.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-09_02-45-39Z-the-picture-isn-t.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-09_05-05-43Z-so-the-apod-image.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-09_12-12-31Z-command-message-commit-commands.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-09_13-59-00Z-command-name-exit-command.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-09_13-59-00Z.md (100%)
+ rename .specstory/history/{ => 2026/04}/2026-04-09_16-03-24Z-whats-a-low-hanging.md (100%)
+ create mode 100644 .specstory/history/2026/04/2026-04-09_18-11-38Z-command-name-clear-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-09_18-45-30Z-use-teamcreate-to-spawn.md
+ create mode 100644 .specstory/history/2026/04/2026-04-10_02-04-36Z-command-name-clear-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-10_05-37-43Z-command-name-clear-command.md
+ create mode 100644 .specstory/history/2026/04/2026-04-11_06-51-53Z.md
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:11:23Z)**_
+
+Now move CLAUDE.md. I'll do the rename as its own commit (keeping the modified content, since git will still detect it as a rename with >50% similarity).
+
+_**Agent (claude-opus-4-7 2026-04-17 07:12:37Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Move CLAUDE.md into .claude/
+
+`git mv CLAUDE.md .claude/CLAUDE.md && git status --short`
+
+```text
+RM CLAUDE.md -> .claude/CLAUDE.md
+ M .gitignore
+ M .specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+ M package-lock.json
+ M package.json
+ M src/index.ts
+?? test/
+?? vitest.config.ts
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:13:04Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:13:05Z)**_
+
+I want the move to be a pure rename without the test-script lines mixed in (those belong with the test commit). Let me reset to HEAD content before committing the rename.
+
+_**Agent (claude-opus-4-7 2026-04-17 07:15:15Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Reset moved file to HEAD content so commit is pure rename
+
+`git show HEAD:CLAUDE.md > .claude/CLAUDE.md && git add .claude/CLAUDE.md && git status --short | head -10`
+
+```text
+R  CLAUDE.md -> .claude/CLAUDE.md
+ M .gitignore
+ M .specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+ M package-lock.json
+ M package.json
+ M src/index.ts
+?? test/
+?? vitest.config.ts
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:15:19Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Commit pure rename
+
+`git commit -m "chore: move CLAUDE.md to .claude/ per project convention"`
+
+```text
+[dev ed39959] chore: move CLAUDE.md to .claude/ per project convention
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ rename CLAUDE.md => .claude/CLAUDE.md (100%)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:15:22Z)**_
+
+Now re-apply the test-script lines to the new location so they're not lost:
+
+_**Agent (claude-opus-4-7 2026-04-17 07:15:25Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:15:28Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./.claude/CLAUDE.md`
+
+```text
+20	npm run log:landing:tail # Show last 20 lines of landing logs
+21	npm run log:prod       # Start tailing production Worker logs to file (background)
+22	npm run log:prod:tail  # Show last 20 lines of production logs
+23	npm run log:prod:watch # Watch production logs live
+24	npm run log:prod:stop  # Stop production log tail
+25	npm run status         # Check if dev servers and prod log are running
+26	npm run stop           # Kill dev servers
+27	npx tsc --noEmit       # Type-check (no build artifact, Wrangler bundles directly)
+28	npm run deploy         # Deploy everything (Worker + landing page)
+29	npm run deploy:api     # Deploy Worker only
+30	npm run deploy:landing # Build + deploy landing to Cloudflare Pages
+31	npm run build:landing  # Vite production build for landing page
+32	```
+33	
+34	## Architecture
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:16:56Z)**_
+
+<tool-use data-tool-type="write" data-tool-name="Edit"><details>
+<summary>Tool use: **Edit**</summary>
+
+```text
+The file /Users/grant/code/nasa-apod/.claude/CLAUDE.md has been updated successfully.
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:16:59Z)**_
+
+Now let's install vitest and run the tests.
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:00Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Check if vitest is installed
+
+`ls node_modules/vitest 2>&1 | head -3`
+
+```text
+LICENSE.md
+README.md
+browser
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:04Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Run vitest suite
+
+`npm test 2>&1 | tail -80`
+
+```text
+> test
+> vitest run
+
+
+ RUN  v4.1.4 /Users/grant/code/nasa-apod
+
+
+ Test Files  2 passed (2)
+      Tests  41 passed (41)
+   Start at  00:17:04
+   Duration  216ms (transform 109ms, setup 0ms, import 132ms, tests 71ms, environment 0ms)
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:10Z)**_
+
+All 41 tests pass across both files in 216ms.
+
+Current state:
+- `3b63ed6` board updates ✓
+- `659e05b` specstory reorganization ✓
+- `ed39959` CLAUDE.md → .claude/ rename ✓
+- Still uncommitted: `.gitignore`, `.claude/CLAUDE.md` (test-script docs), `package.json`/lock (vitest dep + scripts), `src/index.ts` (dev flags + scrape + video thumbnail), `test/`, `vitest.config.ts` — this is the coherent test + feature bundle. Want it as one commit or split (e.g. feature in one, test scaffold in another)?
+
+---
+
+_**User (2026-04-17 07:17:44Z)**_
+
+explain the tests
+
+---
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:48Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:48Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./test/pure.test.ts`
+
+```text
+1	import { describe, it, expect } from "vitest";
+2	import {
+3	  parseDevFlags,
+4	  resolveApod,
+5	  parseApodHtml,
+6	  devApodFixture,
+7	  type ApodResponse,
+8	} from "../src/index";
+9	
+10	// ────────────────────────────────────────────────────────────
+11	// parseDevFlags
+12	// ────────────────────────────────────────────────────────────
+13	describe("parseDevFlags", () => {
+14	  const prod = {}; // ENVIRONMENT unset = production
+15	
+16	  it("returns disabled flags in production regardless of query params", () => {
+17	    const url = new URL("https://api.nasapicture.com/info?dev=video&tools=palette,grid");
+18	    const flags = parseDevFlags(url, prod);
+19	    expect(flags.enabled).toBe(false);
+20	    expect(flags.mode).toBeNull();
+21	    expect(flags.tools.size).toBe(0);
+22	  });
+23	
+24	  it("honors ?dev=<mode> when ENVIRONMENT=development", () => {
+25	    const url = new URL("https://api.nasapicture.com/?dev=video");
+26	    const flags = parseDevFlags(url, { ENVIRONMENT: "development" });
+27	    expect(flags.enabled).toBe(true);
+28	    expect(flags.mode).toBe("video");
+29	  });
+30	
+31	  it("treats ?dev=off as a clear (null mode)", () => {
+32	    const url = new URL("https://api.nasapicture.com/?dev=off");
+33	    const flags = parseDevFlags(url, { ENVIRONMENT: "development" });
+34	    expect(flags.mode).toBeNull();
+35	  });
+36	
+37	  it("treats ?dev= (empty value) as a clear", () => {
+38	    const url = new URL("https://api.nasapicture.com/?dev=");
+39	    const flags = parseDevFlags(url, { ENVIRONMENT: "development" });
+40	    expect(flags.mode).toBeNull();
+41	  });
+42	
+43	  it("parses ?tools=<csv> into a set", () => {
+44	    const url = new URL("https://api.nasapicture.com/?tools=palette,grid,fps");
+45	    const flags = parseDevFlags(url, { ENVIRONMENT: "development" });
+46	    expect(flags.tools).toEqual(new Set(["palette", "grid", "fps"]));
+47	  });
+48	
+49	  it("trims whitespace and ignores empty entries in ?tools", () => {
+50	    const url = new URL("https://api.nasapicture.com/?tools=palette,%20,grid,");
+51	    const flags = parseDevFlags(url, { ENVIRONMENT: "development" });
+52	    expect(flags.tools).toEqual(new Set(["palette", "grid"]));
+53	  });
+54	
+55	  it("treats ENVIRONMENT values other than 'development' as production", () => {
+56	    const url = new URL("https://api.nasapicture.com/?dev=video");
+57	    const flags = parseDevFlags(url, { ENVIRONMENT: "staging" });
+58	    expect(flags.enabled).toBe(false);
+59	    expect(flags.mode).toBeNull();
+60	  });
+61	
+62	  it("leaves mode and tools independent (both can coexist)", () => {
+63	    const url = new URL("https://api.nasapicture.com/?dev=stale&tools=palette,grid");
+64	    const flags = parseDevFlags(url, { ENVIRONMENT: "development" });
+65	    expect(flags.mode).toBe("stale");
+66	    expect(flags.tools).toEqual(new Set(["palette", "grid"]));
+67	  });
+68	});
+69	
+70	// ────────────────────────────────────────────────────────────
+71	// resolveApod
+72	// ────────────────────────────────────────────────────────────
+73	describe("resolveApod", () => {
+74	  const baseImage: ApodResponse = {
+75	    date: "2026-04-10",
+76	    title: "Test Image",
+77	    explanation: "...",
+78	    url: "https://apod.nasa.gov/apod/image/2604/test_sd.jpg",
+79	    hdurl: "https://apod.nasa.gov/apod/image/2604/test_hd.jpg",
+80	    media_type: "image",
+81	  };
+82	
+83	  it("resolves an image APOD, preferring hdurl for the HD URL", () => {
+84	    const r = resolveApod(baseImage);
+85	    expect(r).not.toBeNull();
+86	    expect(r!.source).toBe("image");
+87	    expect(r!.imageUrl).toBe(baseImage.url);
+88	    expect(r!.imageHdUrl).toBe(baseImage.hdurl);
+89	  });
+90	
+91	  it("falls back to url for HD when hdurl is absent", () => {
+92	    const r = resolveApod({ ...baseImage, hdurl: undefined });
+93	    expect(r!.imageHdUrl).toBe(baseImage.url);
+94	  });
+95	
+96	  it("resolves a video APOD with thumbnail_url as video_thumbnail", () => {
+97	    const r = resolveApod({
+98	      date: "2026-04-08",
+99	      title: "Test Video",
+100	      explanation: "...",
+101	      url: "https://www.youtube.com/embed/abc",
+102	      media_type: "video",
+103	      thumbnail_url: "https://img.youtube.com/vi/abc/maxresdefault.jpg",
+104	    });
+105	    expect(r).not.toBeNull();
+106	    expect(r!.source).toBe("video_thumbnail");
+107	    expect(r!.imageUrl).toBe("https://img.youtube.com/vi/abc/maxresdefault.jpg");
+108	    expect(r!.imageHdUrl).toBe("https://img.youtube.com/vi/abc/maxresdefault.jpg");
+109	  });
+110	
+111	  it("returns null for a video APOD without a thumbnail_url", () => {
+112	    const r = resolveApod({
+113	      date: "2026-04-08",
+114	      title: "Test Video",
+115	      explanation: "...",
+116	      url: "https://www.youtube.com/embed/abc",
+117	      media_type: "video",
+118	    });
+119	    expect(r).toBeNull();
+120	  });
+121	});
+122	
+123	// ────────────────────────────────────────────────────────────
+124	// devApodFixture
+125	// ────────────────────────────────────────────────────────────
+126	describe("devApodFixture", () => {
+127	  it("returns a video fixture with thumbnail_url for mode=video", () => {
+128	    const f = devApodFixture("video", "2026-04-10");
+129	    expect(f).not.toBeNull();
+130	    expect(f!.date).toBe("2026-04-10");
+131	    expect(f!.media_type).toBe("video");
+132	    expect(f!.thumbnail_url).toBeTruthy();
+133	    expect(new URL(f!.thumbnail_url!).hostname).toMatch(/\.youtube\.com|\.ytimg\.com/);
+134	  });
+135	
+136	  it("returns a video fixture without thumbnail_url for mode=video-no-thumb", () => {
+137	    const f = devApodFixture("video-no-thumb", "2026-04-10");
+138	    expect(f).not.toBeNull();
+139	    expect(f!.media_type).toBe("video");
+140	    expect(f!.thumbnail_url).toBeUndefined();
+141	  });
+142	
+143	  it("returns null for unknown modes (so the handler falls through)", () => {
+144	    expect(devApodFixture("nasa-error", "2026-04-10")).toBeNull();
+145	    expect(devApodFixture("palette", "2026-04-10")).toBeNull();
+146	    expect(devApodFixture("", "2026-04-10")).toBeNull();
+147	  });
+148	
+149	  it("stamps the requested date onto the fixture", () => {
+150	    expect(devApodFixture("video", "2020-01-01")!.date).toBe("2020-01-01");
+151	  });
+152	
+153	  it("produces fixtures that flow through resolveApod correctly", () => {
+154	    const withThumb = devApodFixture("video", "2026-04-10")!;
+155	    expect(resolveApod(withThumb)!.source).toBe("video_thumbnail");
+156	
+157	    const noThumb = devApodFixture("video-no-thumb", "2026-04-10")!;
+158	    expect(resolveApod(noThumb)).toBeNull();
+159	  });
+160	});
+161	
+162	// ────────────────────────────────────────────────────────────
+163	// parseApodHtml
+164	// ────────────────────────────────────────────────────────────
+165	describe("parseApodHtml", () => {
+166	  it("parses a typical image APOD page with en-dash title separator", () => {
+167	    // Shape mirrors real apYYMMDD.html pages (newer format uses "YYYY Month D – Title").
+168	    const html = `<!doctype html>
+169	<html><head><title> APOD: 2026 April 8 – Earthset
+170	</title></head>
+171	<body>
+172	<center>
+173	<p>2026 April 8
+174	<br>
+175	<a href="image/2604/earthset_original.jpg">
+176	<IMG SRC="image/2604/earthset_700.jpg" alt="Earthset">
+177	</a>
+178	</center>
+179	<center>
+180	<b> Earthset </b> <br>
+181	<b> Image Credit: </b>
+182	NASA
+183	</center> <p>
+184	<b> Explanation: </b>
+185	The crew of Artemis II watched Earth set behind the Moon.
+186	<p> <hr>
+187	</body></html>`;
+188	    const apod = parseApodHtml(html, "2026-04-08");
+189	
+190	    expect(apod.title).toBe("Earthset");
+191	    expect(apod.date).toBe("2026-04-08");
+192	    expect(apod.media_type).toBe("image");
+193	    expect(apod.url).toBe("https://apod.nasa.gov/apod/image/2604/earthset_700.jpg");
+194	    expect(apod.hdurl).toBe("https://apod.nasa.gov/apod/image/2604/earthset_original.jpg");
+195	    expect(apod.explanation).toContain("Artemis II");
+196	    expect(apod.copyright).toContain("NASA");
+197	  });
+198	
+199	  it("parses the older double-space title separator format", () => {
+200	    const html = `<html><head><title> APOD: 2025 January 1  Happy New Year
+201	</title></head>
+202	<body>
+203	<a href="image/2501/newyear_original.jpg">
+204	<IMG SRC="image/2501/newyear_700.jpg">
+205	</a>
+206	<b>Explanation:</b> Fireworks above a dark sky.
+207	<p>
+208	</body></html>`;
+209	    const apod = parseApodHtml(html, "2025-01-01");
+210	    expect(apod.title).toBe("Happy New Year");
+211	    expect(apod.date).toBe("2025-01-01");
+212	    expect(apod.media_type).toBe("image");
+213	  });
+214	
+215	  it("detects video pages by the presence of an iframe", () => {
+216	    const html = `<html><head><title> APOD: 2026 April 7 – Comet Death
+217	</title></head>
+218	<body>
+219	<iframe src="https://www.youtube.com/embed/xyz"></iframe>
+220	<b>Explanation:</b> A comet disintegrates near the Sun.
+221	</body></html>`;
+222	    const apod = parseApodHtml(html, "2026-04-07");
+223	    expect(apod.media_type).toBe("video");
+224	    expect(apod.title).toBe("Comet Death");
+225	  });
+226	
+227	  it("prefixes relative image paths with the APOD base URL", () => {
+228	    const html = `<html><head><title> APOD: 2026 April 8 – Earthset</title></head>
+229	<body><a href="image/2604/foo.jpg"><IMG SRC="image/2604/foo_sd.jpg"></a></body></html>`;
+230	    const apod = parseApodHtml(html, "2026-04-08");
+231	    expect(apod.hdurl).toMatch(/^https:\/\/apod\.nasa\.gov\/apod\/image\//);
+232	    expect(apod.url).toMatch(/^https:\/\/apod\.nasa\.gov\/apod\/image\//);
+233	  });
+234	
+235	  it("strips a leading en-dash, em-dash, or hyphen from the title", () => {
+236	    for (const sep of ["–", "—", "-"]) {
+237	      const html = `<html><head><title> APOD: 2026 April 8 ${sep} Earthset</title></head>
+238	<body><a href="image/2604/x.jpg"><IMG SRC="image/2604/x_sd.jpg"></a></body></html>`;
+239	      expect(parseApodHtml(html, "2026-04-08").title).toBe("Earthset");
+240	    }
+241	  });
+242	
+243	  it("gracefully falls back when the title tag is missing", () => {
+244	    const html = `<html><body><a href="image/2604/x.jpg"><IMG SRC="image/2604/x_sd.jpg"></a></body></html>`;
+245	    const apod = parseApodHtml(html, "2026-04-08");
+246	    expect(apod.title).toBe("Astronomy Picture of the Day");
+247	    expect(apod.date).toBe("2026-04-08"); // falls back to the requested date
+248	  });
+249	});
+250
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:51Z)**_
+
+<tool-use data-tool-type="read" data-tool-name="Read"><details>
+<summary>Tool use: **Read**</summary>
+ `./test/handler.test.ts`
+
+```text
+1	import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+2	import worker, {
+3	  __resetInflightApod,
+4	  type ApodResponse,
+5	} from "../src/index";
+6	
+7	// ────────────────────────────────────────────────────────────
+8	// In-memory stand-ins for globals the Worker reaches for. Node gives us
+9	// Request/Response/fetch/URL natively; we only need to fake `caches.default`
+10	// and route outbound `fetch` calls. The tests call the default export's
+11	// fetch handler directly — no wrangler, no miniflare, no real network.
+12	// ────────────────────────────────────────────────────────────
+13	
+14	interface CacheEntry {
+15	  body: ArrayBuffer;
+16	  headers: [string, string][];
+17	}
+18	
+19	function createCache() {
+20	  const store = new Map<string, CacheEntry>();
+21	  const cache = {
+22	    async match(req: Request | string): Promise<Response | undefined> {
+23	      const url = typeof req === "string" ? req : req.url;
+24	      const entry = store.get(url);
+25	      if (!entry) return undefined;
+26	      return new Response(entry.body.slice(0), { headers: entry.headers });
+27	    },
+28	    async put(req: Request | string, res: Response): Promise<void> {
+29	      const url = typeof req === "string" ? req : req.url;
+30	      const body = await res.arrayBuffer();
+31	      const headers: [string, string][] = [];
+32	      res.headers.forEach((value, key) => headers.push([key, value]));
+33	      store.set(url, { body, headers });
+34	    },
+35	    async delete(req: Request | string): Promise<boolean> {
+36	      const url = typeof req === "string" ? req : req.url;
+37	      return store.delete(url);
+38	    },
+39	    // helpers for assertions
+40	    _keys: () => Array.from(store.keys()),
+41	    _size: () => store.size,
+42	  };
+43	  return cache;
+44	}
+45	
+46	type CacheMock = ReturnType<typeof createCache>;
+47	
+48	interface FetchCall {
+49	  url: string;
+50	  method: string;
+51	}
+52	
+53	type RouteHandler = (req: Request) => Response | Promise<Response>;
+54	
+55	function createFetchMock() {
+56	  const routes: Array<{ match: (url: string) => boolean; handler: RouteHandler }> = [];
+57	  const calls: FetchCall[] = [];
+58	
+59	  const fn: typeof fetch = async (input, init) => {
+60	    const req =
+61	      input instanceof Request
+62	        ? new Request(input, init)
+63	        : new Request(typeof input === "string" ? input : String(input), init);
+64	    calls.push({ url: req.url, method: req.method });
+65	    for (const route of routes) {
+66	      if (route.match(req.url)) return route.handler(req);
+67	    }
+68	    throw new Error(`fetch mock: no route for ${req.url}`);
+69	  };
+70	
+71	  return Object.assign(fn, {
+72	    calls,
+73	    when(matcher: string | RegExp, handler: RouteHandler) {
+74	      const match =
+75	        typeof matcher === "string"
+76	          ? (url: string) => url.includes(matcher)
+77	          : (url: string) => matcher.test(url);
+78	      routes.push({ match, handler });
+79	    },
+80	    urlsMatching(pattern: string | RegExp): string[] {
+81	      return calls
+82	        .map((c) => c.url)
+83	        .filter((u) => (typeof pattern === "string" ? u.includes(pattern) : pattern.test(u)));
+84	    },
+85	  });
+86	}
+87	
+88	type FetchMock = ReturnType<typeof createFetchMock>;
+89	
+90	// ────────────────────────────────────────────────────────────
+91	// Test harness state
+92	// ────────────────────────────────────────────────────────────
+93	
+94	let cache: CacheMock;
+95	let fetchMock: FetchMock;
+96	let originalFetch: typeof fetch | undefined;
+97	let originalCaches: typeof caches | undefined;
+98	
+99	const DEV_ENV = { ENVIRONMENT: "development" };
+100	const PROD_ENV = {};
+101	
+102	// Pin "now" to a deterministic instant so todayET() always returns 2026-04-10.
+103	// 16:00 UTC on 2026-04-10 is 12:00 ET — safely inside the same ET day.
+104	const PINNED_NOW = new Date("2026-04-10T16:00:00Z");
+105	const TODAY = "2026-04-10";
+106	const YESTERDAY = "2026-04-09";
+107	
+108	beforeEach(() => {
+109	  vi.useFakeTimers();
+110	  vi.setSystemTime(PINNED_NOW);
+111	
+112	  cache = createCache();
+113	  fetchMock = createFetchMock();
+114	
+115	  originalFetch = globalThis.fetch;
+116	  originalCaches = (globalThis as unknown as { caches?: typeof caches }).caches;
+117	
+118	  (globalThis as unknown as { fetch: typeof fetch }).fetch = fetchMock;
+119	  (globalThis as unknown as { caches: { default: CacheMock } }).caches = {
+120	    default: cache,
+121	  };
+122	
+123	  __resetInflightApod();
+124	});
+125	
+126	afterEach(() => {
+127	  vi.useRealTimers();
+128	  if (originalFetch) {
+129	    (globalThis as unknown as { fetch: typeof fetch }).fetch = originalFetch;
+130	  }
+131	  if (originalCaches) {
+132	    (globalThis as unknown as { caches: typeof caches }).caches = originalCaches;
+133	  } else {
+134	    delete (globalThis as unknown as { caches?: unknown }).caches;
+135	  }
+136	});
+137	
+138	// ────────────────────────────────────────────────────────────
+139	// Canned responses
+140	// ────────────────────────────────────────────────────────────
+141	
+142	function jsonResponse(body: unknown, status = 200): Response {
+143	  return new Response(JSON.stringify(body), {
+144	    status,
+145	    headers: { "Content-Type": "application/json" },
+146	  });
+147	}
+148	
+149	function imageResponse(label: string, contentType = "image/jpeg"): Response {
+150	  // Label the body so we can assert which mocked image was served.
+151	  const bytes = new TextEncoder().encode(`IMAGE:${label}`);
+152	  return new Response(bytes, {
+153	    status: 200,
+154	    headers: {
+155	      "Content-Type": contentType,
+156	      "Content-Length": String(bytes.byteLength),
+157	    },
+158	  });
+159	}
+160	
+161	function nasaImage(date: string, title = `Image for ${date}`): ApodResponse {
+162	  return {
+163	    date,
+164	    title,
+165	    explanation: `Explanation for ${date}.`,
+166	    url: `https://apod.nasa.gov/apod/image/2604/${date}_sd.jpg`,
+167	    hdurl: `https://apod.nasa.gov/apod/image/2604/${date}_hd.jpg`,
+168	    media_type: "image",
+169	  };
+170	}
+171	
+172	function nasaVideoNoThumb(date: string): ApodResponse {
+173	  return {
+174	    date,
+175	    title: `Real video ${date}`,
+176	    explanation: `Video for ${date}.`,
+177	    url: `https://www.youtube.com/embed/real-${date}`,
+178	    media_type: "video",
+179	  };
+180	}
+181	
+182	// Encode an HTML string as UTF-16 LE with a BOM, matching the weird encoding
+183	// NASA silently serves for at least one APOD page (ap260408.html — "Earthset").
+184	// The `Content-Type` header still claims charset=UTF-8, so the scraper cannot
+185	// trust it and has to sniff the BOM. This helper lets us reproduce that exact
+186	// quirk in a test.
+187	function utf16leBomResponse(html: string, status = 200): Response {
+188	  const bytes = new Uint8Array(2 + html.length * 2);
+189	  bytes[0] = 0xff;
+190	  bytes[1] = 0xfe;
+191	  for (let i = 0; i < html.length; i++) {
+192	    const code = html.charCodeAt(i);
+193	    bytes[2 + i * 2] = code & 0xff;
+194	    bytes[2 + i * 2 + 1] = (code >> 8) & 0xff;
+195	  }
+196	  return new Response(bytes, {
+197	    status,
+198	    // Mimic NASA: wrong charset header on purpose.
+199	    headers: { "Content-Type": "text/html; charset=UTF-8" },
+200	  });
+201	}
+202	
+203	// Minimal APOD page HTML — exercises the same code path parseApodHtml uses
+204	// in production, but is small enough to embed.
+205	function apodPageHtml(date: string, title: string): string {
+206	  const [y, m, d] = date.split("-");
+207	  const monthName = [
+208	    "January", "February", "March", "April", "May", "June",
+209	    "July", "August", "September", "October", "November", "December",
+210	  ][Number(m) - 1];
+211	  return `<!doctype html>
+212	<html><head><title> APOD: ${y} ${monthName} ${Number(d)} – ${title}
+213	</title></head>
+214	<body>
+215	<a href="image/2604/scraped_original.jpg">
+216	<IMG SRC="image/2604/scraped_700.jpg">
+217	</a>
+218	<b>Explanation:</b> Scraped page for ${date}.
+219	<p>
+220	</body></html>`;
+221	}
+222	
+223	function invoke(path: string, env: Record<string, string> = DEV_ENV): Promise<Response> {
+224	  const req = new Request(`http://localhost:8787${path}`);
+225	  // Silence the handler's per-request console noise during tests.
+226	  const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+227	  return Promise.resolve(worker.fetch(req, env)).finally(() => logSpy.mockRestore());
+228	}
+229	
+230	// ────────────────────────────────────────────────────────────
+231	// Tests
+232	// ────────────────────────────────────────────────────────────
+233	
+234	describe("?dev=video — video APOD with thumbnail", () => {
+235	  it("/info reports media_type=video and image_source=video_thumbnail", async () => {
+236	    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+237	
+238	    const res = await invoke("/info?dev=video");
+239	    expect(res.status).toBe(200);
+240	    const body = (await res.json()) as Record<string, unknown>;
+241	
+242	    expect(body.media_type).toBe("video");
+243	    expect(body.image_source).toBe("video_thumbnail");
+244	    expect(body.title).toMatch(/video/i);
+245	    // Fixture pinned to today
+246	    expect(body.date).toBe(TODAY);
+247	  });
+248	
+249	  it("/ serves the thumbnail image bytes", async () => {
+250	    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+251	
+252	    const res = await invoke("/?dev=video");
+253	    expect(res.status).toBe(200);
+254	    expect(res.headers.get("Content-Type")).toMatch(/image\//);
+255	    const body = await res.text();
+256	    expect(body).toBe("IMAGE:video-thumbnail");
+257	  });
+258	
+259	  it("never calls the NASA JSON API (fixture short-circuits upstream)", async () => {
+260	    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+261	
+262	    await invoke("/?dev=video");
+263	    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([]);
+264	  });
+265	
+266	  it("does not pollute the primary cache (fixture writes skipped)", async () => {
+267	    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+268	
+269	    await invoke("/info?dev=video");
+270	
+271	    const apodCacheKeys = cache._keys().filter((k) => k.includes("/_cache/apod/"));
+272	    expect(apodCacheKeys).toEqual([]);
+273	  });
+274	});
+275	
+276	describe("?dev=video-no-thumb — walkback to earlier day", () => {
+277	  it("falls back to the next day's real APOD when today's fixture has no thumbnail", async () => {
+278	    // Today's fixture is unresolvable. Walkback asks NASA for yesterday.
+279	    fetchMock.when(`date=${YESTERDAY}`, () => jsonResponse(nasaImage(YESTERDAY, "Yesterday Image")));
+280	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("yesterday-hd"));
+281	
+282	    const res = await invoke("/info?dev=video-no-thumb");
+283	    expect(res.status).toBe(200);
+284	    const body = (await res.json()) as Record<string, unknown>;
+285	
+286	    expect(body.image_source).toBe("image");
+287	    expect(body.date).toBe(YESTERDAY);
+288	    expect(body.title).toBe("Yesterday Image");
+289	  });
+290	
+291	  it("/ serves the walked-back image's bytes", async () => {
+292	    fetchMock.when(`date=${YESTERDAY}`, () => jsonResponse(nasaImage(YESTERDAY)));
+293	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("yesterday-hd"));
+294	
+295	    const res = await invoke("/?dev=video-no-thumb");
+296	    expect(res.status).toBe(200);
+297	    expect(await res.text()).toBe("IMAGE:yesterday-hd");
+298	  });
+299	
+300	  it("skips further walkback when the next day is also unresolvable (video-no-thumb) and tries the day after", async () => {
+301	    // Yesterday is ALSO a video with no thumbnail → walkback continues.
+302	    fetchMock.when(`date=${YESTERDAY}`, () => jsonResponse(nasaVideoNoThumb(YESTERDAY)));
+303	    fetchMock.when("date=2026-04-08", () => jsonResponse(nasaImage("2026-04-08", "Two days ago")));
+304	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("two-days-ago"));
+305	
+306	    const res = await invoke("/info?dev=video-no-thumb");
+307	    const body = (await res.json()) as Record<string, unknown>;
+308	    expect(body.date).toBe("2026-04-08");
+309	    expect(body.title).toBe("Two days ago");
+310	  });
+311	});
+312	
+313	describe("?dev=nasa-error — scrape fallback", () => {
+314	  it("scrape fires when primary + stale cache are both empty", async () => {
+315	    // Return a valid HTML page from the scrape endpoint.
+316	    fetchMock.when(`ap260410.html`, () =>
+317	      new Response(apodPageHtml(TODAY, "Scraped Today"), {
+318	        status: 200,
+319	        headers: { "Content-Type": "text/html; charset=UTF-8" },
+320	      }),
+321	    );
+322	
+323	    const res = await invoke("/info?dev=nasa-error");
+324	    expect(res.status).toBe(200);
+325	    const body = (await res.json()) as Record<string, unknown>;
+326	
+327	    expect(body.title).toBe("Scraped Today");
+328	    expect(body.date).toBe(TODAY);
+329	    expect(body.image_source).toBe("image");
+330	    // NASA JSON API must NOT have been hit (dev=nasa-error skips upstream)
+331	    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([]);
+332	    // Scrape page MUST have been hit
+333	    expect(fetchMock.urlsMatching("ap260410.html").length).toBe(1);
+334	  });
+335	
+336	  it("populates both primary and stale caches after a successful scrape", async () => {
+337	    fetchMock.when(`ap260410.html`, () =>
+338	      new Response(apodPageHtml(TODAY, "Scraped Today"), { status: 200 }),
+339	    );
+340	
+341	    await invoke("/info?dev=nasa-error");
+342	
+343	    const apodKeys = cache._keys().filter((k) => k.includes(`/_cache/apod/${TODAY}`));
+344	    // Primary + stale suffix
+345	    expect(apodKeys.some((k) => k.endsWith(TODAY))).toBe(true);
+346	    expect(apodKeys.some((k) => k.endsWith(`${TODAY}:stale`))).toBe(true);
+347	  });
+348	
+349	  it("stale cache wins over scrape when stale is present", async () => {
+350	    // Pre-populate stale cache with a known value.
+351	    const staleUrl = `https://api.nasapicture.com/_cache/apod/${TODAY}:stale`;
+352	    const staleBody: ApodResponse = nasaImage(TODAY, "From Stale Cache");
+353	    await cache.put(
+354	      new Request(staleUrl),
+355	      new Response(JSON.stringify(staleBody), {
+356	        headers: { "Content-Type": "application/json" },
+357	      }),
+358	    );
+359	
+360	    // The scrape route would return a DIFFERENT title — if the test fails
+361	    // and scrape runs, the response would contain "Scraped Today" instead.
+362	    fetchMock.when(`ap260410.html`, () =>
+363	      new Response(apodPageHtml(TODAY, "Scraped Today"), { status: 200 }),
+364	    );
+365	
+366	    const res = await invoke("/info?dev=nasa-error");
+367	    const body = (await res.json()) as Record<string, unknown>;
+368	
+369	    expect(body.title).toBe("From Stale Cache");
+370	    // Scrape endpoint MUST NOT have been called.
+371	    expect(fetchMock.urlsMatching("ap260410.html")).toEqual([]);
+372	  });
+373	
+374	  it("decodes UTF-16 LE pages with BOM even when Content-Type lies about UTF-8", async () => {
+375	    // Real-world quirk: NASA served ap260408.html as UTF-16 LE with BOM while
+376	    // the Content-Type header still claimed charset=UTF-8. If the scraper
+377	    // trusts the header and uses res.text(), every char comes out interleaved
+378	    // with NULs and all regexes fail to match. Reproducing here.
+379	    fetchMock.when("ap260410.html", () =>
+380	      utf16leBomResponse(apodPageHtml(TODAY, "Earthset")),
+381	    );
+382	
+383	    const res = await invoke("/info?dev=nasa-error");
+384	    expect(res.status).toBe(200);
+385	    const body = (await res.json()) as Record<string, unknown>;
+386	
+387	    expect(body.title).toBe("Earthset");
+388	    expect(body.date).toBe(TODAY);
+389	    expect(body.image_source).toBe("image");
+390	    // The extracted image URL must be a real absolute HTTPS URL — if decoding
+391	    // failed the regex wouldn't have matched and url would be empty, which
+392	    // would later throw "Invalid URL string" from validateImageUrl.
+393	    expect(body.url).toMatch(/^https:\/\/apod\.nasa\.gov\/apod\/image\//);
+394	  });
+395	
+396	  it("decodes UTF-16 BE pages with BOM", async () => {
+397	    // Defensive: BE BOM detection is symmetric with LE. Covers the other branch.
+398	    const html = apodPageHtml(TODAY, "BigEndian");
+399	    const bytes = new Uint8Array(2 + html.length * 2);
+400	    bytes[0] = 0xfe;
+401	    bytes[1] = 0xff;
+402	    for (let i = 0; i < html.length; i++) {
+403	      const code = html.charCodeAt(i);
+404	      bytes[2 + i * 2] = (code >> 8) & 0xff;
+405	      bytes[2 + i * 2 + 1] = code & 0xff;
+406	    }
+407	    fetchMock.when("ap260410.html", () =>
+408	      new Response(bytes, {
+409	        status: 200,
+410	        headers: { "Content-Type": "text/html; charset=UTF-8" },
+411	      }),
+412	    );
+413	
+414	    const res = await invoke("/info?dev=nasa-error");
+415	    expect(res.status).toBe(200);
+416	    const body = (await res.json()) as Record<string, unknown>;
+417	    expect(body.title).toBe("BigEndian");
+418	  });
+419	
+420	  it("returns 502 when scrape also fails and nothing else is cached", async () => {
+421	    // Every day in the walkback will 404 the scrape. /info uses
+422	    // findLatestResolvable which walks back MAX_LOOKBACK_DAYS+1 days,
+423	    // so the final error comes from the walkback loop, not the inner
+424	    // NasaApiError from a single date.
+425	    fetchMock.when(/ap\d{6}\.html$/, () => new Response("not found", { status: 404 }));
+426	
+427	    const res = await invoke("/info?dev=nasa-error");
+428	    expect(res.status).toBe(502);
+429	    const body = (await res.json()) as Record<string, unknown>;
+430	    expect(body.error).toMatch(/No image found/);
+431	    // Scrape was attempted for today's date at minimum
+432	    expect(fetchMock.urlsMatching("ap260410.html").length).toBeGreaterThan(0);
+433	  });
+434	});
+435	
+436	describe("ENVIRONMENT gating", () => {
+437	  it("silently ignores ?dev=video in production and hits the real API", async () => {
+438	    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY, "Real Image Today")));
+439	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("real-today"));
+440	
+441	    const res = await invoke("/info?dev=video", PROD_ENV);
+442	    expect(res.status).toBe(200);
+443	    const body = (await res.json()) as Record<string, unknown>;
+444	
+445	    // Response is the real API result, not the fixture
+446	    expect(body.title).toBe("Real Image Today");
+447	    expect(body.image_source).toBe("image");
+448	    expect(body.media_type).toBe("image");
+449	    // Real NASA API must have been called
+450	    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod").length).toBeGreaterThan(0);
+451	  });
+452	
+453	  it("silently ignores ?dev=nasa-error in production (normal API path runs)", async () => {
+454	    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY)));
+455	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("real"));
+456	
+457	    const res = await invoke("/info?dev=nasa-error", PROD_ENV);
+458	    expect(res.status).toBe(200);
+459	    // Scrape must NOT have run — it's only reachable via the upstream-failure path.
+460	    expect(fetchMock.urlsMatching("ap260410.html")).toEqual([]);
+461	  });
+462	});
+463	
+464	describe("unknown dev modes", () => {
+465	  it("falls through to the normal API path when the mode is not a recognized fixture", async () => {
+466	    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY, "Normal")));
+467	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("normal"));
+468	
+469	    const res = await invoke("/info?dev=palette");
+470	    expect(res.status).toBe(200);
+471	    const body = (await res.json()) as Record<string, unknown>;
+472	    expect(body.title).toBe("Normal");
+473	    expect(body.image_source).toBe("image");
+474	  });
+475	});
+476	
+477	describe("normal (no dev flag) path is unchanged", () => {
+478	  it("/info hits the real NASA API in dev env when no dev flag is set", async () => {
+479	    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY, "Plain")));
+480	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("plain"));
+481	
+482	    const res = await invoke("/info");
+483	    expect(res.status).toBe(200);
+484	    const body = (await res.json()) as Record<string, unknown>;
+485	    expect(body.title).toBe("Plain");
+486	    expect(body.image_source).toBe("image");
+487	  });
+488	
+489	  it("caches the API response so the next request is a cache hit", async () => {
+490	    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY)));
+491	    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("plain"));
+492	
+493	    await invoke("/info");
+494	    const callsAfterFirst = fetchMock.urlsMatching("api.nasa.gov/planetary/apod").length;
+495	
+496	    await invoke("/info");
+497	    const callsAfterSecond = fetchMock.urlsMatching("api.nasa.gov/planetary/apod").length;
+498	
+499	    expect(callsAfterSecond).toBe(callsAfterFirst); // no additional upstream calls
+500	  });
+501	});
+502
+```
+</details></tool-use>
+
+_**Agent (claude-opus-4-7 2026-04-17 07:17:57Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:18:23Z)**_
+
+## Test suite overview
+
+Two files, split by testing style. 41 tests total, ~200ms runtime.
+
+### `test/pure.test.ts` — 20 unit tests on exported helpers
+
+Covers the pure functions lifted out of the handler. No mocks, no timers, no globals — just input/output.
+
+- **`parseDevFlags`** (8 tests) — prod gating (ENVIRONMENT unset or anything != `"development"` returns disabled regardless of query), `?dev=` mode parsing including `off`/empty as clears, `?tools=` CSV parsing with trim and empty-entry rejection, mode+tools independence.
+- **`resolveApod`** (4 tests) — image APOD prefers `hdurl`, falls back to `url`; video with `thumbnail_url` resolves as `video_thumbnail`; video without `thumbnail_url` returns null (trigger for walkback).
+- **`devApodFixture`** (5 tests) — fixture shapes for `video` / `video-no-thumb`, null for unknown modes, date stamping, round-trip through `resolveApod`.
+- **`parseApodHtml`** (6 tests) — title extraction with en-dash and double-space separators, video detection via `<iframe>`, image URL prefixing with APOD base, leading dash/en-dash/em-dash stripping, graceful degradation when `<title>` is absent.
+
+### `test/handler.test.ts` — 21 integration tests through `worker.fetch()`
+
+Calls the default export directly in Node. No miniflare, no wrangler, no real network. The harness fakes exactly two things:
+
+**`createCache()`** — in-memory `Map` wrapper matching the shape of `Cache` (`match`/`put`/`delete` + `_keys`/`_size` for assertions). Installed as `globalThis.caches.default` in `beforeEach`.
+
+**`createFetchMock()`** — route table keyed by substring or regex match. Records every call so tests can assert *what got hit* (e.g. "NASA API must not have been called"). Installed as `globalThis.fetch`.
+
+Time is pinned with `vi.useFakeTimers()` + `vi.setSystemTime(2026-04-10T16:00Z)` so `todayET()` deterministically returns `2026-04-10`. `__resetInflightApod()` clears the in-flight coalescing map between tests.
+
+Organized into six describe blocks:
+
+1. **`?dev=video`** (4 tests) — `/info` reports `image_source: "video_thumbnail"`, `/` serves thumbnail bytes from `img.youtube.com`, NASA JSON API is never called, primary cache is not polluted.
+2. **`?dev=video-no-thumb`** (3 tests) — today's fixture unresolvable → walkback fetches yesterday; chain continues when yesterday is also a video-no-thumb; correct image bytes flow through.
+3. **`?dev=nasa-error`** (6 tests) — scrape fires when primary + stale both empty; stale-cache beats scrape when present; both cache tiers populated after successful scrape; **UTF-16 LE-with-BOM decoding works despite `Content-Type: charset=UTF-8`** (reproducing the real `ap260408.html` quirk); UTF-16 BE variant also handled; 502 when scrape also fails across the whole walkback window.
+4. **ENVIRONMENT gating** (2 tests) — both `?dev=video` and `?dev=nasa-error` are silently ignored in production; real API path runs instead.
+5. **Unknown dev modes** (1 test) — `?dev=palette` falls through to the normal path (no crash, no fixture match).
+6. **Normal path unchanged** (2 tests) — baseline smoke that the non-dev path still works; second call is cached (no extra upstream fetch).
+
+### Notable design choices
+
+- **Handler tested directly, not via miniflare** — much faster (~200ms) and no Cloudflare runtime dependency. Cost: doesn't exercise real Workers runtime quirks.
+- **Request counting via `fetchMock.urlsMatching()`** — assertions like "NASA API was not called" are expressible, which is critical for the `?dev=` short-circuit guarantees.
+- **UTF-16 BOM helper lives in the test file** — `utf16leBomResponse()` encodes the real bug NASA served. That regression is locked in.
+- **No coverage for image-transform endpoints** (`/optimized`, `/thumb`) — those depend on CF Image Transformations which aren't mocked. Gap worth flagging.
+
+---
+
+_**User (2026-04-17 07:27:29Z)**_
+
+so is there any "shortcut" and basically skipping tests, i.e. false positives
+
+---
+
+_**Agent (claude-opus-4-7 2026-04-17 07:28:40Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:28:56Z)**_
+
+Good audit question. I read both files with that lens. No outright cheating, but real gaps:
+
+### Things that are *not* shortcuts (defensively written)
+- **`createFetchMock` throws on un-routed URLs** (handler.test.ts:68). You can't accidentally pass a test by forgetting to mock — an un-mocked fetch bubbles up as a 500 and fails the assertion.
+- **ENVIRONMENT gating tests use `PROD_ENV` and assert that NASA *was* called** (:450). A legitimate negative-control: if gating regressed, the test would fail.
+- **UTF-16 BOM tests encode the bytes by hand** (:187) and assert the decoded title. That's an honest end-to-end exercise of the `scrapeApodForDate` decoding path — not a shortcut.
+
+### Weak assertions that could hide real bugs
+1. **`/info?dev=video` never checks `body.width`/`body.height`** (:235). If `fetchImageDimensions` silently returned null for video thumbnails, the test would pass with degraded output. Same gap in every `/info` test.
+2. **"caches the API response" compares only call counts, not body content** (:489). If caching returned garbled/truncated JSON on the hit, this would pass.
+3. **`parseApodHtml` tests use hand-crafted HTML** (pure.test.ts:168), not captured real NASA pages. If NASA's layout quirks slip past the regexes in subtle ways (extra whitespace, attribute ordering, mixed case), unit tests won't catch it. A fixtures directory with 2–3 real captured pages would harden this.
+
+### Entire code paths not exercised
+- **`/optimized` and `/thumb`** — both rely on Cloudflare Image Transformations (`cf: { image: {...} }`), which can't be simulated in Node. Those routes have *zero* test coverage.
+- **`/about`** — no tests at all.
+- **OPTIONS / CORS preflight** — no tests.
+- **Concurrent-request coalescing** (`inflightApod` map) — `__resetInflightApod()` is a test-only backdoor and nothing actually drives two parallel requests for the same date to prove dedup works.
+- **Image host allowlist rejection** — no test for `validateImageUrl` refusing an unexpected host.
+- **Cache Control TTL** — the fake cache is a plain `Map`; it never expires. Production `caches.default` honors `Cache-Control: max-age`. A test that relied on an entry expiring would pass locally and fail in production.
+
+### Fidelity caveat (not a shortcut, but known)
+No miniflare/wrangler test runner. `caches.default` and `fetch` are Node-friendly fakes. The upside is 216ms runtime and zero CF runtime dependency; the downside is real Workers semantics (Cache API normalization, image transforms, `cf` request init) aren't exercised.
+
+**Overall read**: the happy paths and the `?dev=` fixture behavior are genuinely covered. The holes are in periphery routes, edge cases, and a few thin assertions — not in fake-covering the core logic.
+
+Want me to plug any of these gaps before we commit the bundle?
+
+---
+
+_**User (2026-04-17 07:31:06Z)**_
+
+I am ok with missing coverage. what I want to ensure is that there are no tests in place that actually aren't truly testing anything, and just faking the test results
+
+---
+
+_**Agent (claude-opus-4-7 2026-04-17 07:32:00Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:32:17Z)**_
+
+I went through all 41 tests with that specific lens. Short answer: **no, there are no tests that pass without exercising real code**. Here's the evidence.
+
+Every test assertion falls into one of three categories, and all three are real checks:
+
+### 1. Unique values that only the mock can produce
+Tests use distinctive titles ("Yesterday Image", "Scraped Today", "BigEndian", "From Stale Cache", "Two days ago") or unique body labels (`IMAGE:video-thumbnail`, `IMAGE:yesterday-hd`). These values can only end up in the response if the handler actually walked the intended code path. A broken handler couldn't fabricate them.
+
+### 2. Call-log assertions on `fetchMock.urlsMatching(...)` / `cache._keys()`
+These verify **what endpoints got hit, or didn't**. Examples:
+- `expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([])` — proves short-circuit actually short-circuited
+- `expect(fetchMock.urlsMatching("ap260410.html").length).toBe(1)` — proves scrape actually ran
+- `expect(cache._keys().filter(...)).toEqual([])` — proves fixture didn't write to cache
+
+You can't game these — the counts come from the real fetch/cache interactions the handler made.
+
+### 3. Status codes and error messages from the handler's own logic
+Example at handler.test.ts:427: `expect(res.status).toBe(502)` + `expect(body.error).toMatch(/No image found/)`. That 502 and that exact error string only exist in the handler's outer catch block after `findLatestResolvable` exhausts the walkback. Hard-wired only by the real code path.
+
+### Fail-closed harness means you can't accidentally fake-pass
+- **Un-routed fetch throws** (`fetch mock: no route for ${req.url}`). If the handler unexpectedly hit an unmocked URL, the test fails. This is the most important guardrail — it means "the mock only answered the calls I expected, and the handler made them" is actually proven.
+- **`invoke()` calls `worker.fetch(req, env)` directly** — the real default export, not a reimplementation.
+- **`__resetInflightApod()`** just clears a `Map` between tests for isolation. It doesn't stub anything.
+
+### The one tautology I found (cosmetic, not a fake-pass)
+In pure.test.ts:211, `expect(apod.date).toBe("2025-01-01")` is weak because `parseApodHtml`'s fallback also uses the passed-in date, so that assertion can't distinguish parse-success from parse-failure. **But the same test also asserts `title === "Happy New Year"` and `media_type === "image"`**, which *do* require parsing to work. So the test as a whole is real — just has one redundant line.
+
+### Things that could be mistaken for shortcuts but aren't
+- Pure tests use hand-crafted HTML → this limits *coverage breadth* (real NASA pages might differ), but every assertion still requires the parser to actually work on the given input. Not a fake-pass.
+- Fake `caches.default` is a plain `Map` → this limits *fidelity to real Cache API TTLs*, but the cache-hit test still proves the handler wrote a key and read it back on the second call. Real.
+
+**Verdict**: you're clear. Every test exercises the function it claims to test and would fail if that function were broken or stubbed.
+
+---
+
+_**User (2026-04-17 07:34:19Z)**_
+
+<command-message>commit-commands:commit</command-message>
+<command-name>/commit-commands:commit</command-name>
+
+_**User (2026-04-17 07:34:19Z)**_
+
+## Context
+
+- Current git status: On branch dev
+Your branch is ahead of 'origin/dev' by 8 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .claude/CLAUDE.md
+	modified:   .gitignore
+	modified:   .specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+	modified:   package-lock.json
+	modified:   package.json
+	modified:   src/index.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	test/
+	vitest.config.ts
+
+no changes added to commit (use "git add" and/or "git commit -a")
+- Current git diff (staged and unstaged changes): <persisted-output>
+Output too large (132.4KB). Full output saved to: /Users/grant/.claude/projects/-Users-grant-code-nasa-apod/6ab7f17e-3df6-43e3-95a4-d0b7d912b0df/tool-results/becg87pi1.txt
+
+Preview (first 2KB):
+diff --git a/.claude/CLAUDE.md b/.claude/CLAUDE.md
+index 187d7fa..96fdd8d 100644
+--- a/.claude/CLAUDE.md
++++ b/.claude/CLAUDE.md
+@@ -25,6 +25,8 @@ npm run log:prod:stop  # Stop production log tail
+ npm run status         # Check if dev servers and prod log are running
+ npm run stop           # Kill dev servers
+ npx tsc --noEmit       # Type-check (no build artifact, Wrangler bundles directly)
++npm test               # Run vitest suite (unit + handler integration)
++npm run test:watch     # Vitest in watch mode
+ npm run deploy         # Deploy everything (Worker + landing page)
+ npm run deploy:api     # Deploy Worker only
+ npm run deploy:landing # Build + deploy landing to Cloudflare Pages
+diff --git a/.gitignore b/.gitignore
+index 6f4e541..9178024 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -5,3 +5,8 @@ dist/
+ .cache/
+ .DS_Store
+ logs/
++coverage/
++
++# VSCode AI rules
++.github/instructions/codacy.instructions.md
++
+diff --git a/.specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md b/.specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+index 81c5c51..8083a42 100644
+--- a/.specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
++++ b/.specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md
+@@ -1326,11 +1326,1159 @@ drwxr-xr-x@ 25 grant  staff   800 Apr 17 00:04 ..
+ ```
+ </details></tool-use>
+ 
+-_**Agent (claude-opus-4-7 2026-04-17 07:11:06Z)**_
++_**Agent (claude-opus-4-7 2026-04-17 07:11:07Z)**_
+ 
+ <tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+ <summary>Tool use: **Bash**</summary>
+ Stage specstory changes
+ 
+ `git add .specstory/ && git status --short | head -30`
++
++```text
++ M .gitignore
++D  .specstory/history/2026-04-04_03-23-11Z-command-message-specstory-guard.md
++A  .specstory/history/2026-04-11_06-51-53Z.md
++A  .specstory/history/2026-04-11_20-43-46Z-do-you-have-access.md
++A  .specstory/history/2026-04-11_22-00-40Z-would-it-make-more.md
++A  .specstory/history/2026-04-14_00-16-12Z.md
+...
+</persisted-output>
+- Current branch: dev
+- Recent commits: ed39959 chore: move CLAUDE.md to .claude/ per project convention
+659e05b chore(specstory): organize history into year/month folders
+3b63ed6 docs(board): close video-APOD epic, log reliability notes
+5532501 docs(board): prioritize reliability tasks, add dev flag convention
+dc4ece6 docs(board): process 8 notes into tasks, add social previews epic
+749900d chore(board): archive NOTE-0005, TASK-0024, TASK-0025 as won't-implement
+e73ab4d fix(api): add nosniff header, close metadata route tasks as won't-implement
+a94d82d docs(board): add metadata route tasks from NOTE-0005 breakdown
+4653847 fix(landing): center header tagline with absolute positioning
+d9ede2c Merge pull request #4 from GDKeller/dev
+
+## Your task
+
+Based on the above changes, create a single git commit.
+
+You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.
+
+
+---
+
+_**Agent (claude-opus-4-7 2026-04-17 07:34:28Z)**_
+
+_**Agent (claude-opus-4-7 2026-04-17 07:34:30Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Stage all remaining changes and commit
+
+`git add .claude/CLAUDE.md .gitignore .specstory/history/2026-04-17_07-01-29Z-looks-like-we-had.md package-lock.json package.json src/index.ts test/ vitest.config.ts && git commit -m "feat(api): add video thumbnail, scrape fallback, and dev flag fixtures with vitest suite" && git status`
 </details></tool-use>

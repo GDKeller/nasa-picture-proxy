@@ -14,17 +14,20 @@
     "log:prod": "./scripts/log-prod.sh start",
     "log:prod:tail": "./scripts/log.sh tail prod",
     "log:prod:watch": "./scripts/log.sh watch prod",
-    "log:prod:stop": "./scripts/log-prod.sh stop",  
+    "log:prod:stop": "./scripts/log-prod.sh stop",
     "status": "./scripts/status.sh",
     "stop": "./scripts/stop.sh",
     "build:landing": "npm run build --prefix landing",
     "deploy": "npm run deploy:api && npm run deploy:landing",
     "deploy:api": "wrangler deploy",
-    "deploy:landing": "npm run build:landing && wrangler pages deploy landing/dist/ --project-name nasapicture-landing"
+    "deploy:landing": "npm run build:landing && wrangler pages deploy landing/dist/ --project-name nasapicture-landing",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241004.0",
     "typescript": "^5.6.0",
+    "vitest": "^4.1.4",
     "wrangler": "^4.77.0"
   }
 }
