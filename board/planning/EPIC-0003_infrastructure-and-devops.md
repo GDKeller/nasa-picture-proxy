@@ -2,7 +2,7 @@
 type: epic
 status: planning
 created: 2026-04-03
-updated: 2026-04-09
+updated: 2026-04-10
 ---
 
 # Infrastructure and DevOps
@@ -11,13 +11,13 @@ Remove manual steps from the deploy workflow and add durable storage so the serv
 
 ## Priority focus: show today's image reliably
 
-Recent incidents (video APOD tripping walkback, unexplained NASA API 500 on 2026-04-08) have repeatedly hurt the core promise — showing today's image reliably. TASK-0020 and TASK-0021 in this epic directly address that, and are now **priority 1**. Ship them before the rest of the epic.
+Recent incidents (video APOD tripping walkback, unexplained NASA API 500 on 2026-04-08) have repeatedly hurt the core promise — showing today's image reliably. TASK-0020 shipped alongside EPIC-0004's TASK-0019; TASK-0021 (cron warming) is the remaining P1.
 
 ## Tasks
 
-### TASK-0020: HTML scraping fallback for NASA API outages [P1]
+### ~~TASK-0020: HTML scraping fallback for NASA API outages~~ [done]
 
-When the NASA API returns non-200 and stale cache is empty, scrape the APOD webpage (`apod.nasa.gov/apod/`) as a last-resort data source. Regex extraction, populates both cache tiers. Only fires when all other sources are exhausted. **Directly addresses the 2026-04-08 outage.**
+Shipped with TASK-0019. `scrapeApodForDate` + `parseApodHtml` in `src/index.ts` kick in from `handleUpstreamFailure` whenever the API errors and stale cache is empty. Handles UTF-8 and UTF-16 LE/BE APOD pages (NASA silently serves some pages as UTF-16 LE with BOM despite a UTF-8 Content-Type header). **Directly addresses the 2026-04-08 outage.**
 
 ### TASK-0021: Automated daily cache warming via Cron Trigger [P1]
 
@@ -39,8 +39,8 @@ Workflow triggered on push to `main`. Runs type-check (`npx tsc --noEmit`) as a 
 
 ## Sequence
 
-1. **TASK-0020** [P1] — HTML scraping fallback. No dependencies, immediate reliability win.
-2. **TASK-0021** [P1] — Cron cache warming. Benefits from TASK-0020 being in place (scraping can feed the warmer when NASA API is down).
+1. ~~TASK-0020~~ — done
+2. **TASK-0021** [P1] — Cron cache warming. Now that scrape is in place, cron warming guarantees stale cache never runs dry.
 3. TASK-0011 — R2 storage layer. Larger effort, unblocks follow-on features (gallery, timezone Phase 2).
 4. TASK-0032 — GitHub Action. Small, can be done anytime.
 

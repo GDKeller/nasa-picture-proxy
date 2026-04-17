@@ -103,14 +103,13 @@ Avoid implementation details in the name. `video` is a scenario; `force-video-th
 
 ### Worker (`src/index.ts`)
 
-_(none yet — TASK-0019 and TASK-0020 are the first Worker-side modes)_
-
-Planned:
+Gated on `env.ENVIRONMENT === "development"` (set in `.dev.vars`, gitignored). If the env var is unset or any other value, dev params are silently ignored and all requests go through the normal path.
 
 | Param | Task | Description |
 |---|---|---|
-| `?dev=video` | TASK-0019 | Return a hard-coded video APOD response (from the known 2026-04-08 video) so the thumbnail branch can be exercised on demand |
-| `?dev=nasa-error` | TASK-0020 | Skip the NASA API fetch and throw `NasaApiError` to exercise the scrape fallback |
+| `?dev=video` | TASK-0019 | Return a hard-coded video APOD fixture *with* `thumbnail_url` so the video-thumbnail branch of `resolveApod` can be exercised. Only short-circuits for today's date; walkback iterations still hit the normal path. Bypasses the APOD cache entirely so fixture runs never pollute real cached data. |
+| `?dev=video-no-thumb` | TASK-0019 | Return a hard-coded video APOD fixture *without* `thumbnail_url`. `resolveApod` returns null for today, so the walkback path runs and pulls the next resolvable day. |
+| `?dev=nasa-error` | TASK-0020 | Skip the upstream NASA API fetch and route straight to the stale-cache-then-scrape fallback path. Bypasses the primary cache so every request reliably exercises the fallback. Stale cache still wins over scrape when present — scrape is the last resort. |
 
 ## Why this shape
 

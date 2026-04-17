@@ -1,13 +1,15 @@
 ---
 type: task
-status: todo
+status: done
 priority: 1
 created: 2026-04-08
-updated: 2026-04-09
+updated: 2026-04-10
 parent: EPIC-0004
 ---
 
 # Serve video APOD thumbnail instead of walking back
+
+> **Done.** Shipped alongside TASK-0020 and the worker-side dev flags parser. `resolveApod(apod)` is the new single point where image vs. video_thumbnail is decided; `findLatestResolvable` returns `ResolvedApod` so every route can treat both cases uniformly. `/info` reports `image_source: "image" | "video_thumbnail"`. `?dev=video` and `?dev=video-no-thumb` fixtures live in `src/index.ts` and are gated on `env.ENVIRONMENT === "development"`. `ALLOWED_IMAGE_HOSTS` was widened to accept `*.ytimg.com` / `*.youtube.com` / `*.vimeocdn.com` so video thumbnails pass `validateImageUrl`.
 
 **Priority 1** — today's-image reliability. Video APOD days have repeatedly forced the service to show stale (days-old) content; this fix keeps the image current.
 

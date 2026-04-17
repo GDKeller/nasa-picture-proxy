@@ -1,8 +1,8 @@
 ---
 type: epic
-status: current
+status: done
 created: 2026-04-08
-updated: 2026-04-09
+updated: 2026-04-10
 ---
 
 # Video APOD Resilience
@@ -11,25 +11,16 @@ Make the service handle video APODs and upstream failures gracefully, so image e
 
 See NOTE-0026 for full context and discovery.
 
-## Priority focus: show today's image reliably
+## Status: done
 
-Video APOD days are one of the two recurring failure modes that keep the service from showing *today's* image (the other being NASA API outages, covered by EPIC-0003 TASK-0020/TASK-0021). TASK-0019 is now **priority 1**.
+Both reliability goals are shipped. Video days with a NASA-provided `thumbnail_url` now serve the thumbnail directly (no stale walkback), and upstream API outages now fall through to an HTML scrape of `apod.nasa.gov/apod/` before giving up. The two changes landed together because they share the same plumbing: `resolveApod()`, `findLatestResolvable()`, and `handleUpstreamFailure()` all live in `src/index.ts`.
 
 ## Tasks
 
-### ~~TASK-0018: Fix findLatestImage walkback error handling~~ [done]
-
-Shipped in commit `997371e`. `findLatestImage` no longer crashes on the first upstream error; each date inside the loop is wrapped in a try/catch so a 500 for one date doesn't prevent checking earlier dates.
-
-### TASK-0019: Serve video APOD thumbnail instead of walking back [P1]
-
-When the current APOD is a video, check for a `thumbnail_url` in the NASA API response and serve that as the image. This keeps content current instead of showing a stale photo from days ago. Fall back to the (now-fixed) walkback if no thumbnail is available.
-
-## Sequence
-
-1. ~~TASK-0018~~ — done
-2. **TASK-0019** [P1] — video thumbnail. The walkback fix is the floor; this is the real reliability win for video days.
+- ~~TASK-0018~~ — walkback error handling (shipped `997371e`)
+- ~~TASK-0019~~ — video APOD thumbnail support
+- ~~TASK-0020~~ — HTML scrape fallback (cross-filed under EPIC-0003 but closed as part of the same shipment)
 
 ## Cross-EPIC Dependencies
 
-- EPIC-0003 TASK-0011 (R2 storage) would make video fallbacks more resilient long-term by providing archived same-day content from previous runs, but is not required for this epic.
+- EPIC-0003 TASK-0011 (R2 storage) would add an archival layer on top of this, but is not required — the scrape + thumbnail path already closes the two reliability holes that motivated this epic.

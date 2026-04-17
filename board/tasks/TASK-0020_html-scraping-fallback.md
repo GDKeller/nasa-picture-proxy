@@ -1,13 +1,15 @@
 ---
 type: task
-status: todo
+status: done
 priority: 1
 created: 2026-04-08
-updated: 2026-04-09
+updated: 2026-04-10
 parent: EPIC-0003
 ---
 
 # HTML scraping fallback for NASA API outages
+
+> **Done.** `scrapeApodForDate(log, date)` and `parseApodHtml(html, date)` live in `src/index.ts`. Wired into `handleUpstreamFailure` which is now the single funnel for every upstream-failure path (real 5xx *and* `?dev=nasa-error`): stale cache first, then scrape, then throw. Scraped results are written to both primary and stale caches. Discovered during testing that at least one recent APOD page (`ap260408.html`, the Earthset one) is served as **UTF-16 LE with BOM** despite the `Content-Type: text/html; charset=UTF-8` header, so the scraper now sniffs the BOM and picks `TextDecoder("utf-16le" | "utf-16be" | "utf-8")` accordingly. Title regex strips a leading en-dash because newer APOD pages use `YYYY Month D – Title` instead of the old `YYYY Month D  Title` double-space separator.
 
 **Priority 1** — today's-image reliability. A NASA API 500 on 2026-04-08 took the service down for a stretch even though `apod.nasa.gov/apod/` was serving normally. Scraping the page as a last-resort data source closes that gap.
 
