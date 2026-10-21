@@ -2,7 +2,7 @@
 type: epic
 status: planning
 created: 2026-04-03
-updated: 2026-04-09
+updated: 2026-10-20
 ---
 
 # Landing Page Polish
@@ -16,7 +16,8 @@ Address remaining items from the design critique (NOTE-0017) and add content and
 
 ### Design refinement (remaining NOTE-0017 items)
 - **TASK-0029**: Fix focus toggle markup and discoverability. The visible "Focus" label shipped but `aria-label`/`title` still say "Dim the lights" (accessible-name mismatch), there's no `aria-pressed` state, and the label font size is too small.
-- **TASK-0030**: Landing page bug cleanup — `--font-weight-medmium` typo, `/optimized` and `/thumb` missing from the endpoint list, verify caption spread on wide viewports.
+- ~~**TASK-0030**: Landing page bug cleanup~~ [done]: typo fixed, `/optimized` and `/thumb` added to the endpoint list and README, caption spread verified fixed (commit `c669166`).
+- **TASK-0041** [P3]: Strengthen landing page type hierarchy. Triage the impeccable `flat-type-hierarchy` finding: suppress it if the flat scale is intentional, otherwise add one stronger size step.
 
 ### Behavior
 - **TASK-0028**: Auto-refresh on APOD rollover. Self-correcting countdown + burst polling, fade transition, visibility-change handler. All in `landing/index.html` JS. From NOTE-0010.
@@ -37,11 +38,12 @@ Address remaining items from the design critique (NOTE-0017) and add content and
 
 ## Suggested sequence
 
-1. TASK-0030 (quick cleanup) — small, unblocks reading the critique as "closed out"
+1. ~~TASK-0030 (quick cleanup)~~ (done)
 2. TASK-0029 (focus toggle) — a11y fix, small
 3. TASK-0027 (why-is-this-needed) — content addition
 4. TASK-0028 (auto-refresh) — behavior, larger
-5. TASK-0031 (local timezone) — deferred until TASK-0011 ships
+5. TASK-0041 (type hierarchy): low priority, decide intentional vs. fix
+6. TASK-0031 (local timezone) — deferred until TASK-0011 ships
 
 ## Related notes
 
