@@ -10,3 +10,6 @@ coverage/
 # VSCode AI rules
 .github/instructions/codacy.instructions.md
 
+
+# SpecStory per-machine session stats
+.specstory/statistics.json
