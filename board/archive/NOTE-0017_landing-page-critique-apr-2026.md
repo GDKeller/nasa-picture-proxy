@@ -1,7 +1,7 @@
 ---
 type: note
 status: processed
-created: 2026-04-03T21:30:00-05:00
+created: 2026-04-03
 processed: 2026-04-09
 spawned: [TASK-0029, TASK-0030]
 ---

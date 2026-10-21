@@ -1,6 +1,6 @@
 ---
 type: task
-status: todo
+status: backlog
 created: 2026-03-26
 ---
 

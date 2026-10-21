@@ -1,6 +1,6 @@
 ---
 type: task
-status: todo
+status: backlog
 priority: 1
 created: 2026-04-08
 updated: 2026-04-09

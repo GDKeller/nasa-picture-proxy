@@ -1,12 +1,14 @@
 ---
 type: task
-status: wontdo
+status: done
 created: 2026-04-09
 parent: NOTE-0005
 blocked-by: TASK-0024
 ---
 
 # Add metadata routes to landing page endpoint list
+
+**Decision: won't implement.** Parent task (TASK-0024) was dropped, so there are no new routes to list.
 
 Add `/date`, `/title`, `/explanation`, `/copyright` to the endpoint grid in `landing/index.html` (~line 87).
 

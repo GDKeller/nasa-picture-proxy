@@ -1,6 +1,6 @@
 ---
 type: task
-status: closed
+status: done
 priority: 2
 created: 2026-03-31
 ---

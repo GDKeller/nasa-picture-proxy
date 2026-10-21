@@ -2,7 +2,7 @@
 type: epic
 status: planning
 created: 2026-04-03
-updated: 2026-04-10
+updated: 2026-10-20
 ---
 
 # Infrastructure and DevOps
@@ -30,8 +30,6 @@ Insert R2 between edge cache and NASA as a persistent origin. Every image fetche
 Key structure: `{date}/hd.{ext}`, `{date}/sd.{ext}`, `{date}/info.json`. Current-day images re-validated against NASA for same-day corrections; past dates served from R2 unconditionally.
 
 R2 archiving also unblocks TASK-0031 Phase 2 (local timezone rollover, ahead-of-ET) and TASK-0035 (gallery/archive).
-
-Blocked by TASK-0010.
 
 ### TASK-0032: GitHub Action auto-deploy on merge to main
 
