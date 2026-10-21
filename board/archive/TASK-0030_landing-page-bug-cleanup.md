@@ -1,6 +1,6 @@
 ---
 type: task
-status: backlog
+status: done
 priority: 3
 created: 2026-04-09
 parent: EPIC-0002
@@ -22,6 +22,8 @@ Residual bugs from NOTE-0017 that are small enough to batch into a single cleanu
 
 ### 3. Verify caption spread on wide viewports
 NOTE-0017 flagged that title and date spread across the full image width on desktop, feeling scattered rather than intimate. Verify against the current layout and tighten if still an issue (constrain caption width or cluster elements under the image edge). Close as verified-fixed if no longer applicable.
+
+**Resolution (2026-10-20)**: Verified fixed. `.hero-caption` is now `flex-direction: column`; at a 1600px viewport the title and date stack left-aligned under the image's left edge.
 
 ### 4. README endpoint table missing `/optimized` and `/thumb`
 `README.md:56-61` lists only `/`, `/image.jpg`, `/sd`, `/image-sd.jpg`, `/info`, `/about`. Missing `/optimized`, `/image-optimized.jpg`, `/thumb`, and `/thumb.jpg`. Source of truth is the route arrays at `src/index.ts:608-611` and the `/about` route listing at `src/index.ts:690-697`; match descriptions to those.

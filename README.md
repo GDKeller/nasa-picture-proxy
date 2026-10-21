@@ -57,10 +57,14 @@ Returns data from the APOD API:
 | `/image.jpg` | Same as `/` with file extension |
 | `/sd` | Standard resolution image |
 | `/image-sd.jpg` | Same as `/sd` with file extension |
-| `/info` | JSON metadata (title, date, explanation, copyright) |
+| `/optimized` | Optimized image (≤1200px, auto WebP/AVIF) |
+| `/image-optimized.jpg` | Same as `/optimized` with file extension |
+| `/thumb` | Tiny blurred thumbnail (32px WebP, ~1KB) |
+| `/thumb.jpg` | Same as `/thumb` with file extension |
+| `/info` | JSON metadata (title, date, explanation, copyright, image dimensions) |
 | `/about` | Plain-text description and route listing |
 
-When the APOD of the day is a video, the proxy walks backwards up to 7 days to find the most recent image.
+When the APOD of the day is a video, the proxy serves NASA's video thumbnail. If there's no thumbnail, it walks backwards up to 7 days to find the most recent image.
 
 ## How it works
 
