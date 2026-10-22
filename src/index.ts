@@ -20,7 +20,6 @@ export interface Env {
 }
 
 const NASA_APOD_URL = "https://api.nasa.gov/planetary/apod";
-const APOD_PAGE_BASE = "https://apod.nasa.gov/apod/";
 const MAX_LOOKBACK_DAYS = 7;
 const CACHE_TTL = 21600;      // 6 hours — APOD changes once/day
 const STALE_CACHE_TTL = 86400; // 24 hours — fallback when NASA API is down/rate-limited
@@ -45,7 +44,7 @@ export interface ApodResponse {
   thumbnail_url?: string;
 }
 
-export type ImageSource = "image" | "video_thumbnail" | "scrape";
+export type ImageSource = "image" | "video_thumbnail";
 
 export interface ResolvedApod {
   apod: ApodResponse;
@@ -181,7 +180,7 @@ async function fetchApod(
   const staleReq = new Request(apodCacheUrl(`${cacheKey}:stale`));
 
   // nasa-error bypasses the primary cache so every request exercises the
-  // stale/scrape fallback path rather than hitting warm data.
+  // stale fallback path rather than hitting warm data.
   const bypassCache = devFlags.enabled && devFlags.mode === "nasa-error";
 
   if (!bypassCache) {
@@ -211,29 +210,17 @@ async function fetchApod(
 async function handleUpstreamFailure(
   log: string[],
   cache: Cache,
-  cacheReq: Request,
   staleReq: Request,
-  resolvedDate: string,
   cacheKey: string,
   upstreamStatus: number,
 ): Promise<ApodResponse> {
-  // Stale cache is the first, cheapest fallback.
+  // Stale cache is the only fallback. The HTML scrape that used to follow it
+  // was removed in EPIC-0006: NASA's old APOD site redirects every page to
+  // the science.nasa.gov index now.
   const stale = await cache.match(staleReq);
   if (stale) {
     log.push(`  [fetchApod] ${cacheKey} → stale cache fallback`);
     return stale.json() as Promise<ApodResponse>;
-  }
-
-  // Last resort: scrape the APOD webpage. It has historically stayed up
-  // when the JSON API returns 5xx.
-  try {
-    const scraped = await scrapeApodForDate(log, resolvedDate);
-    log.push(`  [fetchApod] ${cacheKey} → scrape fallback activated (source: apod.nasa.gov webpage)`);
-    await writeApodCaches(cache, cacheReq, staleReq, scraped);
-    return scraped;
-  } catch (scrapeErr) {
-    const msg = scrapeErr instanceof Error ? scrapeErr.message : "unknown";
-    log.push(`  [fetchApod] ${cacheKey} → scrape failed: ${msg}`);
   }
 
   throw new NasaApiError(
@@ -252,7 +239,7 @@ async function fetchApodFromNasa(
 
   if (devFlags.enabled && devFlags.mode === "nasa-error") {
     log.push(`  [fetchApod] ${cacheKey} → dev simulated nasa-error (skipping upstream)`);
-    return handleUpstreamFailure(log, cache, cacheReq, staleReq, resolvedDate, cacheKey, 500);
+    return handleUpstreamFailure(log, cache, staleReq, cacheKey, 500);
   }
 
   const url = `${NASA_APOD_URL}?api_key=${apiKey}&date=${resolvedDate}`;
@@ -264,30 +251,12 @@ async function fetchApodFromNasa(
   if (!res.ok) {
     const body = await res.text();
     log.push(`  [fetchApod] body=${body}`);
-    return handleUpstreamFailure(log, cache, cacheReq, staleReq, resolvedDate, cacheKey, res.status);
+    return handleUpstreamFailure(log, cache, staleReq, cacheKey, res.status);
   }
 
   const apod = await res.json() as ApodResponse;
   await writeApodCaches(cache, cacheReq, staleReq, apod);
   return apod;
-}
-
-// ────────────────────────────────────────────────────────────
-// HTML scrape fallback — last-resort data source when NASA's JSON API
-// fails and the stale cache is empty. The apod.nasa.gov/apod/ pages use a
-// stable 1990s-era HTML layout, so regex extraction is reliable enough for
-// a rescue path. See NOTE-0022 for the layout reverse-engineering.
-// ────────────────────────────────────────────────────────────
-
-const MONTH_NAMES = [
-  "january", "february", "march", "april", "may", "june",
-  "july", "august", "september", "october", "november", "december",
-];
-
-function pageUrlForDate(date: string): string {
-  // YYYY-MM-DD → apod.nasa.gov/apod/apYYMMDD.html
-  const [yyyy, mm, dd] = date.split("-");
-  return `${APOD_PAGE_BASE}ap${yyyy.slice(2)}${mm}${dd}.html`;
 }
 
 function stripHtml(s: string): string {
@@ -301,105 +270,6 @@ function stripHtml(s: string): string {
     .replace(/&gt;/gi, ">")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-async function scrapeApodForDate(log: string[], date: string): Promise<ApodResponse> {
-  const pageUrl = pageUrlForDate(date);
-  log.push(`  [scrape] GET ${pageUrl}`);
-
-  const res = await fetch(pageUrl, {
-    headers: { "User-Agent": "nasa-picture-proxy/1.0 (+https://nasapicture.com)" },
-  });
-  if (!res.ok) {
-    throw new Error(`scrape: ${pageUrl} returned ${res.status}`);
-  }
-
-  // NASA's server declares Content-Type: text/html; charset=UTF-8, but at least
-  // some pages (observed: ap260408.html) are actually encoded as UTF-16 LE with
-  // a BOM. Detect BOM and pick the right decoder ourselves rather than trust
-  // the header.
-  const buf = await res.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  let encoding = "utf-8";
-  if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
-    encoding = "utf-16le";
-  } else if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
-    encoding = "utf-16be";
-  }
-  const html = new TextDecoder(encoding).decode(bytes);
-  log.push(`  [scrape] decoded ${bytes.length}B as ${encoding}`);
-  return parseApodHtml(html, date);
-}
-
-export function parseApodHtml(html: string, date: string): ApodResponse {
-  // Video detection: APOD video days use an <iframe> instead of <img>.
-  const hasIframe = /<iframe[\s>]/i.test(html);
-  const mediaType: "image" | "video" = hasIframe ? "video" : "image";
-
-  // Title and date: both live in the <title> tag as "APOD: YYYY Month D  Title"
-  // (older pages) or "APOD: YYYY Month D – Title" (newer pages introduce an
-  // en-dash separator). Strip any leading en-dash/em-dash/hyphen from the
-  // remainder so the title doesn't carry the separator.
-  let title = "Astronomy Picture of the Day";
-  let pageDate = date;
-  const titleTag = html.match(/<title>\s*APOD:\s*([\s\S]*?)<\/title>/i);
-  if (titleTag) {
-    const inner = titleTag[1].replace(/\s+/g, " ").trim();
-    const m = inner.match(/^(\d{4})\s+([A-Za-z]+)\s+(\d{1,2})\s+(.+)$/);
-    if (m) {
-      const [, y, monthName, d, rest] = m;
-      const monthIdx = MONTH_NAMES.indexOf(monthName.toLowerCase());
-      if (monthIdx >= 0) {
-        const mm = String(monthIdx + 1).padStart(2, "0");
-        const dd = String(Number(d)).padStart(2, "0");
-        pageDate = `${y}-${mm}-${dd}`;
-      }
-      title = rest.replace(/^[\u2013\u2014-]\s*/, "").trim();
-    }
-  }
-
-  // Image URLs: the main photo sits inside <a href="image/…"><img src="image/…">.
-  // The anchor points at the full-res file, the img at the display (SD) file.
-  let url = "";
-  let hdurl: string | undefined;
-  const imgAnchor = html.match(
-    /<a\s+href="(image\/[^"]+)"\s*>\s*<img\s+src="(image\/[^"]+)"/i,
-  );
-  if (imgAnchor) {
-    hdurl = `${APOD_PAGE_BASE}${imgAnchor[1]}`;
-    url = `${APOD_PAGE_BASE}${imgAnchor[2]}`;
-  } else {
-    const imgOnly = html.match(/<img\s+src="(image\/[^"]+)"/i);
-    if (imgOnly) url = `${APOD_PAGE_BASE}${imgOnly[1]}`;
-  }
-
-  // Explanation: text following "<b>Explanation:</b>" until the next <p> or <hr>.
-  let explanation = "";
-  const expMatch = html.match(
-    /<b>\s*Explanation:\s*<\/b>([\s\S]*?)(?=<p>\s*<center>|<hr|<\/body>)/i,
-  );
-  if (expMatch) explanation = stripHtml(expMatch[1]);
-
-  // Credit/copyright: labelled "Image Credit:" or "Credit & Copyright:". Capture
-  // text through end of the nearest <p>/<center>/<hr> block.
-  let copyright: string | undefined;
-  const creditMatch = html.match(
-    /<b>\s*(?:Image Credit(?:\s*(?:&amp;|&)\s*Copyright)?|Credit(?:\s*(?:&amp;|&)\s*Copyright)?)\s*:\s*<\/b>([\s\S]*?)(?=<\/p>|<\/center>|<hr|<b>\s*Explanation)/i,
-  );
-  if (creditMatch) {
-    const credit = stripHtml(creditMatch[1]);
-    if (credit) copyright = credit;
-  }
-
-  return {
-    date: pageDate,
-    title,
-    explanation,
-    url,
-    hdurl,
-    media_type: mediaType,
-    copyright,
-  };
 }
 
 async function findLatestResolvable(

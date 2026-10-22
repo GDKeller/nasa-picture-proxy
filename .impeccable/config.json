@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "src/index.ts"
+        ],
+        "createdAt": "2026-10-21T03:32:42.747Z",
+        "reason": "Claude: the <img> is example-usage text inside the text/plain /about response, not rendered markup"
+      }
+    ]
+  }
+}

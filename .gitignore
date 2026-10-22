@@ -13,3 +13,7 @@ coverage/
 
 # SpecStory per-machine session stats
 .specstory/statistics.json
+
+# Impeccable per-machine state (config.json is shared and tracked)
+.impeccable/config.local.json
+.impeccable/hook.cache.json

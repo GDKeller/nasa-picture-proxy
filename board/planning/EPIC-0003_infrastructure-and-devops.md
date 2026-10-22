@@ -19,6 +19,8 @@ Recent incidents (video APOD tripping walkback, unexplained NASA API 500 on 2026
 
 Shipped with TASK-0019. `scrapeApodForDate` + `parseApodHtml` in `src/index.ts` kick in from `handleUpstreamFailure` whenever the API errors and stale cache is empty. Handles UTF-8 and UTF-16 LE/BE APOD pages (NASA silently serves some pages as UTF-16 LE with BOM despite a UTF-8 Content-Type header). **Directly addresses the 2026-04-08 outage.**
 
+**Superseded by EPIC-0006 (TASK-0044).** NASA moved APOD to science.nasa.gov and every apod.nasa.gov page now redirects to the index, so the scrape had no target and was removed before it ever deployed. The 24h stale cache tier is the only fallback now.
+
 ### TASK-0021: Automated daily cache warming via Cron Trigger [P1]
 
 Add a `scheduled()` handler with a cron trigger to warm the edge cache after APOD rollover. Calls `findLatestImage`, `fetchImageCached`, and `fetchImageDimensions` to populate metadata and image bytes proactively. **Combined with TASK-0020, guarantees a fresh entry in stale cache so outages never exhaust our fallback.**

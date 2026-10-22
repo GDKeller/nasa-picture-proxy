@@ -179,47 +179,6 @@ function nasaVideoNoThumb(date: string): ApodResponse {
   };
 }
 
-// Encode an HTML string as UTF-16 LE with a BOM, matching the weird encoding
-// NASA silently serves for at least one APOD page (ap260408.html — "Earthset").
-// The `Content-Type` header still claims charset=UTF-8, so the scraper cannot
-// trust it and has to sniff the BOM. This helper lets us reproduce that exact
-// quirk in a test.
-function utf16leBomResponse(html: string, status = 200): Response {
-  const bytes = new Uint8Array(2 + html.length * 2);
-  bytes[0] = 0xff;
-  bytes[1] = 0xfe;
-  for (let i = 0; i < html.length; i++) {
-    const code = html.charCodeAt(i);
-    bytes[2 + i * 2] = code & 0xff;
-    bytes[2 + i * 2 + 1] = (code >> 8) & 0xff;
-  }
-  return new Response(bytes, {
-    status,
-    // Mimic NASA: wrong charset header on purpose.
-    headers: { "Content-Type": "text/html; charset=UTF-8" },
-  });
-}
-
-// Minimal APOD page HTML — exercises the same code path parseApodHtml uses
-// in production, but is small enough to embed.
-function apodPageHtml(date: string, title: string): string {
-  const [y, m, d] = date.split("-");
-  const monthName = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ][Number(m) - 1];
-  return `<!doctype html>
-<html><head><title> APOD: ${y} ${monthName} ${Number(d)} – ${title}
-</title></head>
-<body>
-<a href="image/2604/scraped_original.jpg">
-<IMG SRC="image/2604/scraped_700.jpg">
-</a>
-<b>Explanation:</b> Scraped page for ${date}.
-<p>
-</body></html>`;
-}
-
 function invoke(path: string, env: Record<string, string> = DEV_ENV): Promise<Response> {
   const req = new Request(`http://localhost:8787${path}`);
   // Silence the handler's per-request console noise during tests.
@@ -310,43 +269,8 @@ describe("?dev=video-no-thumb — walkback to earlier day", () => {
   });
 });
 
-describe("?dev=nasa-error — scrape fallback", () => {
-  it("scrape fires when primary + stale cache are both empty", async () => {
-    // Return a valid HTML page from the scrape endpoint.
-    fetchMock.when(`ap260410.html`, () =>
-      new Response(apodPageHtml(TODAY, "Scraped Today"), {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=UTF-8" },
-      }),
-    );
-
-    const res = await invoke("/info?dev=nasa-error");
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-
-    expect(body.title).toBe("Scraped Today");
-    expect(body.date).toBe(TODAY);
-    expect(body.image_source).toBe("image");
-    // NASA JSON API must NOT have been hit (dev=nasa-error skips upstream)
-    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([]);
-    // Scrape page MUST have been hit
-    expect(fetchMock.urlsMatching("ap260410.html").length).toBe(1);
-  });
-
-  it("populates both primary and stale caches after a successful scrape", async () => {
-    fetchMock.when(`ap260410.html`, () =>
-      new Response(apodPageHtml(TODAY, "Scraped Today"), { status: 200 }),
-    );
-
-    await invoke("/info?dev=nasa-error");
-
-    const apodKeys = cache._keys().filter((k) => k.includes(`/_cache/apod/${TODAY}`));
-    // Primary + stale suffix
-    expect(apodKeys.some((k) => k.endsWith(TODAY))).toBe(true);
-    expect(apodKeys.some((k) => k.endsWith(`${TODAY}:stale`))).toBe(true);
-  });
-
-  it("stale cache wins over scrape when stale is present", async () => {
+describe("?dev=nasa-error — upstream failure", () => {
+  it("serves the stale cache entry when one is present", async () => {
     // Pre-populate stale cache with a known value.
     const staleUrl = `https://api.nasapicture.com/_cache/apod/${TODAY}:stale`;
     const staleBody: ApodResponse = nasaImage(TODAY, "From Stale Cache");
@@ -357,79 +281,26 @@ describe("?dev=nasa-error — scrape fallback", () => {
       }),
     );
 
-    // The scrape route would return a DIFFERENT title — if the test fails
-    // and scrape runs, the response would contain "Scraped Today" instead.
-    fetchMock.when(`ap260410.html`, () =>
-      new Response(apodPageHtml(TODAY, "Scraped Today"), { status: 200 }),
-    );
-
     const res = await invoke("/info?dev=nasa-error");
+    expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
 
     expect(body.title).toBe("From Stale Cache");
-    // Scrape endpoint MUST NOT have been called.
-    expect(fetchMock.urlsMatching("ap260410.html")).toEqual([]);
-  });
-
-  it("decodes UTF-16 LE pages with BOM even when Content-Type lies about UTF-8", async () => {
-    // Real-world quirk: NASA served ap260408.html as UTF-16 LE with BOM while
-    // the Content-Type header still claimed charset=UTF-8. If the scraper
-    // trusts the header and uses res.text(), every char comes out interleaved
-    // with NULs and all regexes fail to match. Reproducing here.
-    fetchMock.when("ap260410.html", () =>
-      utf16leBomResponse(apodPageHtml(TODAY, "Earthset")),
-    );
-
-    const res = await invoke("/info?dev=nasa-error");
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-
-    expect(body.title).toBe("Earthset");
     expect(body.date).toBe(TODAY);
-    expect(body.image_source).toBe("image");
-    // The extracted image URL must be a real absolute HTTPS URL — if decoding
-    // failed the regex wouldn't have matched and url would be empty, which
-    // would later throw "Invalid URL string" from validateImageUrl.
-    expect(body.url).toMatch(/^https:\/\/apod\.nasa\.gov\/apod\/image\//);
+    // nasa-error skips the API, and there is no other data source to fall
+    // through to. (The dimensions probe still fetches the image URL.)
+    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([]);
   });
 
-  it("decodes UTF-16 BE pages with BOM", async () => {
-    // Defensive: BE BOM detection is symmetric with LE. Covers the other branch.
-    const html = apodPageHtml(TODAY, "BigEndian");
-    const bytes = new Uint8Array(2 + html.length * 2);
-    bytes[0] = 0xfe;
-    bytes[1] = 0xff;
-    for (let i = 0; i < html.length; i++) {
-      const code = html.charCodeAt(i);
-      bytes[2 + i * 2] = (code >> 8) & 0xff;
-      bytes[2 + i * 2 + 1] = code & 0xff;
-    }
-    fetchMock.when("ap260410.html", () =>
-      new Response(bytes, {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=UTF-8" },
-      }),
-    );
-
-    const res = await invoke("/info?dev=nasa-error");
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body.title).toBe("BigEndian");
-  });
-
-  it("returns 502 when scrape also fails and nothing else is cached", async () => {
-    // Every day in the walkback will 404 the scrape. /info uses
-    // findLatestResolvable which walks back MAX_LOOKBACK_DAYS+1 days,
-    // so the final error comes from the walkback loop, not the inner
-    // NasaApiError from a single date.
-    fetchMock.when(/ap\d{6}\.html$/, () => new Response("not found", { status: 404 }));
-
+  it("returns 502 when nothing is cached", async () => {
+    // /info uses findLatestResolvable, which walks back MAX_LOOKBACK_DAYS+1
+    // days. Every day fails the same way, so the final error comes from the
+    // walkback loop, not the inner NasaApiError from a single date.
     const res = await invoke("/info?dev=nasa-error");
     expect(res.status).toBe(502);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.error).toMatch(/No image found/);
-    // Scrape was attempted for today's date at minimum
-    expect(fetchMock.urlsMatching("ap260410.html").length).toBeGreaterThan(0);
+    expect(fetchMock.calls).toEqual([]);
   });
 });
 
@@ -456,8 +327,8 @@ describe("ENVIRONMENT gating", () => {
 
     const res = await invoke("/info?dev=nasa-error", PROD_ENV);
     expect(res.status).toBe(200);
-    // Scrape must NOT have run — it's only reachable via the upstream-failure path.
-    expect(fetchMock.urlsMatching("ap260410.html")).toEqual([]);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.image_source).toBe("image");
   });
 });
 

@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   parseDevFlags,
   resolveApod,
-  parseApodHtml,
   devApodFixture,
   type ApodResponse,
 } from "../src/index";
@@ -156,94 +155,5 @@ describe("devApodFixture", () => {
 
     const noThumb = devApodFixture("video-no-thumb", "2026-04-10")!;
     expect(resolveApod(noThumb)).toBeNull();
-  });
-});
-
-// ────────────────────────────────────────────────────────────
-// parseApodHtml
-// ────────────────────────────────────────────────────────────
-describe("parseApodHtml", () => {
-  it("parses a typical image APOD page with en-dash title separator", () => {
-    // Shape mirrors real apYYMMDD.html pages (newer format uses "YYYY Month D – Title").
-    const html = `<!doctype html>
-<html><head><title> APOD: 2026 April 8 – Earthset
-</title></head>
-<body>
-<center>
-<p>2026 April 8
-<br>
-<a href="image/2604/earthset_original.jpg">
-<IMG SRC="image/2604/earthset_700.jpg" alt="Earthset">
-</a>
-</center>
-<center>
-<b> Earthset </b> <br>
-<b> Image Credit: </b>
-NASA
-</center> <p>
-<b> Explanation: </b>
-The crew of Artemis II watched Earth set behind the Moon.
-<p> <hr>
-</body></html>`;
-    const apod = parseApodHtml(html, "2026-04-08");
-
-    expect(apod.title).toBe("Earthset");
-    expect(apod.date).toBe("2026-04-08");
-    expect(apod.media_type).toBe("image");
-    expect(apod.url).toBe("https://apod.nasa.gov/apod/image/2604/earthset_700.jpg");
-    expect(apod.hdurl).toBe("https://apod.nasa.gov/apod/image/2604/earthset_original.jpg");
-    expect(apod.explanation).toContain("Artemis II");
-    expect(apod.copyright).toContain("NASA");
-  });
-
-  it("parses the older double-space title separator format", () => {
-    const html = `<html><head><title> APOD: 2025 January 1  Happy New Year
-</title></head>
-<body>
-<a href="image/2501/newyear_original.jpg">
-<IMG SRC="image/2501/newyear_700.jpg">
-</a>
-<b>Explanation:</b> Fireworks above a dark sky.
-<p>
-</body></html>`;
-    const apod = parseApodHtml(html, "2025-01-01");
-    expect(apod.title).toBe("Happy New Year");
-    expect(apod.date).toBe("2025-01-01");
-    expect(apod.media_type).toBe("image");
-  });
-
-  it("detects video pages by the presence of an iframe", () => {
-    const html = `<html><head><title> APOD: 2026 April 7 – Comet Death
-</title></head>
-<body>
-<iframe src="https://www.youtube.com/embed/xyz"></iframe>
-<b>Explanation:</b> A comet disintegrates near the Sun.
-</body></html>`;
-    const apod = parseApodHtml(html, "2026-04-07");
-    expect(apod.media_type).toBe("video");
-    expect(apod.title).toBe("Comet Death");
-  });
-
-  it("prefixes relative image paths with the APOD base URL", () => {
-    const html = `<html><head><title> APOD: 2026 April 8 – Earthset</title></head>
-<body><a href="image/2604/foo.jpg"><IMG SRC="image/2604/foo_sd.jpg"></a></body></html>`;
-    const apod = parseApodHtml(html, "2026-04-08");
-    expect(apod.hdurl).toMatch(/^https:\/\/apod\.nasa\.gov\/apod\/image\//);
-    expect(apod.url).toMatch(/^https:\/\/apod\.nasa\.gov\/apod\/image\//);
-  });
-
-  it("strips a leading en-dash, em-dash, or hyphen from the title", () => {
-    for (const sep of ["–", "—", "-"]) {
-      const html = `<html><head><title> APOD: 2026 April 8 ${sep} Earthset</title></head>
-<body><a href="image/2604/x.jpg"><IMG SRC="image/2604/x_sd.jpg"></a></body></html>`;
-      expect(parseApodHtml(html, "2026-04-08").title).toBe("Earthset");
-    }
-  });
-
-  it("gracefully falls back when the title tag is missing", () => {
-    const html = `<html><body><a href="image/2604/x.jpg"><IMG SRC="image/2604/x_sd.jpg"></a></body></html>`;
-    const apod = parseApodHtml(html, "2026-04-08");
-    expect(apod.title).toBe("Astronomy Picture of the Day");
-    expect(apod.date).toBe("2026-04-08"); // falls back to the requested date
   });
 });
