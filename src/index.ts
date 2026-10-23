@@ -14,15 +14,21 @@
  *   GET /about     → plain-text description and attribution
  */
 
+import { z } from "zod";
+
 export interface Env {
-  NASA_API_KEY?: string;
   ENVIRONMENT?: string;
 }
 
-const NASA_APOD_URL = "https://api.nasa.gov/planetary/apod";
+// NASA's APOD feed. A WordPress REST endpoint on science.nasa.gov, keyed by
+// YYMMDD, no API key. See EPIC-0006 for the verified field behavior.
+const APOD_BASIC_URL = "https://science.nasa.gov/wp-json/wp/v2/apod-basic";
+const APOD_BASIC_FIELDS = "date,title,media_type,explanation,copyright,hdurl,permalink,basic_html";
+const APOD_ASSET_HOST = "https://assets.science.nasa.gov";
+const USER_AGENT = "nasa-picture-proxy/1.0 (+https://nasapicture.com)";
 const MAX_LOOKBACK_DAYS = 7;
 const CACHE_TTL = 21600;      // 6 hours — APOD changes once/day
-const STALE_CACHE_TTL = 86400; // 24 hours — fallback when NASA API is down/rate-limited
+const STALE_CACHE_TTL = 86400; // 24 hours — fallback when the APOD source is down
 
 // Hosts allowed for image fetches. NASA hosts the photography itself; YouTube
 // and Vimeo host video thumbnails linked from video APOD entries.
@@ -33,23 +39,42 @@ const ALLOWED_IMAGE_HOSTS = [
   ".vimeocdn.com",
 ];
 
-export interface ApodResponse {
+// Upstream record, trimmed by `_fields`. Only what the proxy cannot work
+// without is required; everything else degrades to empty.
+const ApodBasic = z.object({
+  date: z.string(),
+  title: z.string().trim().min(1),
+  media_type: z.enum(["image", "video"]),
+  explanation: z.string().nullish(),
+  copyright: z.string().nullish(),
+  hdurl: z.string().nullish(),
+  permalink: z.string().nullish(),
+  basic_html: z.string().nullish(),
+});
+
+export interface ApodImage {
+  sd: string;         // 1280px rendition (dynamicimage path, no params)
+  hd: string;         // original bytes (content/dam path)
+  hdFallback: string; // hdurl as NASA sent it, in case the original is missing
+}
+
+// Normalized, plain-text model. This is what gets cached.
+export interface Apod {
   date: string;
   title: string;
   explanation: string;
-  url: string;
-  hdurl?: string;
+  copyright: string | null;
   media_type: "image" | "video";
-  copyright?: string;
-  thumbnail_url?: string;
+  permalink: string;
+  image: ApodImage | null; // null only on video days without a usable poster
+  video_url: string | null;
 }
 
 export type ImageSource = "image" | "video_thumbnail";
 
 export interface ResolvedApod {
-  apod: ApodResponse;
-  imageUrl: string;
-  imageHdUrl: string;
+  apod: Apod;
+  image: ApodImage;
   source: ImageSource;
 }
 
@@ -59,13 +84,7 @@ export interface DevFlags {
   tools: Set<string>;
 }
 
-class NasaApiError extends Error {
-  constructor(public statusCode: number, message: string) {
-    super(message);
-  }
-}
-
-const inflightApod = new Map<string, Promise<ApodResponse>>();
+const inflightApod = new Map<string, Promise<Apod | null>>();
 
 /** Test-only: clear the in-flight promise map between test cases. */
 export function __resetInflightApod(): void {
@@ -76,30 +95,36 @@ export function __resetInflightApod(): void {
 // Dev flag fixtures — only reachable when env.ENVIRONMENT === "development".
 // Registered in REFE-0001. When a new mode is added here, update that table.
 // ────────────────────────────────────────────────────────────
-const VIDEO_FIXTURE_BASE: Omit<ApodResponse, "thumbnail_url"> = {
-  date: "2026-04-08",
+const DEV_POSTER_PATH = "science/cds/apod/apod/2026/october/SonifiedEagleNebulaPillars.jpg";
+
+const VIDEO_FIXTURE: Apod = {
+  date: "2026-10-18",
   title: "Fixture: Video APOD (dev=video)",
   explanation:
-    "Dev fixture used to exercise the video-thumbnail branch locally. " +
-    "Shape mirrors NASA's API response for video media_type entries. " +
-    "See TASK-0019 and REFE-0001 for context.",
-  url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "Dev fixture used to exercise the video-poster branch locally. " +
+    "Shape mirrors a normalized apod-basic video entry. " +
+    "See TASK-0019, TASK-0042 and REFE-0001 for context.",
+  copyright: null,
   media_type: "video",
+  permalink: "https://science.nasa.gov/image-article/apod-2026-october-18-sonified-eagle-nebula-pillars/",
+  image: {
+    sd: `${APOD_ASSET_HOST}/dynamicimage/assets/${DEV_POSTER_PATH}`,
+    hd: `${APOD_ASSET_HOST}/content/dam/${DEV_POSTER_PATH}`,
+    hdFallback: `${APOD_ASSET_HOST}/dynamicimage/assets/${DEV_POSTER_PATH}?w=3048&h=1708`,
+  },
+  video_url: "https://www.youtube.com/embed/DzrCEm1ZBRY",
 };
 
-const VIDEO_FIXTURE_WITH_THUMB: ApodResponse = {
-  ...VIDEO_FIXTURE_BASE,
-  thumbnail_url: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+const VIDEO_FIXTURE_NO_POSTER: Apod = {
+  ...VIDEO_FIXTURE,
+  title: "Fixture: Video APOD no poster (dev=video-no-thumb)",
+  image: null,
+  video_url: `${APOD_ASSET_HOST}/content/dam/science/cds/apod/apod/2026/october/CRS35-Holland30s1080p.mp4`,
 };
 
-const VIDEO_FIXTURE_NO_THUMB: ApodResponse = {
-  ...VIDEO_FIXTURE_BASE,
-  title: "Fixture: Video APOD no thumbnail (dev=video-no-thumb)",
-};
-
-export function devApodFixture(mode: string, date: string): ApodResponse | null {
-  if (mode === "video") return { ...VIDEO_FIXTURE_WITH_THUMB, date };
-  if (mode === "video-no-thumb") return { ...VIDEO_FIXTURE_NO_THUMB, date };
+export function devApodFixture(mode: string, date: string): Apod | null {
+  if (mode === "video") return { ...VIDEO_FIXTURE, date };
+  if (mode === "video-no-thumb") return { ...VIDEO_FIXTURE_NO_POSTER, date };
   return null;
 }
 
@@ -119,149 +144,41 @@ export function parseDevFlags(url: URL, env: Env): DevFlags {
   return { enabled, mode, tools };
 }
 
-export function resolveApod(apod: ApodResponse): ResolvedApod | null {
-  if (apod.media_type === "image") {
-    return {
-      apod,
-      imageUrl: apod.url,
-      imageHdUrl: apod.hdurl || apod.url,
-      source: "image",
-    };
-  }
-  if (apod.media_type === "video" && apod.thumbnail_url) {
-    return {
-      apod,
-      imageUrl: apod.thumbnail_url,
-      imageHdUrl: apod.thumbnail_url,
-      source: "video_thumbnail",
-    };
-  }
-  return null;
-}
+// ────────────────────────────────────────────────────────────
+// Upstream normalization
+// ────────────────────────────────────────────────────────────
 
-function apodCacheUrl(key: string): string {
-  return `https://api.nasapicture.com/_cache/apod/${key}`;
-}
+// APOD photography lives under one asset tree. Anything else on the host
+// (site chrome, the generic news thumbnail, videos) is not an APOD image.
+const APOD_ASSET_PATH =
+  /^\/(?:dynamicimage\/assets|content\/dam)\/(science\/cds\/apod\/.+\.(?:jpe?g|png|gif|webp))$/i;
 
-function todayET(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-}
-
-async function writeApodCaches(
-  cache: Cache, cacheReq: Request, staleReq: Request, apod: ApodResponse,
-): Promise<void> {
-  const body = JSON.stringify(apod);
-  const cacheHeaders = { "Content-Type": "application/json", "Cache-Control": `public, max-age=${CACHE_TTL}` };
-  const staleHeaders = { "Content-Type": "application/json", "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` };
-  await Promise.all([
-    cache.put(cacheReq, new Response(body, { headers: cacheHeaders })),
-    cache.put(staleReq, new Response(body, { headers: staleHeaders })),
-  ]);
-}
-
-async function fetchApod(
-  log: string[], devFlags: DevFlags, apiKey: string, date?: string,
-): Promise<ApodResponse> {
-  const resolvedDate = date ?? todayET();
-  const cacheKey = resolvedDate;
-
-  // Dev fixture short-circuit: only for today's date, bypasses cache entirely
-  // so fixture runs never pollute real cached data.
-  if (devFlags.enabled && devFlags.mode && resolvedDate === todayET()) {
-    const fixture = devApodFixture(devFlags.mode, resolvedDate);
-    if (fixture) {
-      log.push(`  [fetchApod] ${cacheKey} → dev fixture (${devFlags.mode})`);
-      return fixture;
-    }
-  }
-
-  const cache = caches.default;
-  const cacheReq = new Request(apodCacheUrl(cacheKey));
-  const staleReq = new Request(apodCacheUrl(`${cacheKey}:stale`));
-
-  // nasa-error bypasses the primary cache so every request exercises the
-  // stale fallback path rather than hitting warm data.
-  const bypassCache = devFlags.enabled && devFlags.mode === "nasa-error";
-
-  if (!bypassCache) {
-    const cached = await cache.match(cacheReq);
-    if (cached) {
-      log.push(`  [fetchApod] ${cacheKey} → cache HIT`);
-      return cached.json() as Promise<ApodResponse>;
-    }
-  }
-
-  // Deduplicate concurrent requests for the same date
-  const inflight = inflightApod.get(cacheKey);
-  if (inflight) {
-    log.push(`  [fetchApod] ${cacheKey} → coalesced with in-flight request`);
-    return inflight;
-  }
-
-  const promise = fetchApodFromNasa(log, devFlags, apiKey, resolvedDate, cacheKey, cacheReq, staleReq);
-  inflightApod.set(cacheKey, promise);
+/** Asset path under assets.science.nasa.gov, or null when the URL points anywhere else. */
+export function apodAssetPath(url: string): string | null {
+  let parsed: URL;
   try {
-    return await promise;
-  } finally {
-    inflightApod.delete(cacheKey);
+    parsed = new URL(url);
+  } catch {
+    return null;
   }
+  if (parsed.protocol !== "https:" || parsed.hostname !== "assets.science.nasa.gov") return null;
+  return parsed.pathname.match(APOD_ASSET_PATH)?.[1] ?? null;
 }
 
-async function handleUpstreamFailure(
-  log: string[],
-  cache: Cache,
-  staleReq: Request,
-  cacheKey: string,
-  upstreamStatus: number,
-): Promise<ApodResponse> {
-  // Stale cache is the only fallback. The HTML scrape that used to follow it
-  // was removed in EPIC-0006: NASA's old APOD site redirects every page to
-  // the science.nasa.gov index now.
-  const stale = await cache.match(staleReq);
-  if (stale) {
-    log.push(`  [fetchApod] ${cacheKey} → stale cache fallback`);
-    return stale.json() as Promise<ApodResponse>;
-  }
-
-  throw new NasaApiError(
-    upstreamStatus,
-    upstreamStatus === 429
-      ? "NASA API rate limit exceeded — try again later"
-      : `NASA API returned ${upstreamStatus}`,
-  );
-}
-
-async function fetchApodFromNasa(
-  log: string[], devFlags: DevFlags, apiKey: string, resolvedDate: string, cacheKey: string,
-  cacheReq: Request, staleReq: Request,
-): Promise<ApodResponse> {
-  const cache = caches.default;
-
-  if (devFlags.enabled && devFlags.mode === "nasa-error") {
-    log.push(`  [fetchApod] ${cacheKey} → dev simulated nasa-error (skipping upstream)`);
-    return handleUpstreamFailure(log, cache, staleReq, cacheKey, 500);
-  }
-
-  const url = `${NASA_APOD_URL}?api_key=${apiKey}&date=${resolvedDate}`;
-  const res = await fetch(url);
-
-  const cfCache = res.headers.get("cf-cache-status") ?? "none";
-  log.push(`  [fetchApod] ${cacheKey} → ${res.status} (cf-cache: ${cfCache})`);
-
-  if (!res.ok) {
-    const body = await res.text();
-    log.push(`  [fetchApod] body=${body}`);
-    return handleUpstreamFailure(log, cache, staleReq, cacheKey, res.status);
-  }
-
-  const apod = await res.json() as ApodResponse;
-  await writeApodCaches(cache, cacheReq, staleReq, apod);
-  return apod;
+function apodImage(url: string): ApodImage | null {
+  const path = apodAssetPath(url);
+  if (!path) return null;
+  return {
+    sd: `${APOD_ASSET_HOST}/dynamicimage/assets/${path}`,
+    hd: `${APOD_ASSET_HOST}/content/dam/${path}`,
+    hdFallback: url,
+  };
 }
 
 function stripHtml(s: string): string {
   return s
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<br\s*\/?>|<\/p>/gi, " ")
+    .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
@@ -272,9 +189,179 @@ function stripHtml(s: string): string {
     .trim();
 }
 
-async function findLatestResolvable(
-  log: string[], devFlags: DevFlags, apiKey: string,
-): Promise<ResolvedApod> {
+/**
+ * Validate an apod-basic record and map it to the internal model. Throws on
+ * anything that must never be cached or served: schema failures, a record
+ * for a different date, or an image day with no APOD image (the 2026-10-20
+ * logo outage looked exactly like that).
+ */
+export function normalizeApod(raw: unknown, date: string): Apod {
+  const parsed = ApodBasic.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(`invalid record: ${z.prettifyError(parsed.error)}`);
+  }
+  const rec = parsed.data;
+  if (rec.date !== date) {
+    throw new Error(`date mismatch: asked ${date}, got ${rec.date}`);
+  }
+
+  const image = apodImage(rec.hdurl ?? "");
+  if (rec.media_type === "image" && !image) {
+    throw new Error(`no APOD image in hdurl (${rec.hdurl})`);
+  }
+
+  const copyright = stripHtml(rec.copyright ?? "");
+  return {
+    date: rec.date,
+    title: stripHtml(rec.title),
+    explanation: stripHtml(rec.explanation ?? "").replace(/^Explanation:\s*/, ""),
+    copyright: copyright || null,
+    media_type: rec.media_type,
+    permalink: rec.permalink ?? "",
+    image,
+    video_url: null,
+  };
+}
+
+export function resolveApod(apod: Apod): ResolvedApod | null {
+  if (!apod.image) return null;
+  return {
+    apod,
+    image: apod.image,
+    source: apod.media_type === "video" ? "video_thumbnail" : "image",
+  };
+}
+
+// ────────────────────────────────────────────────────────────
+// Fetch and cache
+// ────────────────────────────────────────────────────────────
+
+function apodCacheUrl(key: string): string {
+  return `https://api.nasapicture.com/_cache/apod/${key}`;
+}
+
+function todayET(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+}
+
+async function writeApodCaches(
+  cache: Cache, cacheReq: Request, staleReq: Request, apod: Apod,
+): Promise<void> {
+  const body = JSON.stringify(apod);
+  const cacheHeaders = { "Content-Type": "application/json", "Cache-Control": `public, max-age=${CACHE_TTL}` };
+  const staleHeaders = { "Content-Type": "application/json", "Cache-Control": `public, max-age=${STALE_CACHE_TTL}` };
+  await Promise.all([
+    cache.put(cacheReq, new Response(body, { headers: cacheHeaders })),
+    cache.put(staleReq, new Response(body, { headers: staleHeaders })),
+  ]);
+}
+
+/** Cached APOD for a date, or null when NASA has not published it yet. */
+async function fetchApod(log: string[], devFlags: DevFlags, date: string): Promise<Apod | null> {
+  // Dev fixture short-circuit: only for today's date, bypasses cache entirely
+  // so fixture runs never pollute real cached data.
+  if (devFlags.enabled && devFlags.mode && date === todayET()) {
+    const fixture = devApodFixture(devFlags.mode, date);
+    if (fixture) {
+      log.push(`  [fetchApod] ${date} → dev fixture (${devFlags.mode})`);
+      return fixture;
+    }
+  }
+
+  const cache = caches.default;
+  const cacheReq = new Request(apodCacheUrl(date));
+  const staleReq = new Request(apodCacheUrl(`${date}:stale`));
+
+  // nasa-error bypasses the primary cache so every request exercises the
+  // stale fallback path rather than hitting warm data.
+  const bypassCache = devFlags.enabled && devFlags.mode === "nasa-error";
+
+  if (!bypassCache) {
+    const cached = await cache.match(cacheReq);
+    if (cached) {
+      log.push(`  [fetchApod] ${date} → cache HIT`);
+      return cached.json() as Promise<Apod>;
+    }
+  }
+
+  // Deduplicate concurrent requests for the same date
+  const inflight = inflightApod.get(date);
+  if (inflight) {
+    log.push(`  [fetchApod] ${date} → coalesced with in-flight request`);
+    return inflight;
+  }
+
+  const promise = fetchApodFromUpstream(log, devFlags, date, cacheReq, staleReq);
+  inflightApod.set(date, promise);
+  try {
+    return await promise;
+  } finally {
+    inflightApod.delete(date);
+  }
+}
+
+async function handleUpstreamFailure(
+  log: string[], cache: Cache, staleReq: Request, date: string, reason: string,
+): Promise<Apod> {
+  // Stale cache is the only fallback. The HTML scrape that used to follow it
+  // was removed in EPIC-0006: NASA's old APOD site redirects every page to
+  // the science.nasa.gov index now.
+  const stale = await cache.match(staleReq);
+  if (stale) {
+    log.push(`  [fetchApod] ${date} → stale cache fallback (${reason})`);
+    return stale.json() as Promise<Apod>;
+  }
+
+  throw new Error(`APOD source failed: ${reason}`);
+}
+
+async function fetchApodFromUpstream(
+  log: string[], devFlags: DevFlags, date: string, cacheReq: Request, staleReq: Request,
+): Promise<Apod | null> {
+  const cache = caches.default;
+
+  if (devFlags.enabled && devFlags.mode === "nasa-error") {
+    log.push(`  [fetchApod] ${date} → dev simulated nasa-error (skipping upstream)`);
+    return handleUpstreamFailure(log, cache, staleReq, date, "simulated by ?dev=nasa-error");
+  }
+
+  // apod-basic keys entries by YYMMDD, like the old apYYMMDD.html pages did.
+  const yymmdd = date.slice(2).replaceAll("-", "");
+  const res = await fetch(`${APOD_BASIC_URL}/${yymmdd}?_fields=${APOD_BASIC_FIELDS}`, {
+    headers: { "User-Agent": USER_AGENT },
+  });
+  log.push(`  [fetchApod] ${date} → ${res.status}`);
+
+  if (res.status === 404) {
+    const body = await res.json().catch(() => null) as { code?: string } | null;
+    if (body?.code === "apod_basic_not_found") {
+      // Not published yet (NASA posts at 00:05 ET). Not an outage, and
+      // nothing to cache: the walkback serves the previous day.
+      log.push(`  [fetchApod] ${date} → not published`);
+      return null;
+    }
+    return handleUpstreamFailure(log, cache, staleReq, date, `404 ${JSON.stringify(body)}`);
+  }
+
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 200);
+    log.push(`  [fetchApod] body=${body}`);
+    return handleUpstreamFailure(log, cache, staleReq, date, `status ${res.status}`);
+  }
+
+  let apod: Apod;
+  try {
+    apod = normalizeApod(await res.json(), date);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "unknown";
+    return handleUpstreamFailure(log, cache, staleReq, date, msg);
+  }
+
+  await writeApodCaches(cache, cacheReq, staleReq, apod);
+  return apod;
+}
+
+async function findLatestResolvable(log: string[], devFlags: DevFlags): Promise<ResolvedApod> {
   let unresolvable = 0;
   let errors = 0;
 
@@ -284,8 +371,8 @@ async function findLatestResolvable(
     const date = d.toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
     try {
-      const apod = await fetchApod(log, devFlags, apiKey, date);
-      const resolved = resolveApod(apod);
+      const apod = await fetchApod(log, devFlags, date);
+      const resolved = apod && resolveApod(apod);
       if (resolved) {
         if (i > 0 || resolved.source !== "image") {
           log.push(`  [findLatest] ${date} → ${resolved.source} (lookback=${i})`);
@@ -465,7 +552,6 @@ export default {
     let res: Response;
 
     try {
-      const apiKey = env.NASA_API_KEY || "DEMO_KEY";
       const devFlags = parseDevFlags(reqUrl, env);
       if (devFlags.enabled && (devFlags.mode || devFlags.tools.size)) {
         log.push(
@@ -481,10 +567,10 @@ export default {
       const thumbPaths = ["/thumb", "/thumb.jpg"];
 
       if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
-        const resolved = await findLatestResolvable(log, devFlags, apiKey);
+        const resolved = await findLatestResolvable(log, devFlags);
         const imageUrl = sdPaths.includes(pathname)
-          ? resolved.imageUrl
-          : resolved.imageHdUrl;
+          ? resolved.image.sd
+          : resolved.image.hd;
 
         const upstream = await fetchImageCached(log, imageUrl);
         const contentType = upstream.headers.get("Content-Type") || "image/jpeg";
@@ -493,8 +579,8 @@ export default {
           headers: baseHeaders(origin, { "Content-Type": contentType }),
         });
       } else if (optimizedPaths.includes(pathname)) {
-        const resolved = await findLatestResolvable(log, devFlags, apiKey);
-        const imageUrl = resolved.imageHdUrl;
+        const resolved = await findLatestResolvable(log, devFlags);
+        const imageUrl = resolved.image.hd;
         validateImageUrl(imageUrl);
 
         const imageOpts: RequestInitCfPropertiesImage = {
@@ -526,8 +612,8 @@ export default {
           headers: baseHeaders(origin, { "Content-Type": contentType }),
         });
       } else if (thumbPaths.includes(pathname)) {
-        const resolved = await findLatestResolvable(log, devFlags, apiKey);
-        const imageUrl = resolved.imageHdUrl;
+        const resolved = await findLatestResolvable(log, devFlags);
+        const imageUrl = resolved.image.hd;
         validateImageUrl(imageUrl);
 
         const imageOpts: RequestInitCfPropertiesImage = {
@@ -568,9 +654,8 @@ export default {
         };
 
         try {
-          const resolved = await findLatestResolvable(log, devFlags, apiKey);
-          const { apod, source, imageHdUrl } = resolved;
-          const dimensions = await fetchImageDimensions(log, imageHdUrl);
+          const { apod, source, image } = await findLatestResolvable(log, devFlags);
+          const dimensions = await fetchImageDimensions(log, image.hd);
 
           res = new Response(
             JSON.stringify({
@@ -578,9 +663,10 @@ export default {
               date: apod.date,
               explanation: apod.explanation,
               media_type: apod.media_type,
-              url: apod.url,
-              hdurl: apod.hdurl ?? null,
-              copyright: apod.copyright ?? null,
+              url: apod.media_type === "video" ? apod.video_url : image.sd,
+              hdurl: image.hd,
+              permalink: apod.permalink,
+              copyright: apod.copyright,
               width: dimensions?.width ?? null,
               height: dimensions?.height ?? null,
               image_source: source,
@@ -590,10 +676,9 @@ export default {
           );
         } catch (err) {
           const message = err instanceof Error ? err.message : "Unknown error";
-          const status = err instanceof NasaApiError && err.statusCode === 429 ? 429 : 502;
           res = new Response(
             JSON.stringify({ error: message, endpoints }, null, 2),
-            { status, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+            { status: 502, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
           );
         }
       } else if (pathname === "/about") {
@@ -648,10 +733,9 @@ export default {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      const status = err instanceof NasaApiError && err.statusCode === 429 ? 429 : 502;
       res = new Response(
         JSON.stringify({ error: message }),
-        { status, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+        { status: 502, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
       );
     }
 

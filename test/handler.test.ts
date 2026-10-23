@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import worker, {
-  __resetInflightApod,
-  type ApodResponse,
-} from "../src/index";
+import worker, { __resetInflightApod, normalizeApod } from "../src/index";
 
 // ────────────────────────────────────────────────────────────
 // In-memory stand-ins for globals the Worker reaches for. Node gives us
@@ -48,6 +45,7 @@ type CacheMock = ReturnType<typeof createCache>;
 interface FetchCall {
   url: string;
   method: string;
+  userAgent: string | null;
 }
 
 type RouteHandler = (req: Request) => Response | Promise<Response>;
@@ -61,7 +59,7 @@ function createFetchMock() {
       input instanceof Request
         ? new Request(input, init)
         : new Request(typeof input === "string" ? input : String(input), init);
-    calls.push({ url: req.url, method: req.method });
+    calls.push({ url: req.url, method: req.method, userAgent: req.headers.get("User-Agent") });
     for (const route of routes) {
       if (route.match(req.url)) return route.handler(req);
     }
@@ -139,6 +137,8 @@ afterEach(() => {
 // Canned responses
 // ────────────────────────────────────────────────────────────
 
+const ASSETS = "https://assets.science.nasa.gov";
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -158,25 +158,33 @@ function imageResponse(label: string, contentType = "image/jpeg"): Response {
   });
 }
 
-function nasaImage(date: string, title = `Image for ${date}`): ApodResponse {
+/** apod-basic keys entries by YYMMDD. */
+function yymmdd(date: string): string {
+  return date.slice(2).replaceAll("-", "");
+}
+
+/** A raw apod-basic record the way science.nasa.gov sends it. */
+function apodBasic(date: string, overrides: Record<string, unknown> = {}) {
   return {
     date,
-    title,
-    explanation: `Explanation for ${date}.`,
-    url: `https://apod.nasa.gov/apod/image/2604/${date}_sd.jpg`,
-    hdurl: `https://apod.nasa.gov/apod/image/2604/${date}_hd.jpg`,
+    title: `Image for ${date}`,
     media_type: "image",
+    explanation: `<strong>Explanation: </strong>Explanation for ${date}.`,
+    copyright: `<a href="mailto:x">Photographer</a>`,
+    hdurl: `${ASSETS}/dynamicimage/assets/science/cds/apod/apod/2026/april/${date}.jpg?w=4000&h=3000`,
+    permalink: `https://science.nasa.gov/image-article/apod-${date}/`,
+    basic_html: "",
+    ...overrides,
   };
 }
 
-function nasaVideoNoThumb(date: string): ApodResponse {
-  return {
-    date,
-    title: `Real video ${date}`,
-    explanation: `Video for ${date}.`,
-    url: `https://www.youtube.com/embed/real-${date}`,
-    media_type: "video",
-  };
+function notFound(): Response {
+  return jsonResponse({ code: "apod_basic_not_found", message: "APOD not found.", data: { status: 404 } }, 404);
+}
+
+/** Route the apod-basic request for one date. */
+function upstream(date: string, handler: RouteHandler): void {
+  fetchMock.when(`/apod-basic/${yymmdd(date)}?`, handler);
 }
 
 function invoke(path: string, env: Record<string, string> = DEV_ENV): Promise<Response> {
@@ -190,9 +198,9 @@ function invoke(path: string, env: Record<string, string> = DEV_ENV): Promise<Re
 // Tests
 // ────────────────────────────────────────────────────────────
 
-describe("?dev=video — video APOD with thumbnail", () => {
+describe("?dev=video — video APOD with poster", () => {
   it("/info reports media_type=video and image_source=video_thumbnail", async () => {
-    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+    fetchMock.when(ASSETS, () => imageResponse("video-poster"));
 
     const res = await invoke("/info?dev=video");
     expect(res.status).toBe(200);
@@ -203,27 +211,30 @@ describe("?dev=video — video APOD with thumbnail", () => {
     expect(body.title).toMatch(/video/i);
     // Fixture pinned to today
     expect(body.date).toBe(TODAY);
+    // url is the video, hdurl is the poster we serve at /
+    expect(body.url).toMatch(/^https:\/\/www\.youtube\.com\/embed\//);
+    expect(body.hdurl).toMatch(/^https:\/\/assets\.science\.nasa\.gov\/content\/dam\/science\/cds\/apod\//);
   });
 
-  it("/ serves the thumbnail image bytes", async () => {
-    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+  it("/ serves the poster image bytes", async () => {
+    fetchMock.when(ASSETS, () => imageResponse("video-poster"));
 
     const res = await invoke("/?dev=video");
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toMatch(/image\//);
     const body = await res.text();
-    expect(body).toBe("IMAGE:video-thumbnail");
+    expect(body).toBe("IMAGE:video-poster");
   });
 
-  it("never calls the NASA JSON API (fixture short-circuits upstream)", async () => {
-    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+  it("never calls the APOD API (fixture short-circuits upstream)", async () => {
+    fetchMock.when(ASSETS, () => imageResponse("video-poster"));
 
     await invoke("/?dev=video");
-    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([]);
+    expect(fetchMock.urlsMatching("apod-basic")).toEqual([]);
   });
 
   it("does not pollute the primary cache (fixture writes skipped)", async () => {
-    fetchMock.when("img.youtube.com", () => imageResponse("video-thumbnail"));
+    fetchMock.when(ASSETS, () => imageResponse("video-poster"));
 
     await invoke("/info?dev=video");
 
@@ -233,10 +244,10 @@ describe("?dev=video — video APOD with thumbnail", () => {
 });
 
 describe("?dev=video-no-thumb — walkback to earlier day", () => {
-  it("falls back to the next day's real APOD when today's fixture has no thumbnail", async () => {
+  it("falls back to the next day's real APOD when today's fixture has no poster", async () => {
     // Today's fixture is unresolvable. Walkback asks NASA for yesterday.
-    fetchMock.when(`date=${YESTERDAY}`, () => jsonResponse(nasaImage(YESTERDAY, "Yesterday Image")));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("yesterday-hd"));
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Yesterday Image" })));
+    fetchMock.when(ASSETS, () => imageResponse("yesterday-hd"));
 
     const res = await invoke("/info?dev=video-no-thumb");
     expect(res.status).toBe(200);
@@ -248,19 +259,19 @@ describe("?dev=video-no-thumb — walkback to earlier day", () => {
   });
 
   it("/ serves the walked-back image's bytes", async () => {
-    fetchMock.when(`date=${YESTERDAY}`, () => jsonResponse(nasaImage(YESTERDAY)));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("yesterday-hd"));
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY)));
+    fetchMock.when(ASSETS, () => imageResponse("yesterday-hd"));
 
     const res = await invoke("/?dev=video-no-thumb");
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("IMAGE:yesterday-hd");
   });
 
-  it("skips further walkback when the next day is also unresolvable (video-no-thumb) and tries the day after", async () => {
-    // Yesterday is ALSO a video with no thumbnail → walkback continues.
-    fetchMock.when(`date=${YESTERDAY}`, () => jsonResponse(nasaVideoNoThumb(YESTERDAY)));
-    fetchMock.when("date=2026-04-08", () => jsonResponse(nasaImage("2026-04-08", "Two days ago")));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("two-days-ago"));
+  it("keeps walking back when the next day is a video without a poster", async () => {
+    // Yesterday is ALSO a video with no poster → walkback continues.
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { media_type: "video", hdurl: "" })));
+    upstream("2026-04-08", () => jsonResponse(apodBasic("2026-04-08", { title: "Two days ago" })));
+    fetchMock.when(ASSETS, () => imageResponse("two-days-ago"));
 
     const res = await invoke("/info?dev=video-no-thumb");
     const body = (await res.json()) as Record<string, unknown>;
@@ -273,7 +284,7 @@ describe("?dev=nasa-error — upstream failure", () => {
   it("serves the stale cache entry when one is present", async () => {
     // Pre-populate stale cache with a known value.
     const staleUrl = `https://api.nasapicture.com/_cache/apod/${TODAY}:stale`;
-    const staleBody: ApodResponse = nasaImage(TODAY, "From Stale Cache");
+    const staleBody = normalizeApod(apodBasic(TODAY, { title: "From Stale Cache" }), TODAY);
     await cache.put(
       new Request(staleUrl),
       new Response(JSON.stringify(staleBody), {
@@ -289,13 +300,13 @@ describe("?dev=nasa-error — upstream failure", () => {
     expect(body.date).toBe(TODAY);
     // nasa-error skips the API, and there is no other data source to fall
     // through to. (The dimensions probe still fetches the image URL.)
-    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod")).toEqual([]);
+    expect(fetchMock.urlsMatching("apod-basic")).toEqual([]);
   });
 
   it("returns 502 when nothing is cached", async () => {
     // /info uses findLatestResolvable, which walks back MAX_LOOKBACK_DAYS+1
     // days. Every day fails the same way, so the final error comes from the
-    // walkback loop, not the inner NasaApiError from a single date.
+    // walkback loop, not the inner error from a single date.
     const res = await invoke("/info?dev=nasa-error");
     expect(res.status).toBe(502);
     const body = (await res.json()) as Record<string, unknown>;
@@ -304,10 +315,83 @@ describe("?dev=nasa-error — upstream failure", () => {
   });
 });
 
+describe("upstream validation", () => {
+  it("treats 404 apod_basic_not_found as unpublished and walks back, caching nothing for that day", async () => {
+    upstream(TODAY, notFound);
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Yesterday" })));
+    fetchMock.when(ASSETS, () => imageResponse("yesterday"));
+
+    const res = await invoke("/info");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.date).toBe(YESTERDAY);
+    expect(body.title).toBe("Yesterday");
+    expect(cache._keys().filter((k) => k.includes(`/_cache/apod/${TODAY}`))).toEqual([]);
+  });
+
+  it("treats any other 404 as an upstream failure and serves the stale entry", async () => {
+    const staleUrl = `https://api.nasapicture.com/_cache/apod/${TODAY}:stale`;
+    const staleBody = normalizeApod(apodBasic(TODAY, { title: "From Stale Cache" }), TODAY);
+    await cache.put(new Request(staleUrl), jsonResponse(staleBody));
+    upstream(TODAY, () => jsonResponse({ code: "rest_no_route" }, 404));
+    fetchMock.when(ASSETS, () => imageResponse("stale"));
+
+    const res = await invoke("/info");
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.title).toBe("From Stale Cache");
+  });
+
+  it("rejects a logo-shaped record (image day, no APOD image) and never caches it", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, {
+      title: "NASA Science",
+      hdurl: "https://science.nasa.gov/wp-content/themes/nasa-child/assets/images/nasa-logo@2x.png",
+    })));
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Real Image" })));
+    fetchMock.when(ASSETS, () => imageResponse("real"));
+
+    const res = await invoke("/info");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.title).toBe("Real Image");
+    expect(body.date).toBe(YESTERDAY);
+    expect(cache._keys().filter((k) => k.includes(TODAY))).toEqual([]);
+  });
+
+  it("rejects a record for a different date and never caches it", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(YESTERDAY)));
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Yesterday" })));
+    fetchMock.when(ASSETS, () => imageResponse("yesterday"));
+
+    const res = await invoke("/info");
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.title).toBe("Yesterday");
+    expect(cache._keys().filter((k) => k.includes(TODAY))).toEqual([]);
+  });
+
+  it("rejects a record that fails the schema (empty title) and never caches it", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, { title: "  " })));
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Yesterday" })));
+    fetchMock.when(ASSETS, () => imageResponse("yesterday"));
+
+    const res = await invoke("/info");
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.title).toBe("Yesterday");
+    expect(cache._keys().filter((k) => k.includes(TODAY))).toEqual([]);
+  });
+
+  it("returns 502 on a 5xx when nothing is cached", async () => {
+    fetchMock.when("/apod-basic/", () => new Response("<html>Bad Gateway</html>", { status: 502 }));
+
+    const res = await invoke("/info");
+    expect(res.status).toBe(502);
+    expect(cache._keys().filter((k) => k.includes("/_cache/apod/"))).toEqual([]);
+  });
+});
+
 describe("ENVIRONMENT gating", () => {
   it("silently ignores ?dev=video in production and hits the real API", async () => {
-    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY, "Real Image Today")));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("real-today"));
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, { title: "Real Image Today" })));
+    fetchMock.when(ASSETS, () => imageResponse("real-today"));
 
     const res = await invoke("/info?dev=video", PROD_ENV);
     expect(res.status).toBe(200);
@@ -317,13 +401,13 @@ describe("ENVIRONMENT gating", () => {
     expect(body.title).toBe("Real Image Today");
     expect(body.image_source).toBe("image");
     expect(body.media_type).toBe("image");
-    // Real NASA API must have been called
-    expect(fetchMock.urlsMatching("api.nasa.gov/planetary/apod").length).toBeGreaterThan(0);
+    // Real APOD API must have been called
+    expect(fetchMock.urlsMatching("apod-basic").length).toBeGreaterThan(0);
   });
 
   it("silently ignores ?dev=nasa-error in production (normal API path runs)", async () => {
-    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY)));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("real"));
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when(ASSETS, () => imageResponse("real"));
 
     const res = await invoke("/info?dev=nasa-error", PROD_ENV);
     expect(res.status).toBe(200);
@@ -334,8 +418,8 @@ describe("ENVIRONMENT gating", () => {
 
 describe("unknown dev modes", () => {
   it("falls through to the normal API path when the mode is not a recognized fixture", async () => {
-    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY, "Normal")));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("normal"));
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, { title: "Normal" })));
+    fetchMock.when(ASSETS, () => imageResponse("normal"));
 
     const res = await invoke("/info?dev=palette");
     expect(res.status).toBe(200);
@@ -345,28 +429,50 @@ describe("unknown dev modes", () => {
   });
 });
 
-describe("normal (no dev flag) path is unchanged", () => {
-  it("/info hits the real NASA API in dev env when no dev flag is set", async () => {
-    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY, "Plain")));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("plain"));
+describe("normal (no dev flag) path", () => {
+  it("/info fetches apod-basic for today with a descriptive User-Agent and no api.nasa.gov call", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, { title: "Plain" })));
+    fetchMock.when(ASSETS, () => imageResponse("plain"));
 
     const res = await invoke("/info");
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.title).toBe("Plain");
     expect(body.image_source).toBe("image");
+    expect(body.explanation).toBe(`Explanation for ${TODAY}.`);
+    expect(body.copyright).toBe("Photographer");
+    expect(body.permalink).toBe(`https://science.nasa.gov/image-article/apod-${TODAY}/`);
+    expect(body.url).toBe(`${ASSETS}/dynamicimage/assets/science/cds/apod/apod/2026/april/${TODAY}.jpg`);
+    expect(body.hdurl).toBe(`${ASSETS}/content/dam/science/cds/apod/apod/2026/april/${TODAY}.jpg`);
+
+    const apiCalls = fetchMock.calls.filter((c) => c.url.includes("apod-basic"));
+    expect(apiCalls).toHaveLength(1);
+    expect(apiCalls[0].url).toBe(
+      `https://science.nasa.gov/wp-json/wp/v2/apod-basic/${yymmdd(TODAY)}?_fields=date,title,media_type,explanation,copyright,hdurl,permalink,basic_html`,
+    );
+    expect(apiCalls[0].userAgent).toBe("nasa-picture-proxy/1.0 (+https://nasapicture.com)");
+    expect(fetchMock.urlsMatching("api.nasa.gov")).toEqual([]);
   });
 
   it("caches the API response so the next request is a cache hit", async () => {
-    fetchMock.when(`date=${TODAY}`, () => jsonResponse(nasaImage(TODAY)));
-    fetchMock.when("apod.nasa.gov/apod/image/", () => imageResponse("plain"));
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when(ASSETS, () => imageResponse("plain"));
 
     await invoke("/info");
-    const callsAfterFirst = fetchMock.urlsMatching("api.nasa.gov/planetary/apod").length;
+    const callsAfterFirst = fetchMock.urlsMatching("apod-basic").length;
 
     await invoke("/info");
-    const callsAfterSecond = fetchMock.urlsMatching("api.nasa.gov/planetary/apod").length;
+    const callsAfterSecond = fetchMock.urlsMatching("apod-basic").length;
 
     expect(callsAfterSecond).toBe(callsAfterFirst); // no additional upstream calls
+  });
+
+  it("/sd serves the dynamicimage rendition and / serves the content/dam original", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when("/content/dam/", () => imageResponse("original"));
+    fetchMock.when("/dynamicimage/", () => imageResponse("rendition"));
+
+    expect(await (await invoke("/")).text()).toBe("IMAGE:original");
+    expect(await (await invoke("/sd")).text()).toBe("IMAGE:rendition");
   });
 });
