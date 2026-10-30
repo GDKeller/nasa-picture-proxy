@@ -1,7 +1,7 @@
 ---
 type: reference
 created: 2026-04-09
-updated: 2026-04-09
+updated: 2026-10-30
 ---
 
 # Dev feature flag convention
@@ -97,7 +97,7 @@ Avoid implementation details in the name. `video` is a scenario; `force-video-th
 | Param | Description |
 |---|---|
 | `?dev=fallback` | Force the "image not available" fallback state |
-| `?dev=stale` | Simulate showing a previous day's image as fallback |
+| `?dev=stale` | Simulate the stale fallback UI: adds the "Showing a recent image, today's is unavailable" notice to the caption. The image itself is still today's. |
 
 > Landing currently uses the `?dev=` query param but **does not persist to `dev-mode` localStorage** and **does not honor `?dev=off` as a clear**. Retrofit tracked in TASK-0036.
 
@@ -109,7 +109,7 @@ Gated on `env.ENVIRONMENT === "development"` (set in `.dev.vars`, gitignored). I
 |---|---|---|
 | `?dev=video` | TASK-0019 | Return a hard-coded video APOD fixture *with* a poster image so the video-poster branch of `resolveApod` can be exercised. Only short-circuits for today's date; walkback iterations still hit the normal path. Bypasses the APOD cache entirely so fixture runs never pollute real cached data. |
 | `?dev=video-no-thumb` | TASK-0019 | Return a hard-coded video APOD fixture *without* a poster (`image: null`). `resolveApod` returns null for today, so the walkback path runs and pulls the next resolvable day. |
-| `?dev=nasa-error` | TASK-0020, TASK-0044 | Skip the upstream APOD fetch and simulate an upstream failure: serve the stale cache entry if present, otherwise 502. Bypasses the primary cache so every request reliably exercises the fallback. The apod.nasa.gov scrape that used to follow the stale check was removed in EPIC-0006. |
+| `?dev=nasa-error` | TASK-0020, TASK-0044 | Skip the upstream APOD fetch and simulate an upstream failure: serve the stale cache entry if present, otherwise 502. The simulated failure applies to every date in the walkback, so the Worker serves the newest stale entry across today and the previous 7 days (`MAX_LOOKBACK_DAYS`), and returns 502 only when none is cached. Image bytes are still fetched from NASA. Bypasses the primary cache so every request reliably exercises the fallback. The apod.nasa.gov scrape that used to follow the stale check was removed in EPIC-0006. |
 
 ## Why this shape
 

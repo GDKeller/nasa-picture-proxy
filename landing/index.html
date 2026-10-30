@@ -159,9 +159,7 @@
     const wrapper = document.getElementById('hero-img-wrapper');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Dev feature flags via query params (localhost only)
-    // ?dev=fallback  — force the "no image available" fallback state
-    // ?dev=stale     — simulate showing a previous day's image as fallback
+    // Dev feature flags via query params (localhost only). See "Dev flags" in README.md.
     const devFlag = location.hostname === 'localhost'
       ? new URLSearchParams(location.search).get('dev')
       : null;

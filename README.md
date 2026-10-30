@@ -73,6 +73,27 @@ The Worker fetches each day's record from NASA's `apod-basic` feed on science.na
 
 The record and the image bytes are cached with the Workers Cache API (`caches.default`) for 6 hours. A second copy is kept for 24 hours and served if NASA's site is down. Cache keys carry a version, so a change of source or format never serves an entry cached by an older one. There's no KV, D1, or cron involved.
 
+## Dev flags
+
+`npm run dev` starts the Worker on `localhost:8787` and the landing page on `localhost:8788`. Add a `?dev=` query param to force a state that's hard to catch in the wild. Production ignores every flag.
+
+Landing page (works on `localhost` only):
+
+| Flag | Effect |
+|------|--------|
+| `?dev=fallback` | Shows the "Image not available" state and skips the `/info` and `/thumb` calls |
+| `?dev=stale` | Adds the "Showing a recent image" notice to the caption |
+
+Worker (needs `ENVIRONMENT=development` in `.dev.vars`). Flags apply to the image routes and `/info`. The landing page doesn't pass them along, so call the Worker directly, e.g. `localhost:8787/info?dev=video`:
+
+| Flag | Effect |
+|------|--------|
+| `?dev=video` | Serves a video APOD fixture with a poster image |
+| `?dev=video-no-thumb` | Fakes today as a video with no poster, so the proxy walks back to an earlier day |
+| `?dev=nasa-error` | Skips NASA's feed and serves the newest stale copy still cached, otherwise a 502 |
+
+The full convention and flag registry live in [REFE-0001](board/reference/REFE-0001_dev-feature-flag-convention.md).
+
 ## Author
 
 Built by [Grant Keller](https://grantkeller.dev).
