@@ -20,7 +20,7 @@
     "build:landing": "npm run build --prefix landing",
     "deploy": "npm run deploy:api && npm run deploy:landing",
     "deploy:api": "wrangler deploy",
-    "deploy:landing": "npm run build:landing && wrangler pages deploy landing/dist/ --project-name nasapicture-landing",
+    "deploy:landing": "npm run build:landing && CLOUDFLARE_ACCOUNT_ID=2c69d8c9e9f28d3d16d48a2a9d28c26a wrangler pages deploy landing/dist/ --project-name nasapicture-landing",
     "test": "vitest run",
     "test:watch": "vitest"
   },
