@@ -37,12 +37,35 @@ R2 archiving also unblocks TASK-0031 Phase 2 (local timezone rollover, ahead-of-
 
 Workflow triggered on push to `main`. Runs type-check (`npx tsc --noEmit`) as a gate, then `npm run deploy`. Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as repository secrets. Spawned from NOTE-0014.
 
+### TASK-0048: Stream image responses instead of buffering them [P2]
+
+`fetchImageCached` loads the whole image into memory and builds 3 Responses from it. PNG days run to tens of MB (37.7 MB on 2026-10-02) against a 128 MB isolate limit. Stream to the client, write the cache with `ctx.waitUntil`, and drop the duplicate `:stale` image copy. From the PR #5 review.
+
+### TASK-0049: Surface degraded APOD serving [P2]
+
+Serving a walked-back day, a stale entry, or a 502 is only logged through buffered `console.log`. Add `console.error` on those paths, an `X-APOD-Date` header an uptime check can assert, and `[observability]` in `wrangler.toml`. From the PR #5 review. Related: NOTE-0029 (Sentry).
+
+### TASK-0050: Fix the walkback date math across DST [P2]
+
+`findLatestResolvable` steps back in UTC, then formats in `America/New_York`, so DST change days skip or repeat a date. Derive dates from `todayET()` with UTC calendar math. From the PR #5 review; already on `main` before the migration.
+
+### TASK-0051: Report the image URL that actually serves in /info [P3]
+
+`/info` always reports the derived `content/dam` original as `hdurl`, even if it 404s and `/` falls back to NASA's `hdurl`. Run the dimensions probe through `firstThatServes`. Theoretical so far; do it when a missing original shows up in the logs. From the PR #5 review.
+
+### TASK-0055: Update dev dependencies to clear npm audit findings [P2]
+
+`npm audit` on `dev` reports 12 vulnerabilities (9 high), all in dev and tooling dependencies (`wrangler`, `vitest`, and their transitive deps). Runtime dependencies report 0. Every finding has a non-breaking fix.
+
 ## Sequence
 
 1. ~~TASK-0020~~ — done
 2. **TASK-0021** [P1] — Cron cache warming. Now that scrape is in place, cron warming guarantees stale cache never runs dry.
 3. TASK-0011 — R2 storage layer. Larger effort, unblocks follow-on features (gallery, timezone Phase 2).
 4. TASK-0032 — GitHub Action. Small, can be done anytime.
+5. TASK-0049, TASK-0050, TASK-0055 — small, independent, can be done anytime.
+6. TASK-0048 — before TASK-0011, which reworks the same image path.
+7. TASK-0051 — only once a missing original shows up in the logs.
 
 ## Cross-EPIC Dependencies
 

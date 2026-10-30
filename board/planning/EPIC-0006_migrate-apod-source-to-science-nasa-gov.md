@@ -1,6 +1,6 @@
 ---
 type: epic
-status: planning
+status: current
 created: 2026-10-20
 ---
 
@@ -84,20 +84,25 @@ This is a permanent migration to NASA's new official endpoint. No temporary work
 
 ## Tasks
 
-1. **TASK-0042** [P1]: Fetch APOD metadata from the science.nasa.gov apod-basic API
-2. **TASK-0043** [P1]: Resolve APOD image and video URLs from apod-basic data (blocked by TASK-0042)
-3. **TASK-0044** [P1]: Remove the apod.nasa.gov scrape fallback (blocked by TASK-0042)
-4. **TASK-0045** [P1]: Version cache keys so pre-migration entries are never read
-5. **TASK-0046** [P1]: Update docs and user-facing text for the science.nasa.gov source (blocked by TASK-0042, TASK-0043, TASK-0044)
-6. **TASK-0047** [P1]: Merge and deploy the APOD source migration to production (blocked by all of the above)
+1. ~~**TASK-0042** [P1]: Fetch APOD metadata from the science.nasa.gov apod-basic API~~ [done]
+2. ~~**TASK-0043** [P1]: Resolve APOD image and video URLs from apod-basic data~~ [done]
+3. ~~**TASK-0044** [P1]: Remove the apod.nasa.gov scrape fallback~~ [done]
+4. ~~**TASK-0045** [P1]: Version cache keys so pre-migration entries are never read~~ [done]
+5. ~~**TASK-0046** [P1]: Update docs and user-facing text for the science.nasa.gov source~~ [done]
+6. **TASK-0047** [P1]: Merge and deploy the APOD source migration to production [current]
+7. ~~**TASK-0052** [P2]: Keep the APOD record when the cache write fails~~ [done, from the PR #5 review]
+8. ~~**TASK-0053** [P2]: Validate cached entries before using them~~ [done, from the PR #5 review]
+9. **TASK-0054** [P2]: Remove apod.nasa.gov from the Image Transformations sources (blocked by TASK-0047)
 
 ## Sequence
 
-1. TASK-0042 first. It defines the fetch, validation, and internal model.
-2. TASK-0043 and TASK-0044 in parallel.
-3. TASK-0045 can land any time before TASK-0047.
-4. TASK-0046.
-5. TASK-0047.
+1. ~~TASK-0042 first. It defines the fetch, validation, and internal model.~~
+2. ~~TASK-0043 and TASK-0044 in parallel.~~
+3. ~~TASK-0045 can land any time before TASK-0047.~~
+4. ~~TASK-0046.~~
+5. ~~TASK-0052 and TASK-0053, from the PR #5 review.~~
+6. **TASK-0047.**
+7. TASK-0054, once production serves the new source.
 
 ## Cross-EPIC dependencies
 
@@ -105,7 +110,7 @@ These items assume the old source and need revisiting after this epic ships. Non
 
 - **TASK-0021** (cron cache warming, EPIC-0003): it would currently warm caches with the logo, and it references `findLatestImage` (now `findLatestResolvable`).
 - **TASK-0011** (R2 archive): its `{date}/hd.{ext}` / `{date}/sd.{ext}` keys assume the old hd/sd pair. It would currently archive the logo permanently.
-- **TASK-0027** copy cites DEMO_KEY's 30 req/hr limit. **TASK-0032** mentions the `NASA_API_KEY` secret. **TASK-0003** says "we proxy the APOD API".
+- ~~**TASK-0027** copy cites DEMO_KEY's 30 req/hr limit. **TASK-0032** mentions the `NASA_API_KEY` secret. **TASK-0003** says "we proxy the APOD API".~~ Fixed 2026-10-30.
 - **NOTE-0027** (download filename) parses apod.nasa.gov `/apod/image/YYMM/` URLs. The `content/dam` paths carry the original filename.
-- **REFE-0001** dev-mode table (`nasa-error`, `video`, `video-no-thumb`).
+- ~~**REFE-0001** dev-mode table (`nasa-error`, `video`, `video-no-thumb`).~~ Fixed 2026-10-30.
 - **Monitoring:** nothing alerted on this outage. NOTE-0029 (Sentry) or an upstream sanity alert would catch the next silent upstream change.

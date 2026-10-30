@@ -1,10 +1,9 @@
 ---
 type: task
-status: backlog
+status: current
 priority: 1
 created: 2026-10-20
 parent: EPIC-0006
-blocked_by: [TASK-0042, TASK-0043, TASK-0044, TASK-0045, TASK-0046]
 ---
 
 # Merge and deploy the APOD source migration to production
@@ -13,8 +12,9 @@ Ship EPIC-0006 and verify production serves the real APOD again.
 
 ## Context
 
-- Production runs `main` (`4653847`). `dev` is ahead with unreleased work: TASK-0019 (video thumbnail), the vitest suite, and board changes, plus this epic.
+- Production runs `main` (`4653847`). PR #5 merges `dev`, 27 commits ahead: this epic, the PR #5 review fixes (TASK-0052, TASK-0053), TASK-0019 (video thumbnail), the vitest suite, and board changes.
 - Deploys go from `main` only.
+- `assets.science.nasa.gov/` was added to the zone's Image Transformations sources on 2026-10-30, so `/optimized` and `/thumb` can transform the new images. Removing `apod.nasa.gov/` afterward is TASK-0054.
 
 ## Steps
 
@@ -23,7 +23,7 @@ Ship EPIC-0006 and verify production serves the real APOD again.
    - `/`, `/sd`, `/optimized`, `/thumb`, `/info`, and `/about` for today.
    - The `?dev=video`, `?dev=video-no-thumb`, and `?dev=nasa-error` fixtures.
    - The landing page hero and caption.
-3. Open a PR from `dev` to `main` and merge it.
+3. Merge PR #5 (`dev` to `main`).
 4. From `main`, run `npm run deploy` (Worker and landing page).
 5. Remove the obsolete secret with `npx wrangler secret delete NASA_API_KEY`.
 6. Verify production:
