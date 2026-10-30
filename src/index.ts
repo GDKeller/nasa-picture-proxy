@@ -33,7 +33,7 @@ const STALE_CACHE_TTL = 86400; // 24 hours — fallback when the APOD source is 
 // Prefix for every cache key. Bump the version whenever the cached shape or
 // the upstream source changes; old keys are never read again and expire on
 // their own. The host must be in our zone or caches.default drops the write.
-export const CACHE_BASE = "https://api.nasapicture.com/_cache/v2";
+const CACHE_BASE = "https://api.nasapicture.com/_cache/v2";
 
 // Upstream record, trimmed by `_fields`. Only what the proxy cannot work
 // without is required; everything else degrades to empty.
@@ -251,7 +251,7 @@ export function resolveApod(apod: Apod): ResolvedApod | null {
 // Fetch and cache
 // ────────────────────────────────────────────────────────────
 
-function apodCacheUrl(key: string): string {
+export function apodCacheUrl(key: string): string {
   return `${CACHE_BASE}/apod/${key}`;
 }
 

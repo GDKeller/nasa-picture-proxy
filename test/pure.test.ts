@@ -7,6 +7,7 @@ import {
   apodAssetPath,
   type Apod,
 } from "../src/index";
+import * as mainModule from "../src/index";
 import image261020 from "./fixtures/apod-basic/261020.json";
 import youtube261018 from "./fixtures/apod-basic/261018.json";
 import mp4_261016 from "./fixtures/apod-basic/261016.json";
@@ -274,5 +275,15 @@ describe("devApodFixture", () => {
 
     const noPoster = devApodFixture("video-no-thumb", "2026-04-10")!;
     expect(resolveApod(noPoster)).toBeNull();
+  });
+});
+
+describe("main module exports", () => {
+  it("exports only functions besides the default handler", () => {
+    // workerd treats every named export as an entrypoint and refuses to start
+    // on anything else (e.g. a string constant). Unit tests never boot workerd.
+    for (const [name, value] of Object.entries(mainModule)) {
+      if (name !== "default") expect([name, typeof value]).toEqual([name, "function"]);
+    }
   });
 });

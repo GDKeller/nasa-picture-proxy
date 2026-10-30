@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import worker, { __resetInflightApod, CACHE_BASE, normalizeApod } from "../src/index";
+import worker, { __resetInflightApod, apodCacheUrl, normalizeApod } from "../src/index";
 
 // ────────────────────────────────────────────────────────────
 // In-memory stand-ins for globals the Worker reaches for. Node gives us
@@ -238,7 +238,7 @@ describe("?dev=video — video APOD with poster", () => {
 
     await invoke("/info?dev=video");
 
-    const apodCacheKeys = cache._keys().filter((k) => k.startsWith(`${CACHE_BASE}/apod/`));
+    const apodCacheKeys = cache._keys().filter((k) => k.startsWith(apodCacheUrl("")));
     expect(apodCacheKeys).toEqual([]);
   });
 });
@@ -283,7 +283,7 @@ describe("?dev=video-no-thumb — walkback to earlier day", () => {
 describe("?dev=nasa-error — upstream failure", () => {
   it("serves the stale cache entry when one is present", async () => {
     // Pre-populate stale cache with a known value.
-    const staleUrl = `${CACHE_BASE}/apod/${TODAY}:stale`;
+    const staleUrl = apodCacheUrl(`${TODAY}:stale`);
     const staleBody = normalizeApod(apodBasic(TODAY, { title: "From Stale Cache" }), TODAY);
     await cache.put(
       new Request(staleUrl),
@@ -326,11 +326,11 @@ describe("upstream validation", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.date).toBe(YESTERDAY);
     expect(body.title).toBe("Yesterday");
-    expect(cache._keys().filter((k) => k.startsWith(`${CACHE_BASE}/apod/${TODAY}`))).toEqual([]);
+    expect(cache._keys().filter((k) => k.startsWith(apodCacheUrl(TODAY)))).toEqual([]);
   });
 
   it("treats any other 404 as an upstream failure and serves the stale entry", async () => {
-    const staleUrl = `${CACHE_BASE}/apod/${TODAY}:stale`;
+    const staleUrl = apodCacheUrl(`${TODAY}:stale`);
     const staleBody = normalizeApod(apodBasic(TODAY, { title: "From Stale Cache" }), TODAY);
     await cache.put(new Request(staleUrl), jsonResponse(staleBody));
     upstream(TODAY, () => jsonResponse({ code: "rest_no_route" }, 404));
@@ -384,7 +384,7 @@ describe("upstream validation", () => {
 
     const res = await invoke("/info");
     expect(res.status).toBe(502);
-    expect(cache._keys().filter((k) => k.startsWith(`${CACHE_BASE}/apod/`))).toEqual([]);
+    expect(cache._keys().filter((k) => k.startsWith(apodCacheUrl("")))).toEqual([]);
   });
 });
 
@@ -529,7 +529,7 @@ describe("image resolution", () => {
       hd: "https://evil.example/x.jpg",
       hdFallback: "https://evil.example/x.jpg",
     };
-    await cache.put(new Request(`${CACHE_BASE}/apod/${TODAY}`), jsonResponse(poisoned));
+    await cache.put(new Request(apodCacheUrl(TODAY)), jsonResponse(poisoned));
 
     const res = await invoke("/");
     expect(res.status).toBe(502);
@@ -550,8 +550,8 @@ describe("cache key versioning", () => {
     expect(fetchMock.urlsMatching("apod-basic").length).toBeGreaterThan(0);
 
     // The old stale tier is not a fallback either.
-    await cache.delete(new Request(`${CACHE_BASE}/apod/${TODAY}`));
-    await cache.delete(new Request(`${CACHE_BASE}/apod/${TODAY}:stale`));
+    await cache.delete(new Request(apodCacheUrl(TODAY)));
+    await cache.delete(new Request(apodCacheUrl(`${TODAY}:stale`)));
     const failed = await invoke("/info?dev=nasa-error");
     expect(failed.status).toBe(502);
   });
