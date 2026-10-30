@@ -18,20 +18,25 @@ Ship EPIC-0006 and verify production serves the real APOD again.
 
 ## Steps
 
-1. On `dev`, run `npx tsc --noEmit` and `npm test`. Both must pass.
-2. Verify locally with `npm run dev`:
-   - `/`, `/sd`, `/optimized`, `/thumb`, `/info`, and `/about` for today.
-   - The `?dev=video`, `?dev=video-no-thumb`, and `?dev=nasa-error` fixtures.
-   - The landing page hero and caption.
-3. Merge PR #5 (`dev` to `main`).
-4. From `main`, run `npm run deploy` (Worker and landing page).
-5. Remove the obsolete secret with `npx wrangler secret delete NASA_API_KEY`.
-6. Verify production:
-   - Every image route serves the real APOD, not the 8,928 B logo PNG.
-   - `/optimized` and `/thumb` return 200 (they returned 502 on 2026-10-20).
-   - `/info` `title` matches apod-basic for today's date.
-   - nasapicture.com shows the real image.
-7. Watch `npm run log:prod` across the next 00:05 ET rollover and confirm the new date resolves without errors.
+1. ~~On `dev`, run `npx tsc --noEmit` and `npm test`. Both must pass.~~
+2. ~~Verify locally with `npm run dev`.~~
+3. ~~Merge PR #5 (`dev` to `main`).~~ Merged as `90c72f8`.
+4. ~~From `main`, run `npm run deploy` (Worker and landing page).~~ Done 2026-10-30.
+5. ~~Remove the obsolete secret with `npx wrangler secret delete NASA_API_KEY`.~~ Nothing to do: `wrangler secret list` returns `[]`.
+6. ~~Verify production.~~ Done 2026-10-30 at 16:23 ET. Results are below.
+7. Watch `npm run log:prod` across the next 00:05 ET rollover and confirm the new date resolves without errors. Afterward, `/info` `date` should equal the new ET date.
+
+## Deploy record (2026-10-30)
+
+- Worker version `39ce905e-dd41-47c0-9428-1a7a45000ff2`. The rollback target is `bbc7256f-d991-4e0e-98b8-a9acf8497602` (2026-04-09): `npx wrangler rollback <version-id>`.
+- Pages deployment `98f8250c` from `main` `90c72f8`.
+- Production checks:
+  - `/` and `get.`: 200, the 6.0 MB original JPEG.
+  - `/sd`: 200, 296 KB.
+  - `/optimized`: 200, 180 KB.
+  - `/thumb`: 200, a 32×21 WebP.
+  - `/info`: "Haunting the Cepheus Flare", 6000×4076, matching apod-basic.
+  - `/about` and nasapicture.com: 200.
 
 ## Acceptance
 

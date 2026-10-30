@@ -89,10 +89,10 @@ This is a permanent migration to NASA's new official endpoint. No temporary work
 3. ~~**TASK-0044** [P1]: Remove the apod.nasa.gov scrape fallback~~ [done]
 4. ~~**TASK-0045** [P1]: Version cache keys so pre-migration entries are never read~~ [done]
 5. ~~**TASK-0046** [P1]: Update docs and user-facing text for the science.nasa.gov source~~ [done]
-6. **TASK-0047** [P1]: Merge and deploy the APOD source migration to production [current]
+6. **TASK-0047** [P1]: Merge and deploy the APOD source migration to production [current: deployed 2026-10-30, rollover check pending]
 7. ~~**TASK-0052** [P2]: Keep the APOD record when the cache write fails~~ [done, from the PR #5 review]
 8. ~~**TASK-0053** [P2]: Validate cached entries before using them~~ [done, from the PR #5 review]
-9. **TASK-0054** [P2]: Remove apod.nasa.gov from the Image Transformations sources (blocked by TASK-0047)
+9. **TASK-0054** [P2]: Remove apod.nasa.gov from the Image Transformations sources (unblocked by the 2026-10-30 deploy)
 
 ## Sequence
 

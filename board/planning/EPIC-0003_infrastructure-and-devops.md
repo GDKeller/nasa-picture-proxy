@@ -35,7 +35,7 @@ R2 archiving also unblocks TASK-0031 Phase 2 (local timezone rollover, ahead-of-
 
 ### TASK-0032: GitHub Action auto-deploy on merge to main
 
-Workflow triggered on push to `main`. Runs type-check (`npx tsc --noEmit`) as a gate, then `npm run deploy`. Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as repository secrets. Spawned from NOTE-0014.
+Workflow triggered on push to `main`. Runs type-check (`npx tsc --noEmit`) as a gate, then `npm run deploy`. Requires only a `CLOUDFLARE_API_TOKEN` repository secret; the account ID is committed in `wrangler.toml` and the `deploy:landing` script. Spawned from NOTE-0014.
 
 ### TASK-0048: Stream image responses instead of buffering them [P2]
 
