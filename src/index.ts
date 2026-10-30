@@ -50,23 +50,30 @@ const ApodBasic = z.object({
   basic_html: z.string().nullish(),
 });
 
-export interface ApodImage {
-  sd: string;         // 1280px rendition (dynamicimage path, no params)
-  hd: string;         // original bytes (content/dam path)
-  hdFallback: string; // hdurl as NASA sent it, in case the original is missing
-}
+const ApodImageRecord = z.object({
+  sd: z.string(),         // 1280px rendition (dynamicimage path, no params)
+  hd: z.string(),         // original bytes (content/dam path)
+  hdFallback: z.string(), // hdurl as NASA sent it, in case the original is missing
+});
 
-// Normalized, plain-text model. This is what gets cached.
-export interface Apod {
-  date: string;
-  title: string;
-  explanation: string;
-  copyright: string | null;
-  media_type: string;
-  permalink: string;
-  image: ApodImage | null; // null when NASA has nothing we can serve (no poster, .tif, iframe days)
-  video_url: string | null;
-}
+// Normalized, plain-text model. This is what gets cached, and cache reads
+// are checked against it (readCached).
+const ApodRecord = z.object({
+  date: z.string(),
+  title: z.string(),
+  explanation: z.string(),
+  copyright: z.string().nullable(),
+  media_type: z.string(),
+  permalink: z.string(),
+  image: ApodImageRecord.nullable(), // null when NASA has nothing we can serve (no poster, .tif, iframe days)
+  video_url: z.string().nullable(),
+});
+
+const ImageDimensionsRecord = z.object({ width: z.number(), height: z.number() });
+
+export type ApodImage = z.infer<typeof ApodImageRecord>;
+export type Apod = z.infer<typeof ApodRecord>;
+type ImageDimensions = z.infer<typeof ImageDimensionsRecord>;
 
 export type ImageSource = "image" | "video_thumbnail";
 
@@ -294,6 +301,22 @@ async function writeApodCaches(
   ]);
 }
 
+/**
+ * A cached entry, or null on a miss. An entry that doesn't parse is deleted
+ * and treated as a miss, so one bad write can't shadow a day for its TTL.
+ */
+async function readCached<T>(
+  log: string[], cache: Cache, req: Request, schema: z.ZodType<T>,
+): Promise<T | null> {
+  const hit = await cache.match(req);
+  if (!hit) return null;
+  const parsed = schema.safeParse(await hit.json().catch(() => undefined));
+  if (parsed.success) return parsed.data;
+  log.push(`  [cache] ${req.url.slice(0, 80)}… → invalid entry, deleted`);
+  await cache.delete(req);
+  return null;
+}
+
 /** Cached APOD for a date, or null when NASA has not published it yet. */
 async function fetchApod(log: string[], devFlags: DevFlags, date: string): Promise<Apod | null> {
   // Dev fixture short-circuit: only for today's date, bypasses cache entirely
@@ -315,10 +338,10 @@ async function fetchApod(log: string[], devFlags: DevFlags, date: string): Promi
   const bypassCache = devFlags.enabled && devFlags.mode === "nasa-error";
 
   if (!bypassCache) {
-    const cached = await cache.match(cacheReq);
+    const cached = await readCached(log, cache, cacheReq, ApodRecord);
     if (cached) {
       log.push(`  [fetchApod] ${date} → cache HIT`);
-      return cached.json() as Promise<Apod>;
+      return cached;
     }
   }
 
@@ -331,10 +354,10 @@ async function handleUpstreamFailure(
   // Stale cache is the only fallback. The HTML scrape that used to follow it
   // was removed in EPIC-0006: NASA's old APOD site redirects every page to
   // the science.nasa.gov index now.
-  const stale = await cache.match(staleReq);
+  const stale = await readCached(log, cache, staleReq, ApodRecord);
   if (stale) {
     log.push(`  [fetchApod] ${date} → stale cache fallback (${reason})`);
-    return stale.json() as Promise<Apod>;
+    return stale;
   }
 
   throw new Error(`APOD source failed: ${reason}`);
@@ -389,7 +412,10 @@ async function fetchApodFromUpstream(
     return handleUpstreamFailure(log, cache, staleReq, date, msg);
   }
 
-  await writeApodCaches(cache, cacheReq, staleReq, apod);
+  // A failed cache write must not throw away a valid record.
+  await writeApodCaches(cache, cacheReq, staleReq, apod).catch((err) => {
+    log.push(`  [fetchApod] ${date} → cache write failed: ${err instanceof Error ? err.message : "unknown"}`);
+  });
   return apod;
 }
 
@@ -509,11 +535,6 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   return new Response(arrayBuffer, { headers: cacheHeaders });
 }
 
-interface ImageDimensions {
-  width: number;
-  height: number;
-}
-
 async function fetchImageDimensions(log: string[], imageUrl: string): Promise<ImageDimensions | null> {
   validateImageUrl(imageUrl);
 
@@ -522,10 +543,10 @@ async function fetchImageDimensions(log: string[], imageUrl: string): Promise<Im
   const cacheReq = new Request(cacheKey);
   const staleReq = new Request(`${cacheKey}:stale`);
 
-  const cached = await cache.match(cacheReq);
+  const cached = await readCached(log, cache, cacheReq, ImageDimensionsRecord);
   if (cached) {
     log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → cache HIT`);
-    return cached.json() as Promise<ImageDimensions>;
+    return cached;
   }
 
   try {
@@ -534,20 +555,17 @@ async function fetchImageDimensions(log: string[], imageUrl: string): Promise<Im
     });
 
     if (!res.ok) {
-      const stale = await cache.match(staleReq);
+      const stale = await readCached(log, cache, staleReq, ImageDimensionsRecord);
       if (stale) {
         log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → stale cache fallback`);
-        return stale.json() as Promise<ImageDimensions>;
+        return stale;
       }
       log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → ${res.status} (failed)`);
       return null;
     }
 
-    const info = await res.json() as { original: { width: number; height: number } };
-    const dimensions: ImageDimensions = {
-      width: info.original.width,
-      height: info.original.height,
-    };
+    const info = await res.json() as { original?: unknown };
+    const dimensions: ImageDimensions = ImageDimensionsRecord.parse(info.original);
 
     log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → ${dimensions.width}×${dimensions.height}`);
 
@@ -563,9 +581,7 @@ async function fetchImageDimensions(log: string[], imageUrl: string): Promise<Im
     return dimensions;
   } catch (err) {
     log.push(`  [dimensions] ${imageUrl.slice(0, 80)}… → error: ${err instanceof Error ? err.message : "unknown"}`);
-    const stale = await cache.match(staleReq);
-    if (stale) return stale.json() as Promise<ImageDimensions>;
-    return null;
+    return readCached(log, cache, staleReq, ImageDimensionsRecord);
   }
 }
 

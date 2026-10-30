@@ -572,9 +572,9 @@ describe("image resolution", () => {
   });
 });
 
-/** Cache key for an image's stale copy, built from the same versioned base. */
-function imageStaleKey(url: string): string {
-  return apodCacheUrl("").replace(/apod\/$/, `image/${encodeURIComponent(url)}:stale`);
+/** An image or dimensions cache key, built from the same versioned base. */
+function cacheKey(kind: "image" | "dimensions", url: string, suffix = ""): string {
+  return apodCacheUrl("").replace(/apod\/$/, `${kind}/${encodeURIComponent(url)}${suffix}`);
 }
 
 describe("failure handling", () => {
@@ -593,7 +593,7 @@ describe("failure handling", () => {
 
   it("serves an image's stale copy when the image host can't be reached", async () => {
     upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
-    await cache.put(new Request(imageStaleKey(`${ASSETS}/content/dam/${path}`)), imageResponse("stale-original"));
+    await cache.put(new Request(cacheKey("image", `${ASSETS}/content/dam/${path}`, ":stale")), imageResponse("stale-original"));
     fetchMock.when("/content/dam/", () => { throw new TypeError("connection reset"); });
     fetchMock.when("/dynamicimage/", () => imageResponse("hdurl-as-given"));
 
@@ -679,5 +679,48 @@ describe("cache key versioning", () => {
     await cache.delete(new Request(apodCacheUrl(`${TODAY}:stale`)));
     const failed = await invoke("/info?dev=nasa-error");
     expect(failed.status).toBe(502);
+  });
+});
+
+describe("cache integrity", () => {
+  const hd = `${ASSETS}/content/dam/science/cds/apod/apod/2026/april/${TODAY}.jpg`;
+
+  it("serves today even when the cache write fails", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when(ASSETS, () => imageResponse("today"));
+    vi.spyOn(cache, "put").mockRejectedValue(new Error("put failed"));
+
+    const body = (await (await invoke("/info")).json()) as Record<string, unknown>;
+    expect(body.date).toBe(TODAY);
+  });
+
+  it("refetches a day whose primary entry doesn't parse", async () => {
+    await cache.put(new Request(apodCacheUrl(TODAY)), new Response("{not json"));
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when(ASSETS, () => imageResponse("today"));
+
+    const body = (await (await invoke("/info")).json()) as Record<string, unknown>;
+    expect(body.title).toBe(`Image for ${TODAY}`);
+    expect(fetchMock.urlsMatching("apod-basic")).toHaveLength(1);
+  });
+
+  it("never serves a wrong-shape stale entry, and deletes it", async () => {
+    const staleKey = apodCacheUrl(`${TODAY}:stale`);
+    await cache.put(new Request(staleKey), jsonResponse({ title: "Half a record" }));
+
+    const res = await invoke("/info?dev=nasa-error");
+    expect(res.status).toBe(502);
+    expect(cache._keys()).not.toContain(staleKey);
+  });
+
+  it("re-probes dimensions when the cached entry is invalid", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    await cache.put(new Request(cacheKey("dimensions", hd)), jsonResponse({ width: "wide" }));
+    fetchMock.when(ASSETS, (_req, cf) => cf?.image?.format === "json"
+      ? jsonResponse({ original: { width: 5120, height: 3840 } })
+      : imageResponse("image"));
+
+    const body = (await (await invoke("/info")).json()) as Record<string, unknown>;
+    expect([body.width, body.height]).toEqual([5120, 3840]);
   });
 });
