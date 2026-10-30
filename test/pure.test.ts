@@ -128,9 +128,14 @@ describe("normalizeApod", () => {
     });
   });
 
-  it("keeps a YouTube day's poster as the image", () => {
+  it("leaves video_url null on image days", () => {
+    expect(normalizeApod(image261020, "2026-10-20").video_url).toBeNull();
+  });
+
+  it("keeps a YouTube day's poster as the image and pulls the embed URL from basic_html", () => {
     const apod = normalizeApod(youtube261018, "2026-10-18");
     expect(apod.media_type).toBe("video");
+    expect(apod.video_url).toBe("https://www.youtube.com/embed/DzrCEm1ZBRY?rel=0");
     expect(apod.image?.hd).toBe(`${ASSETS}/content/dam/science/cds/apod/apod/2026/october/SonifiedEagleNebulaPillars.jpg`);
     // Multi-line HTML credit flattens to one readable line.
     expect(apod.copyright).toBe(
@@ -145,14 +150,31 @@ describe("normalizeApod", () => {
     expect(apod.image?.hd).toMatch(/CRS35-Holland30s1080p\.jpg$/);
   });
 
-  it("yields image: null for a video day with no poster (walkback, not an error)", () => {
+  it("yields image: null for a video day with no poster (walkback, not an error) and the MP4 URL", () => {
     const apod = normalizeApod(videoNoPoster, "2026-10-16");
     expect(apod.media_type).toBe("video");
     expect(apod.image).toBeNull();
+    expect(apod.video_url).toBe(`${ASSETS}/content/dam/science/cds/apod/apod/2026/october/CRS35-Holland30s1080p.mp4`);
+  });
+
+  it("falls back to the basic_html image when hdurl is the placeholder thumbnail", () => {
+    const real = "science/cds/apod/apod/2015/january/real.jpg";
+    const apod = normalizeApod({
+      ...image261020,
+      hdurl: `${ASSETS}/dynamicimage/assets/science/astro/programs/cosmic-origins/images/misc/news-thumbnail.png?w=594`,
+      basic_html: `<a href="https://science.nasa.gov/apod/archive/">x</a><a href="${ASSETS}/dynamicimage/assets/${real}?w=1&amp;h=2"><IMG SRC="${ASSETS}/dynamicimage/assets/${real}"></a>`,
+    }, "2026-10-20");
+    expect(apod.image).toEqual({
+      sd: `${ASSETS}/dynamicimage/assets/${real}`,
+      hd: `${ASSETS}/content/dam/${real}`,
+      hdFallback: `${ASSETS}/dynamicimage/assets/${real}?w=1&h=2`,
+    });
   });
 
   it("throws on an image day whose hdurl is not an APOD asset (the logo outage shape)", () => {
     expect(() => normalizeApod(logo, "2026-10-20")).toThrow(/no APOD image/);
+    // Same shape, but with the logo also in basic_html: still no APOD asset.
+    expect(() => normalizeApod({ ...logo, basic_html: `<img src="${logo.hdurl}">` }, "2026-10-20")).toThrow(/no APOD image/);
   });
 
   it("throws when the record is for a different date", () => {

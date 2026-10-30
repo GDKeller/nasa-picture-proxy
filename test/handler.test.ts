@@ -476,3 +476,63 @@ describe("normal (no dev flag) path", () => {
     expect(await (await invoke("/sd")).text()).toBe("IMAGE:rendition");
   });
 });
+
+describe("image resolution", () => {
+  it("/ falls back to NASA's hdurl when the derived original is missing", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when("/content/dam/", () => new Response("nope", { status: 404 }));
+    fetchMock.when("/dynamicimage/", () => imageResponse("hdurl-as-given"));
+
+    const res = await invoke("/");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("IMAGE:hdurl-as-given");
+    // The original was tried first, then the fallback.
+    expect(fetchMock.urlsMatching("/content/dam/").length).toBeGreaterThan(0);
+    expect(fetchMock.urlsMatching("?w=4000")).toHaveLength(1);
+  });
+
+  it("/optimized and /thumb transform the original and fall back the same way", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when("/content/dam/", () => new Response("nope", { status: 404 }));
+    fetchMock.when("/dynamicimage/", () => imageResponse("transformed", "image/webp"));
+
+    const optimized = await invoke("/optimized");
+    expect(optimized.status).toBe(200);
+    expect(await optimized.text()).toBe("IMAGE:transformed");
+
+    const thumb = await invoke("/thumb");
+    expect(thumb.status).toBe(200);
+    expect(thumb.headers.get("Content-Type")).toBe("image/webp");
+  });
+
+  it("takes the real image from basic_html when hdurl is the placeholder thumbnail", async () => {
+    const real = `${ASSETS}/dynamicimage/assets/science/cds/apod/apod/2026/april/real_${TODAY}.jpg`;
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, {
+      hdurl: `${ASSETS}/dynamicimage/assets/science/astro/programs/cosmic-origins/images/misc/news-thumbnail.png?w=594`,
+      basic_html: `<a href="https://science.nasa.gov/apod/archive/">Archive</a>\n<a href="${real}">\n<IMG SRC="${real}" alt="x">\n</a>`,
+    })));
+    fetchMock.when(ASSETS, () => imageResponse("real"));
+
+    const res = await invoke("/info");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.date).toBe(TODAY);
+    expect(body.hdurl).toBe(`${ASSETS}/content/dam/science/cds/apod/apod/2026/april/real_${TODAY}.jpg`);
+  });
+
+  it("refuses to fetch a non-APOD image URL even from a cached entry", async () => {
+    // Defense in depth: a poisoned cache entry must not turn the Worker into
+    // an open proxy.
+    const poisoned = normalizeApod(apodBasic(TODAY), TODAY);
+    poisoned.image = {
+      sd: "https://evil.example/x.jpg",
+      hd: "https://evil.example/x.jpg",
+      hdFallback: "https://evil.example/x.jpg",
+    };
+    await cache.put(new Request(`https://api.nasapicture.com/_cache/apod/${TODAY}`), jsonResponse(poisoned));
+
+    const res = await invoke("/");
+    expect(res.status).toBe(502);
+    expect(fetchMock.urlsMatching("evil.example")).toEqual([]);
+  });
+});

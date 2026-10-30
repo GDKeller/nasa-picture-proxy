@@ -30,15 +30,6 @@ const MAX_LOOKBACK_DAYS = 7;
 const CACHE_TTL = 21600;      // 6 hours — APOD changes once/day
 const STALE_CACHE_TTL = 86400; // 24 hours — fallback when the APOD source is down
 
-// Hosts allowed for image fetches. NASA hosts the photography itself; YouTube
-// and Vimeo host video thumbnails linked from video APOD entries.
-const ALLOWED_IMAGE_HOSTS = [
-  ".nasa.gov",
-  ".ytimg.com",
-  ".youtube.com",
-  ".vimeocdn.com",
-];
-
 // Upstream record, trimmed by `_fields`. Only what the proxy cannot work
 // without is required; everything else degrades to empty.
 const ApodBasic = z.object({
@@ -175,6 +166,24 @@ function apodImage(url: string): ApodImage | null {
   };
 }
 
+// basic_html is the legacy APOD page layout. It is the only place the video
+// embed lives, and the only place the real image lives when hdurl is the
+// generic placeholder thumbnail (some older entries).
+function imageFromHtml(html: string): ApodImage | null {
+  for (const m of html.matchAll(/(?:href|src|poster)="([^"]+)"/gi)) {
+    const image = apodImage(m[1].replace(/&amp;/gi, "&"));
+    if (image) return image;
+  }
+  return null;
+}
+
+function videoUrlFromHtml(html: string): string | null {
+  const m = html.match(/<iframe[^>]+src="([^"]+)"/i) ?? html.match(/<source[^>]+src="([^"]+)"/i);
+  if (!m) return null;
+  const src = m[1].replace(/&amp;/gi, "&");
+  return src.startsWith("//") ? `https:${src}` : src;
+}
+
 function stripHtml(s: string): string {
   return s
     .replace(/<br\s*\/?>|<\/p>/gi, " ")
@@ -205,9 +214,10 @@ export function normalizeApod(raw: unknown, date: string): Apod {
     throw new Error(`date mismatch: asked ${date}, got ${rec.date}`);
   }
 
-  const image = apodImage(rec.hdurl ?? "");
+  const html = rec.basic_html ?? "";
+  const image = apodImage(rec.hdurl ?? "") ?? imageFromHtml(html);
   if (rec.media_type === "image" && !image) {
-    throw new Error(`no APOD image in hdurl (${rec.hdurl})`);
+    throw new Error(`no APOD image in hdurl (${rec.hdurl}) or basic_html`);
   }
 
   const copyright = stripHtml(rec.copyright ?? "");
@@ -219,7 +229,7 @@ export function normalizeApod(raw: unknown, date: string): Apod {
     media_type: rec.media_type,
     permalink: rec.permalink ?? "",
     image,
-    video_url: null,
+    video_url: rec.media_type === "video" ? videoUrlFromHtml(html) : null,
   };
 }
 
@@ -392,14 +402,33 @@ async function findLatestResolvable(log: string[], devFlags: DevFlags): Promise<
   );
 }
 
+// Only APOD photography is ever fetched. Everything the proxy serves comes
+// through normalizeApod, so this is defense in depth against a bad cache entry.
 function validateImageUrl(url: string): void {
-  const parsed = new URL(url);
-  if (parsed.protocol !== "https:") {
-    throw new Error(`Blocked image fetch: non-HTTPS scheme (${parsed.protocol})`);
+  if (!apodAssetPath(url)) {
+    throw new Error(`Blocked image fetch: not an APOD asset (${url.slice(0, 80)})`);
   }
-  if (!ALLOWED_IMAGE_HOSTS.some((suffix) => parsed.hostname.endsWith(suffix))) {
-    throw new Error(`Blocked image fetch: unexpected host (${parsed.hostname})`);
+}
+
+/**
+ * Try each image URL in order and return the first that serves. The HD
+ * original is derived from NASA's hdurl, so hdurl itself is the fallback.
+ */
+// ponytail: a 404 on the original is re-paid on every request before the
+// cached fallback hits. Add a short negative cache if that shows up in logs.
+async function firstThatServes<T>(
+  log: string[], urls: string[], attempt: (url: string) => Promise<T>,
+): Promise<T> {
+  let lastErr: unknown = new Error("no image candidates");
+  for (const url of new Set(urls)) {
+    try {
+      return await attempt(url);
+    } catch (err) {
+      lastErr = err;
+      log.push(`  [image] ${url.slice(0, 80)}… → ${err instanceof Error ? err.message : "unknown"}`);
+    }
   }
+  throw lastErr;
 }
 
 async function fetchImageCached(log: string[], url: string): Promise<Response> {
@@ -567,74 +596,46 @@ export default {
       const thumbPaths = ["/thumb", "/thumb.jpg"];
 
       if (hdPaths.includes(pathname) || sdPaths.includes(pathname)) {
-        const resolved = await findLatestResolvable(log, devFlags);
-        const imageUrl = sdPaths.includes(pathname)
-          ? resolved.image.sd
-          : resolved.image.hd;
+        const { image } = await findLatestResolvable(log, devFlags);
+        const candidates = sdPaths.includes(pathname)
+          ? [image.sd, image.hdFallback]
+          : [image.hd, image.hdFallback];
 
-        const upstream = await fetchImageCached(log, imageUrl);
+        const upstream = await firstThatServes(log, candidates, (url) => fetchImageCached(log, url));
         const contentType = upstream.headers.get("Content-Type") || "image/jpeg";
 
         res = new Response(upstream.body, {
           headers: baseHeaders(origin, { "Content-Type": contentType }),
         });
-      } else if (optimizedPaths.includes(pathname)) {
-        const resolved = await findLatestResolvable(log, devFlags);
-        const imageUrl = resolved.image.hd;
-        validateImageUrl(imageUrl);
+      } else if (optimizedPaths.includes(pathname) || thumbPaths.includes(pathname)) {
+        const { image } = await findLatestResolvable(log, devFlags);
+        const thumb = thumbPaths.includes(pathname);
 
-        const imageOpts: RequestInitCfPropertiesImage = {
-          fit: "scale-down",
-          width: 1200,
-          quality: 85,
-        };
+        const imageOpts: RequestInitCfPropertiesImage = thumb
+          ? { fit: "scale-down", width: 32, quality: 30, format: "webp", blur: 5 }
+          : { fit: "scale-down", width: 1200, quality: 85 };
 
-        const accept = request.headers.get("Accept") || "";
-        if (/image\/avif/.test(accept)) {
-          imageOpts.format = "avif";
-        } else if (/image\/webp/.test(accept)) {
-          imageOpts.format = "webp";
+        if (!thumb) {
+          const accept = request.headers.get("Accept") || "";
+          if (/image\/avif/.test(accept)) {
+            imageOpts.format = "avif";
+          } else if (/image\/webp/.test(accept)) {
+            imageOpts.format = "webp";
+          }
         }
 
-        log.push(`  [optimized] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
-
-        const upstream = await fetch(imageUrl, {
-          cf: { image: imageOpts },
+        const label = thumb ? "thumb" : "optimized";
+        const upstream = await firstThatServes(log, [image.hd, image.hdFallback], async (url) => {
+          validateImageUrl(url);
+          log.push(`  [${label}] ${url.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
+          const transformed = await fetch(url, { cf: { image: imageOpts } });
+          if (!transformed.ok) {
+            throw new Error(`Image transform failed: ${transformed.status}`);
+          }
+          return transformed;
         });
 
-        if (!upstream.ok) {
-          throw new Error(`Image transform failed: ${upstream.status}`);
-        }
-
-        const contentType = upstream.headers.get("Content-Type") || "image/jpeg";
-
-        res = new Response(upstream.body, {
-          headers: baseHeaders(origin, { "Content-Type": contentType }),
-        });
-      } else if (thumbPaths.includes(pathname)) {
-        const resolved = await findLatestResolvable(log, devFlags);
-        const imageUrl = resolved.image.hd;
-        validateImageUrl(imageUrl);
-
-        const imageOpts: RequestInitCfPropertiesImage = {
-          fit: "scale-down",
-          width: 32,
-          quality: 30,
-          format: "webp",
-          blur: 5,
-        };
-
-        log.push(`  [thumb] ${imageUrl.slice(0, 80)}… → cf.image ${JSON.stringify(imageOpts)}`);
-
-        const upstream = await fetch(imageUrl, {
-          cf: { image: imageOpts },
-        });
-
-        if (!upstream.ok) {
-          throw new Error(`Thumbnail transform failed: ${upstream.status}`);
-        }
-
-        const contentType = upstream.headers.get("Content-Type") || "image/webp";
+        const contentType = upstream.headers.get("Content-Type") || (thumb ? "image/webp" : "image/jpeg");
 
         res = new Response(upstream.body, {
           headers: baseHeaders(origin, { "Content-Type": contentType }),
