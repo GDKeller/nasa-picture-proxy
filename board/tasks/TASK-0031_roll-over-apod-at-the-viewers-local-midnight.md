@@ -6,7 +6,7 @@ created: 2026-04-09
 parent: EPIC-0002
 ---
 
-# Local timezone APOD rollover
+# Roll over APOD at the viewer's local midnight
 
 Let users receive the new image at midnight in their local timezone instead of waiting for ET rollover. Spawned from NOTE-0016. Nice-to-have.
 

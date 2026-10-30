@@ -7,7 +7,7 @@ updated: 2026-04-09
 parent: EPIC-0003
 ---
 
-# Automated daily cache warming via Cron Trigger
+# Warm the cache daily via Cron Trigger
 
 **Priority 1** — today's-image reliability. Proactively populating the cache right after APOD rollover means the first visitor never hits a cold path, and (combined with TASK-0020) keeps a fresh entry in stale cache so NASA outages never exhaust our fallback.
 

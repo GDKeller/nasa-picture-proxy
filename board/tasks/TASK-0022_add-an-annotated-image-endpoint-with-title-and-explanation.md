@@ -4,7 +4,7 @@ status: backlog
 created: 2026-04-08
 ---
 
-# Annotated image endpoint with title and explanation
+# Add an annotated image endpoint with title and explanation
 
 ## Idea
 

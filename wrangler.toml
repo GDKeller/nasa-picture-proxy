@@ -1,6 +1,7 @@
 name = "nasa-picture-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-09-25"
+account_id = "2c69d8c9e9f28d3d16d48a2a9d28c26a"
 
 [[routes]]
 pattern = "api.nasapicture.com"
