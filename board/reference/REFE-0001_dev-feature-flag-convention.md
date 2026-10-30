@@ -107,8 +107,8 @@ Gated on `env.ENVIRONMENT === "development"` (set in `.dev.vars`, gitignored). I
 
 | Param | Task | Description |
 |---|---|---|
-| `?dev=video` | TASK-0019 | Return a hard-coded video APOD fixture *with* `thumbnail_url` so the video-thumbnail branch of `resolveApod` can be exercised. Only short-circuits for today's date; walkback iterations still hit the normal path. Bypasses the APOD cache entirely so fixture runs never pollute real cached data. |
-| `?dev=video-no-thumb` | TASK-0019 | Return a hard-coded video APOD fixture *without* `thumbnail_url`. `resolveApod` returns null for today, so the walkback path runs and pulls the next resolvable day. |
+| `?dev=video` | TASK-0019 | Return a hard-coded video APOD fixture *with* a poster image so the video-poster branch of `resolveApod` can be exercised. Only short-circuits for today's date; walkback iterations still hit the normal path. Bypasses the APOD cache entirely so fixture runs never pollute real cached data. |
+| `?dev=video-no-thumb` | TASK-0019 | Return a hard-coded video APOD fixture *without* a poster (`image: null`). `resolveApod` returns null for today, so the walkback path runs and pulls the next resolvable day. |
 | `?dev=nasa-error` | TASK-0020, TASK-0044 | Skip the upstream APOD fetch and simulate an upstream failure: serve the stale cache entry if present, otherwise 502. Bypasses the primary cache so every request reliably exercises the fallback. The apod.nasa.gov scrape that used to follow the stale check was removed in EPIC-0006. |
 
 ## Why this shape

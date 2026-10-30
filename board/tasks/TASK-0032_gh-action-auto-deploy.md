@@ -44,7 +44,7 @@ jobs:
 - GitHub repository secrets:
   - `CLOUDFLARE_API_TOKEN` — needs **Workers Scripts: Edit**, **Cloudflare Pages: Edit**, **Account Settings: Read**
   - `CLOUDFLARE_ACCOUNT_ID` — target account
-- `NASA_API_KEY` is already set via `wrangler secret` on the Worker, no GH secret needed
+- The Worker needs no secrets (the apod-basic source is keyless), so no GH secret is needed for it
 
 ## Considerations
 

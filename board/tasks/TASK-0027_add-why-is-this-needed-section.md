@@ -13,7 +13,7 @@ Add a short content block between the hero image and the endpoint docs that expl
 ## What to cover
 
 - **What is APOD?** NASA has published a new Astronomy Picture of the Day every day since 1995, each with a professional explanation from astronomers.
-- **The problem.** NASA's API requires a key, rate-limits (30 req/hr on DEMO_KEY), sometimes returns videos instead of images, and doesn't offer a single stable URL that always points to "today's image."
+- **The problem.** NASA publishes APOD as a web page and a JSON feed, sometimes posts a video instead of an image, and doesn't offer a single stable URL that always points to "today's image."
 - **What this solves.** A fixed URL that always returns today's image, no API key, no rate limits (edge-cached), no video days (auto-fallback). Drop it in an `<img>` tag.
 
 ## Tone and placement
