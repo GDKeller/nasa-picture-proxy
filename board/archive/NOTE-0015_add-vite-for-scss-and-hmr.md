@@ -1,6 +1,6 @@
 ---
 type: note
-status: refined
+status: processed
 created: 2026-04-01
 tasks: [TASK-0012, TASK-0013, TASK-0014]
 ---

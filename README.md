@@ -1,6 +1,6 @@
 # NASA Picture Proxy
 
-A Cloudflare Worker that proxies [NASA's Astronomy Picture of the Day (APOD)](https://apod.nasa.gov/apod/astropix.html) behind a fixed URL. An HTTP GET request returns today's image without needing an API key or parsing JSON.
+A Cloudflare Worker that proxies [NASA's Astronomy Picture of the Day (APOD)](https://science.nasa.gov/apod/) behind a fixed URL. An HTTP GET request returns today's image without needing an API key or parsing JSON.
 
 [nasapicture.com](https://nasapicture.com) · [GitHub](https://github.com/GDKeller/nasa-picture-proxy)
 
@@ -39,12 +39,13 @@ Fetch metadata:
 curl https://api.nasapicture.com/info | jq .
 ```
 
-Returns data from the APOD API:
-- Direct URLs of APOD images
+Returns the day's APOD record from NASA's science.nasa.gov feed:
+- Direct URLs of APOD images (and the video, on video days)
 - Date
 - Image title
 - Image explanation
 - Copyright info
+- Link to the APOD article on science.nasa.gov
 
 > [!TIP]
 > For those without the tech savvy to understand (i.e. remember) "api", all routes are also accessible at `get.nasapicture.com`
@@ -53,20 +54,24 @@ Returns data from the APOD API:
 
 | Path | Response |
 |------|----------|
-| `/` | Today's APOD image (HD, falls back to standard) |
+| `/` | Today's APOD image (full resolution) |
 | `/image.jpg` | Same as `/` with file extension |
 | `/sd` | Standard resolution image |
 | `/image-sd.jpg` | Same as `/sd` with file extension |
-| `/info` | JSON metadata (title, date, explanation, copyright) |
+| `/optimized` | Optimized image (≤1200px, auto WebP/AVIF) |
+| `/image-optimized.jpg` | Same as `/optimized` with file extension |
+| `/thumb` | Tiny blurred thumbnail (32px WebP, ~1KB) |
+| `/thumb.jpg` | Same as `/thumb` with file extension |
+| `/info` | JSON metadata (title, date, explanation, copyright, image and article URLs, image dimensions) |
 | `/about` | Plain-text description and route listing |
 
-When the APOD of the day is a video, the proxy walks backwards up to 7 days to find the most recent image.
+When the APOD of the day is a video, the proxy serves NASA's poster image for it, and `/info` returns the video's URL. If there's nothing to show (a video with no poster, or an image in a format browsers can't display), it walks backwards up to 7 days to find the most recent image.
 
 ## How it works
 
-Both the NASA API call and the upstream image fetch are cached at Cloudflare's edge via `cf: { cacheTtl, cacheEverything }`. Caching is purely edge-based; there's no KV, D1, or cron involved.
+The Worker fetches each day's record from NASA's `apod-basic` feed on science.nasa.gov. "Today" is the date in `America/New_York`, so it rolls over at midnight ET. If NASA hasn't published today's entry yet, the proxy serves yesterday's.
 
-When the date rolls over, `formatDate(new Date())` produces a new date string, which changes the API request URL and therefore the cache key. The response updates automatically.
+The record and the image bytes are cached with the Workers Cache API (`caches.default`) for 6 hours. A second copy is kept for 24 hours and served if NASA's site is down. Cache keys carry a version, so a change of source or format never serves an entry cached by an older one. There's no KV, D1, or cron involved.
 
 ## Author
 

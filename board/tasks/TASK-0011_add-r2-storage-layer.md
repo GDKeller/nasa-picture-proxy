@@ -1,9 +1,8 @@
 ---
 type: task
-status: todo
+status: backlog
 created: 2026-04-01
 parent: EPIC-0003
-blocked-by: TASK-0010
 ---
 
 # Add R2 storage layer for APOD image archiving

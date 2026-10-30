@@ -1,12 +1,12 @@
 ---
 type: task
-status: todo
+status: backlog
 created: 2026-03-26
 ---
 
 # Apply for NASA Data Insignia
 
-The NASA Data Insignia is a badge for products that use publicly available NASA data. We qualify since we proxy the APOD API.
+The NASA Data Insignia is a badge for products that use publicly available NASA data. We qualify since we proxy NASA's APOD data.
 
 - Email `agency-brand@mail.nasa.gov` to request approval
 - Details: https://www.nasa.gov/nasa-data-insignia/

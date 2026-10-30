@@ -88,7 +88,7 @@
           <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/" target="_blank"
             rel="noopener noreferrer">
             <code class="endpoint-route">/</code>
-            <span class="endpoint-desc">HD image, falls back to standard</span>
+            <span class="endpoint-desc">Full-resolution image</span>
             <code class="endpoint-type">image/*</code>
           </a>
           <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/sd" target="_blank"
@@ -96,6 +96,18 @@
             <code class="endpoint-route">/sd</code>
             <span class="endpoint-desc">Standard resolution image</span>
             <code class="endpoint-type">image/*</code>
+          </a>
+          <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/optimized" target="_blank"
+            rel="noopener noreferrer">
+            <code class="endpoint-route">/optimized</code>
+            <span class="endpoint-desc">Web-sized, up to 1200px, WebP or AVIF</span>
+            <code class="endpoint-type">image/*</code>
+          </a>
+          <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/thumb" target="_blank"
+            rel="noopener noreferrer">
+            <code class="endpoint-route">/thumb</code>
+            <span class="endpoint-desc">Tiny blurred placeholder, about 1KB</span>
+            <code class="endpoint-type">image/webp</code>
           </a>
           <a class="endpoint-row animated-bottom-border" href="https://api.nasapicture.com/info" target="_blank"
             rel="noopener noreferrer">
@@ -120,7 +132,7 @@
           rel="noopener noreferrer">Grant Keller</a> at <a href="https://davantsystems.com"
           class="animated-bottom-border" target="_blank" rel="noopener noreferrer">Davant Systems</a></p>
       <p class="footer-links">
-        <a href="https://apod.nasa.gov/" class="animated-bottom-border" target="_blank" rel="noopener noreferrer">NASA
+        <a href="https://science.nasa.gov/apod/" class="animated-bottom-border" target="_blank" rel="noopener noreferrer">NASA
           Astronomy Picture of the Day</a>
         <a href="https://github.com/GDKeller/nasa-picture-proxy" class="animated-bottom-border" target="_blank"
           rel="noopener noreferrer">Source</a>
