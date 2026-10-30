@@ -1,9 +1,9 @@
 /**
  * APOD Proxy — Cloudflare Worker
  *
- * Serves NASA's Astronomy Picture of the Day from a stable URL.
- * Uses Cloudflare's edge cache for both the API response and the
- * image bytes — no KV, no cron, no external storage.
+ * Serves NASA's Astronomy Picture of the Day (science.nasa.gov/apod) from a
+ * stable URL. Caches both the APOD record and the image bytes in Cloudflare's
+ * edge cache, with no KV, no cron, and no external storage.
  *
  * Routes:
  *   GET /          → today's APOD image (high res, falls back to standard)
@@ -704,7 +704,7 @@ export default {
           "",
           "  Proxy for NASA's Astronomy Picture of the Day.",
           "  Returns today's image at a static URL, no API key required.",
-          "  Video days are skipped automatically.",
+          "  On video days, serves the video's poster or the latest image.",
           "  Useful for wallpapers, <img> sources, and other zero-JS environments.",
           "",
           "  Usage:",
@@ -723,6 +723,7 @@ export default {
           "    /about               This page",
           "",
           "  Homepage: https://nasapicture.com",
+          "  APOD:     https://science.nasa.gov/apod/",
           "",
           "  Built by Grant Keller | https://grantkeller.dev",
           "",
