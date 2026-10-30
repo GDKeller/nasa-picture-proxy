@@ -1,6 +1,6 @@
 ---
 type: task
-status: backlog
+status: done
 priority: 2
 created: 2026-10-30
 parent: EPIC-0003
@@ -32,3 +32,11 @@ Move `landing/` from Vite 6 to Vite 8, the current major (8.3.5 on 2026-10-30).
 - `landing/` builds and serves on Vite 8.x.
 - `npm audit --prefix landing` reports no high or critical findings.
 - The built page renders the same as before.
+
+## Outcome
+
+Done on 2026-10-30 in `7c696dd`: Vite 8.3.5, Sass 1.107.0, and `npm audit --prefix landing` reports 0 vulnerabilities.
+
+- `vite.config.ts` needed no migration changes. The only CSS change is Lightning CSS minification. Computed styles and layout match the Vite 6 build in a current browser.
+- Kept Vite 8's default browser targets (Safari 16.4+). Lightning CSS emits range media queries (`@media (width>=640px)`), so Safari and iOS before 16.4 get the base layout at every width. Accepted as graceful degradation instead of setting `build.cssTarget`.
+- Related, same branch: `.nvmrc` pins Node 24 (`ea61165`), and a dev-only Vite plugin points the hero image at the local Worker so dev page loads don't hit production (`00352ed`).

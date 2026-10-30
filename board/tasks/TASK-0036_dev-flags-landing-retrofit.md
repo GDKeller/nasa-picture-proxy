@@ -8,7 +8,7 @@ parent: EPIC-0002
 
 # Retrofit landing page dev flags to the shared convention
 
-The landing page already uses `?dev=fallback` and `?dev=stale` query params (`landing/index.html:151-155`), but it predates the cross-project shared convention documented in REFE-0001. Retrofit to match.
+The landing page already uses `?dev=fallback` and `?dev=stale` query params (`landing/index.html:162-165`), but it predates the cross-project shared convention documented in REFE-0001. Retrofit to match.
 
 ## Gaps vs. REFE-0001
 
