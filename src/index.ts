@@ -30,6 +30,11 @@ const MAX_LOOKBACK_DAYS = 7;
 const CACHE_TTL = 21600;      // 6 hours — APOD changes once/day
 const STALE_CACHE_TTL = 86400; // 24 hours — fallback when the APOD source is down
 
+// Prefix for every cache key. Bump the version whenever the cached shape or
+// the upstream source changes; old keys are never read again and expire on
+// their own. The host must be in our zone or caches.default drops the write.
+export const CACHE_BASE = "https://api.nasapicture.com/_cache/v2";
+
 // Upstream record, trimmed by `_fields`. Only what the proxy cannot work
 // without is required; everything else degrades to empty.
 const ApodBasic = z.object({
@@ -247,7 +252,7 @@ export function resolveApod(apod: Apod): ResolvedApod | null {
 // ────────────────────────────────────────────────────────────
 
 function apodCacheUrl(key: string): string {
-  return `https://api.nasapicture.com/_cache/apod/${key}`;
+  return `${CACHE_BASE}/apod/${key}`;
 }
 
 function todayET(): string {
@@ -435,8 +440,8 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
   validateImageUrl(url);
 
   const cache = caches.default;
-  const cacheReq = new Request(`https://api.nasapicture.com/_cache/image/${encodeURIComponent(url)}`);
-  const staleReq = new Request(`https://api.nasapicture.com/_cache/image/${encodeURIComponent(url)}:stale`);
+  const cacheReq = new Request(`${CACHE_BASE}/image/${encodeURIComponent(url)}`);
+  const staleReq = new Request(`${CACHE_BASE}/image/${encodeURIComponent(url)}:stale`);
 
   const cached = await cache.match(cacheReq);
   if (cached) {
@@ -485,7 +490,7 @@ async function fetchImageDimensions(log: string[], imageUrl: string): Promise<Im
   validateImageUrl(imageUrl);
 
   const cache = caches.default;
-  const cacheKey = `https://api.nasapicture.com/_cache/dimensions/${encodeURIComponent(imageUrl)}`;
+  const cacheKey = `${CACHE_BASE}/dimensions/${encodeURIComponent(imageUrl)}`;
   const cacheReq = new Request(cacheKey);
   const staleReq = new Request(`${cacheKey}:stale`);
 
