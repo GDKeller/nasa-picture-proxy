@@ -57,13 +57,17 @@ Serving a walked-back day, a stale entry, or a 502 is only logged through buffer
 
 `npm audit` on `dev` reports 12 vulnerabilities (9 high), all in dev and tooling dependencies (`wrangler`, `vitest`, and their transitive deps). Runtime dependencies report 0. Every finding has a non-breaking fix.
 
+### TASK-0056: Upgrade the landing page to Vite 8 [P2]
+
+`landing/` builds with Vite 6.4.1, two majors behind. Vite 8 swaps Rollup and esbuild for Rolldown. `npm audit --prefix landing` reports 5 high findings, `vite` among them. The root package already runs Vite 8 through `vitest`.
+
 ## Sequence
 
 1. ~~TASK-0020~~ — done
 2. **TASK-0021** [P1] — Cron cache warming. Now that scrape is in place, cron warming guarantees stale cache never runs dry.
 3. TASK-0011 — R2 storage layer. Larger effort, unblocks follow-on features (gallery, timezone Phase 2).
 4. TASK-0032 — GitHub Action. Small, can be done anytime.
-5. TASK-0049, TASK-0050, TASK-0055 — small, independent, can be done anytime.
+5. TASK-0049, TASK-0050, TASK-0055, TASK-0056 — small, independent, can be done anytime.
 6. TASK-0048 — before TASK-0011, which reworks the same image path.
 7. TASK-0051 — only once a missing original shows up in the logs.
 
