@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-10-21T03:32:42.747Z",
         "reason": "Claude: the <img> is example-usage text inside the text/plain /about response, not rendered markup"
+      },
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "landing/index.html"
+        ],
+        "createdAt": "2026-10-30T07:47:31.134Z",
+        "reason": "user confirmed: landing heading sizes are intentional"
       }
     ]
   }
