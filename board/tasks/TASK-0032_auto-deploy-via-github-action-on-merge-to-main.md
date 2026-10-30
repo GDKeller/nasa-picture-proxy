@@ -6,7 +6,7 @@ created: 2026-04-09
 parent: EPIC-0003
 ---
 
-# GitHub Action auto-deploy on merge to main
+# Auto-deploy via GitHub Action on merge to main
 
 Automate the manual `npm run deploy` step after each PR merge so Worker and Pages both deploy on `push` to `main`. Spawned from NOTE-0014.
 
