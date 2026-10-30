@@ -39,7 +39,7 @@ jobs:
 
 ## Prerequisites
 
-- **Create `.nvmrc` at the repo root** pinning Node LTS (e.g., `24`) so CI and local dev stay in sync. This file does not exist yet — it must be created as part of this task. The workflow's `node-version-file: .nvmrc` depends on it. (Alternative: drop `node-version-file` and use `node-version: '24'` inline, but `.nvmrc` is preferred so local dev via nvm stays in sync.)
+- `.nvmrc` at the repo root pins Node `24` (added in `ea61165`), so CI and local dev stay in sync. The workflow's `node-version-file: .nvmrc` reads it.
 - GitHub repository secret `CLOUDFLARE_API_TOKEN` — needs **Workers Scripts: Edit**, **Cloudflare Pages: Edit**, **Account Settings: Read**
 - No `CLOUDFLARE_ACCOUNT_ID` secret is needed. The account ID is not a credential and is committed in two places:
   - `wrangler.toml` `account_id`, read by `wrangler deploy`, `tail`, and `secret`.
