@@ -6,7 +6,7 @@
  * edge cache, with no KV, no cron, and no external storage.
  *
  * Routes:
- *   GET /          → today's APOD image (high res, falls back to standard)
+ *   GET /          → today's APOD image (full resolution)
  *   GET /sd        → today's APOD image (standard res)
  *   GET /optimized → optimized image (≤1200px, auto WebP/AVIF)
  *   GET /thumb     → tiny thumbnail (32px, blurred WebP)
@@ -27,6 +27,8 @@ const APOD_BASIC_FIELDS = "date,title,media_type,explanation,copyright,hdurl,per
 const APOD_ASSET_HOST = "https://assets.science.nasa.gov";
 const USER_AGENT = "nasa-picture-proxy/1.0 (+https://nasapicture.com)";
 const MAX_LOOKBACK_DAYS = 7;
+const UPSTREAM_TIMEOUT_MS = 10_000; // apod-basic is a small JSON record
+const IMAGE_TIMEOUT_MS = 30_000;    // originals run to tens of MB
 const CACHE_TTL = 21600;      // 6 hours — APOD changes once/day
 const STALE_CACHE_TTL = 86400; // 24 hours — fallback when the APOD source is down
 
@@ -40,7 +42,7 @@ const CACHE_BASE = "https://api.nasapicture.com/_cache/v2";
 const ApodBasic = z.object({
   date: z.string(),
   title: z.string().trim().min(1),
-  media_type: z.enum(["image", "video"]),
+  media_type: z.string(), // image, video, and rarely others (2025-03-02 is "iframe")
   explanation: z.string().nullish(),
   copyright: z.string().nullish(),
   hdurl: z.string().nullish(),
@@ -60,9 +62,9 @@ export interface Apod {
   title: string;
   explanation: string;
   copyright: string | null;
-  media_type: "image" | "video";
+  media_type: string;
   permalink: string;
-  image: ApodImage | null; // null only on video days without a usable poster
+  image: ApodImage | null; // null when NASA has nothing we can serve (no poster, .tif, iframe days)
   video_url: string | null;
 }
 
@@ -78,13 +80,6 @@ export interface DevFlags {
   enabled: boolean;
   mode: string | null;
   tools: Set<string>;
-}
-
-const inflightApod = new Map<string, Promise<Apod | null>>();
-
-/** Test-only: clear the in-flight promise map between test cases. */
-export function __resetInflightApod(): void {
-  inflightApod.clear();
 }
 
 // ────────────────────────────────────────────────────────────
@@ -144,10 +139,11 @@ export function parseDevFlags(url: URL, env: Env): DevFlags {
 // Upstream normalization
 // ────────────────────────────────────────────────────────────
 
-// APOD photography lives under one asset tree. Anything else on the host
-// (site chrome, the generic news thumbnail, videos) is not an APOD image.
+// APOD images live under /science/ on the asset host: mostly the APOD tree,
+// sometimes a mission's (Webb, Photojournal). When a day has no image, NASA
+// fills hdurl with a generic placeholder from cosmic-origins/images/misc/.
 const APOD_ASSET_PATH =
-  /^\/(?:dynamicimage\/assets|content\/dam)\/(science\/cds\/apod\/.+\.(?:jpe?g|png|gif|webp))$/i;
+  /^\/(?:dynamicimage\/assets|content\/dam)\/(science\/(?!astro\/programs\/cosmic-origins\/images\/misc\/).+\.(?:jpe?g|png|gif|webp))$/i;
 
 /** Asset path under assets.science.nasa.gov, or null when the URL points anywhere else. */
 export function apodAssetPath(url: string): string | null {
@@ -159,6 +155,22 @@ export function apodAssetPath(url: string): string | null {
   }
   if (parsed.protocol !== "https:" || parsed.hostname !== "assets.science.nasa.gov") return null;
   return parsed.pathname.match(APOD_ASSET_PATH)?.[1] ?? null;
+}
+
+function httpsUrl(url: string | null | undefined): string | null {
+  try {
+    return url && new URL(url).protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+function onAssetHost(url: string | null | undefined): boolean {
+  try {
+    return new URL(url ?? "").hostname === "assets.science.nasa.gov";
+  } catch {
+    return false;
+  }
 }
 
 function apodImage(url: string): ApodImage | null {
@@ -173,7 +185,13 @@ function apodImage(url: string): ApodImage | null {
 
 // basic_html is the legacy APOD page layout. It is the only place the video
 // embed lives, and the only place the real image lives when hdurl is the
-// generic placeholder thumbnail (some older entries).
+// generic placeholder thumbnail (some older entries). Callers pass only the
+// media section, above "<b> Explanation: </b>", so a link in the explanation
+// to some other APOD's image is never taken for today's.
+function mediaSection(html: string): string {
+  return html.split(/<b>\s*Explanation:\s*<\/b>/i)[0];
+}
+
 function imageFromHtml(html: string): ApodImage | null {
   for (const m of html.matchAll(/(?:href|src|poster)="([^"]+)"/gi)) {
     const image = apodImage(m[1].replace(/&amp;/gi, "&"));
@@ -206,8 +224,10 @@ function stripHtml(s: string): string {
 /**
  * Validate an apod-basic record and map it to the internal model. Throws on
  * anything that must never be cached or served: schema failures, a record
- * for a different date, or an image day with no APOD image (the 2026-10-20
- * logo outage looked exactly like that).
+ * for a different date, or an image day whose hdurl points off the asset
+ * host (the 2026-10-20 logo outage looked exactly like that). A real day
+ * with nothing servable (.tif only, iframe days) maps to image: null, which
+ * is cached and walked past like a video day without a poster.
  */
 export function normalizeApod(raw: unknown, date: string): Apod {
   const parsed = ApodBasic.safeParse(raw);
@@ -219,9 +239,10 @@ export function normalizeApod(raw: unknown, date: string): Apod {
     throw new Error(`date mismatch: asked ${date}, got ${rec.date}`);
   }
 
-  const html = rec.basic_html ?? "";
-  const image = apodImage(rec.hdurl ?? "") ?? imageFromHtml(html);
-  if (rec.media_type === "image" && !image) {
+  const media = mediaSection(rec.basic_html ?? "");
+  const servable = rec.media_type === "image" || rec.media_type === "video";
+  const image = servable ? apodImage(rec.hdurl ?? "") ?? imageFromHtml(media) : null;
+  if (rec.media_type === "image" && !image && !onAssetHost(rec.hdurl)) {
     throw new Error(`no APOD image in hdurl (${rec.hdurl}) or basic_html`);
   }
 
@@ -229,12 +250,14 @@ export function normalizeApod(raw: unknown, date: string): Apod {
   return {
     date: rec.date,
     title: stripHtml(rec.title),
-    explanation: stripHtml(rec.explanation ?? "").replace(/^Explanation:\s*/, ""),
+    explanation: stripHtml(rec.explanation ?? "")
+      .replace(/^Explanation:\s*/, "")
+      .replace(/\s*Tomorrow(?:'|’|&#0?39;)s picture:.*$/i, ""),
     copyright: copyright || null,
     media_type: rec.media_type,
-    permalink: rec.permalink ?? "",
+    permalink: httpsUrl(rec.permalink) ?? "",
     image,
-    video_url: rec.media_type === "video" ? videoUrlFromHtml(html) : null,
+    video_url: rec.media_type === "video" ? httpsUrl(videoUrlFromHtml(media)) : null,
   };
 }
 
@@ -299,20 +322,7 @@ async function fetchApod(log: string[], devFlags: DevFlags, date: string): Promi
     }
   }
 
-  // Deduplicate concurrent requests for the same date
-  const inflight = inflightApod.get(date);
-  if (inflight) {
-    log.push(`  [fetchApod] ${date} → coalesced with in-flight request`);
-    return inflight;
-  }
-
-  const promise = fetchApodFromUpstream(log, devFlags, date, cacheReq, staleReq);
-  inflightApod.set(date, promise);
-  try {
-    return await promise;
-  } finally {
-    inflightApod.delete(date);
-  }
+  return fetchApodFromUpstream(log, devFlags, date, cacheReq, staleReq);
 }
 
 async function handleUpstreamFailure(
@@ -342,9 +352,16 @@ async function fetchApodFromUpstream(
 
   // apod-basic keys entries by YYMMDD, like the old apYYMMDD.html pages did.
   const yymmdd = date.slice(2).replaceAll("-", "");
-  const res = await fetch(`${APOD_BASIC_URL}/${yymmdd}?_fields=${APOD_BASIC_FIELDS}`, {
-    headers: { "User-Agent": USER_AGENT },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${APOD_BASIC_URL}/${yymmdd}?_fields=${APOD_BASIC_FIELDS}`, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "unknown";
+    return handleUpstreamFailure(log, cache, staleReq, date, `fetch failed: ${msg}`);
+  }
   log.push(`  [fetchApod] ${date} → ${res.status}`);
 
   if (res.status === 404) {
@@ -407,8 +424,9 @@ async function findLatestResolvable(log: string[], devFlags: DevFlags): Promise<
   );
 }
 
-// Only APOD photography is ever fetched. Everything the proxy serves comes
-// through normalizeApod, so this is defense in depth against a bad cache entry.
+// Only NASA photography on the asset host is ever fetched. Everything the
+// proxy serves comes through normalizeApod, so this is defense in depth
+// against a bad cache entry.
 function validateImageUrl(url: string): void {
   if (!apodAssetPath(url)) {
     throw new Error(`Blocked image fetch: not an APOD asset (${url.slice(0, 80)})`);
@@ -449,21 +467,31 @@ async function fetchImageCached(log: string[], url: string): Promise<Response> {
     return cached;
   }
 
-  const res = await fetch(url);
+  let res: Response | null = null;
+  let failure = "";
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS) });
+  } catch (err) {
+    failure = err instanceof Error ? err.message : "unknown";
+  }
+  const contentType = res?.headers.get("Content-Type") ?? "";
+  // A 200 that isn't an image (a block page, a soft 404) is a failure too.
+  if (res && !(res.ok && contentType.startsWith("image/"))) {
+    failure = `${res.status} ${contentType}`;
+  }
 
-  log.push(`  [fetchImage] ${url.slice(0, 80)}… → ${res.status}`);
+  log.push(`  [fetchImage] ${url.slice(0, 80)}… → ${failure || res?.status}`);
 
-  if (!res.ok) {
+  if (failure || !res) {
     // Try stale cache before giving up
     const stale = await cache.match(staleReq);
     if (stale) {
       log.push(`  [fetchImage] ${url.slice(0, 80)}… → stale cache fallback`);
       return stale;
     }
-    throw new Error(`Image fetch failed: ${res.status}`);
+    throw new Error(`Image fetch failed: ${failure}`);
   }
 
-  const contentType = res.headers.get("Content-Type") || "image/jpeg";
   const contentLength = res.headers.get("Content-Length");
   const cacheHeaders: Record<string, string> = {
     "Content-Type": contentType,
@@ -642,12 +670,13 @@ export default {
 
         const contentType = upstream.headers.get("Content-Type") || (thumb ? "image/webp" : "image/jpeg");
 
+        // The format follows Accept, so shared caches must key on it.
         res = new Response(upstream.body, {
-          headers: baseHeaders(origin, { "Content-Type": contentType }),
+          headers: baseHeaders(origin, { "Content-Type": contentType, ...(thumb ? {} : { "Vary": "Accept" }) }),
         });
       } else if (pathname === "/info") {
         const endpoints = {
-          "/": "Today's APOD image (high resolution, falls back to standard)",
+          "/": "Today's APOD image (full resolution)",
           "/image.jpg": "Same as / with file extension (for contexts that need one)",
           "/sd": "Today's APOD image (standard resolution)",
           "/image-sd.jpg": "Same as /sd with file extension",
@@ -684,7 +713,7 @@ export default {
           const message = err instanceof Error ? err.message : "Unknown error";
           res = new Response(
             JSON.stringify({ error: message, endpoints }, null, 2),
-            { status: 502, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+            { status: 502, headers: baseHeaders(origin, { "Content-Type": "application/json", "Cache-Control": "no-store" }) },
           );
         }
       } else if (pathname === "/about") {
@@ -742,7 +771,7 @@ export default {
       const message = err instanceof Error ? err.message : "Unknown error";
       res = new Response(
         JSON.stringify({ error: message }),
-        { status: 502, headers: baseHeaders(origin, { "Content-Type": "application/json" }) },
+        { status: 502, headers: baseHeaders(origin, { "Content-Type": "application/json", "Cache-Control": "no-store" }) },
       );
     }
 

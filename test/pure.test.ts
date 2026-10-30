@@ -96,9 +96,18 @@ describe("apodAssetPath", () => {
     expect(apodAssetPath(`${ASSETS}/dynamicimage/assets/${encoded}`)).toBe(encoded);
   });
 
-  it("rejects the NASA logo, the placeholder thumbnail, videos, other hosts, and junk", () => {
+  it("accepts NASA images outside the APOD tree (2026-08-26 Webb, 2026-07-29 Photojournal)", () => {
+    const webb = "science/missions/webb/science/2026/08/STScI-01KX6D0XBHSYP7Q1EM5QTC43RP.png";
+    const pia = "science/psd/photojournal/pia/pia26/pia26586/PIA26586.png";
+    expect(apodAssetPath(`${ASSETS}/dynamicimage/assets/${webb}?w=4000`)).toBe(webb);
+    expect(apodAssetPath(`${ASSETS}/dynamicimage/assets/${pia}`)).toBe(pia);
+  });
+
+  it("rejects the NASA logo, the placeholder thumbnails, videos, other hosts, and junk", () => {
     expect(apodAssetPath("https://science.nasa.gov/wp-content/themes/nasa-child/assets/images/nasa-logo@2x.png")).toBeNull();
     expect(apodAssetPath(`${ASSETS}/dynamicimage/assets/science/astro/programs/cosmic-origins/images/misc/news-thumbnail.png?w=594`)).toBeNull();
+    expect(apodAssetPath(`${ASSETS}/dynamicimage/assets/science/astro/programs/cosmic-origins/images/misc/NASA-Meatball-Feature5.png`)).toBeNull();
+    expect(apodAssetPath(`${ASSETS}/dynamicimage/assets/site/chrome/logo.png`)).toBeNull();
     expect(apodAssetPath(`${ASSETS}/content/dam/science/cds/apod/apod/2026/october/CRS35-Holland30s1080p.mp4`)).toBeNull();
     expect(apodAssetPath(`http://assets.science.nasa.gov/content/dam/${path}`)).toBeNull();
     expect(apodAssetPath(`https://evil.example/content/dam/${path}`)).toBeNull();
@@ -185,7 +194,48 @@ describe("normalizeApod", () => {
   it("throws on schema failures", () => {
     expect(() => normalizeApod(notFound, "2026-12-31")).toThrow(/invalid record/);
     expect(() => normalizeApod({ ...image261020, title: " " }, "2026-10-20")).toThrow(/invalid record/);
-    expect(() => normalizeApod({ ...image261020, media_type: "other" }, "2026-10-20")).toThrow(/invalid record/);
+    expect(() => normalizeApod({ ...image261020, media_type: 42 }, "2026-10-20")).toThrow(/invalid record/);
+  });
+
+  it("maps an unknown media type (2025-03-02 is \"iframe\") to image: null instead of failing", () => {
+    const apod = normalizeApod({ ...image261020, media_type: "iframe" }, "2026-10-20");
+    expect(apod.media_type).toBe("iframe");
+    expect(apod.image).toBeNull();
+    expect(apod.video_url).toBeNull();
+  });
+
+  it("maps an image day with only an unservable asset (2026-01-10 is a .tif) to image: null", () => {
+    const apod = normalizeApod({
+      ...image261020,
+      hdurl: `${ASSETS}/content/dam/science/cds/apod/apod/2026/january/jupiter2026.tif?w=987&h=984`,
+      basic_html: "",
+    }, "2026-10-20");
+    expect(apod.image).toBeNull();
+  });
+
+  it("drops the trailing \"Tomorrow's picture\" teaser from the explanation", () => {
+    expect(image261020.explanation).toMatch(/Tomorrow's picture/);
+    expect(normalizeApod(image261020, "2026-10-20").explanation).toMatch(/hanging up laundry\.$/);
+  });
+
+  it("ignores APOD images linked from the explanation", () => {
+    const other = `${ASSETS}/content/dam/science/cds/apod/apod/2019/may/other.jpg`;
+    const apod = normalizeApod({
+      ...image261020,
+      hdurl: `${ASSETS}/dynamicimage/assets/science/astro/programs/cosmic-origins/images/misc/news-thumbnail.png`,
+      basic_html: `<h1>Title</h1>\n<b> Explanation: </b> Compare with <a href="${other}">this one</a>.`,
+    }, "2026-10-20");
+    expect(apod.image).toBeNull();
+  });
+
+  it("only passes https video and permalink URLs through", () => {
+    const apod = normalizeApod({
+      ...youtube261018,
+      permalink: "javascript:alert(1)",
+      basic_html: `<iframe src="http://example.com/embed"></iframe>`,
+    }, "2026-10-18");
+    expect(apod.permalink).toBe("");
+    expect(apod.video_url).toBeNull();
   });
 
   it("tolerates missing optional fields", () => {

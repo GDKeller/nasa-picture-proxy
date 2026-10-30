@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import worker, { __resetInflightApod, apodCacheUrl, normalizeApod } from "../src/index";
+import worker, { apodCacheUrl, normalizeApod } from "../src/index";
 
 // ────────────────────────────────────────────────────────────
 // In-memory stand-ins for globals the Worker reaches for. Node gives us
@@ -42,13 +42,17 @@ function createCache() {
 
 type CacheMock = ReturnType<typeof createCache>;
 
+// Node's Request drops Cloudflare's `cf` init, so it is recorded separately.
+type CfInit = { image?: Record<string, unknown> } | undefined;
+
 interface FetchCall {
   url: string;
   method: string;
   userAgent: string | null;
+  cf: CfInit;
 }
 
-type RouteHandler = (req: Request) => Response | Promise<Response>;
+type RouteHandler = (req: Request, cf: CfInit) => Response | Promise<Response>;
 
 function createFetchMock() {
   const routes: Array<{ match: (url: string) => boolean; handler: RouteHandler }> = [];
@@ -59,9 +63,10 @@ function createFetchMock() {
       input instanceof Request
         ? new Request(input, init)
         : new Request(typeof input === "string" ? input : String(input), init);
-    calls.push({ url: req.url, method: req.method, userAgent: req.headers.get("User-Agent") });
+    const cf = (init as { cf?: CfInit } | undefined)?.cf;
+    calls.push({ url: req.url, method: req.method, userAgent: req.headers.get("User-Agent"), cf });
     for (const route of routes) {
-      if (route.match(req.url)) return route.handler(req);
+      if (route.match(req.url)) return route.handler(req, cf);
     }
     throw new Error(`fetch mock: no route for ${req.url}`);
   };
@@ -118,7 +123,6 @@ beforeEach(() => {
     default: cache,
   };
 
-  __resetInflightApod();
 });
 
 afterEach(() => {
@@ -187,8 +191,10 @@ function upstream(date: string, handler: RouteHandler): void {
   fetchMock.when(`/apod-basic/${yymmdd(date)}?`, handler);
 }
 
-function invoke(path: string, env: Record<string, string> = DEV_ENV): Promise<Response> {
-  const req = new Request(`http://localhost:8787${path}`);
+function invoke(
+  path: string, env: Record<string, string> = DEV_ENV, headers: Record<string, string> = {},
+): Promise<Response> {
+  const req = new Request(`http://localhost:8787${path}`, { headers });
   // Silence the handler's per-request console noise during tests.
   const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   return Promise.resolve(worker.fetch(req, env)).finally(() => logSpy.mockRestore());
@@ -317,6 +323,10 @@ describe("?dev=nasa-error — upstream failure", () => {
 
 describe("upstream validation", () => {
   it("treats 404 apod_basic_not_found as unpublished and walks back, caching nothing for that day", async () => {
+    // A stale entry for today must not be served: unpublished is not an
+    // outage. (An outage would serve this entry instead of walking back.)
+    await cache.put(new Request(apodCacheUrl(`${TODAY}:stale`)),
+      jsonResponse(normalizeApod(apodBasic(TODAY, { title: "From Stale Cache" }), TODAY)));
     upstream(TODAY, notFound);
     upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Yesterday" })));
     fetchMock.when(ASSETS, () => imageResponse("yesterday"));
@@ -326,7 +336,7 @@ describe("upstream validation", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.date).toBe(YESTERDAY);
     expect(body.title).toBe("Yesterday");
-    expect(cache._keys().filter((k) => k.startsWith(apodCacheUrl(TODAY)))).toEqual([]);
+    expect(cache._keys()).not.toContain(apodCacheUrl(TODAY));
   });
 
   it("treats any other 404 as an upstream failure and serves the stale entry", async () => {
@@ -471,9 +481,16 @@ describe("normal (no dev flag) path", () => {
     upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
     fetchMock.when("/content/dam/", () => imageResponse("original"));
     fetchMock.when("/dynamicimage/", () => imageResponse("rendition"));
+    const path = `science/cds/apod/apod/2026/april/${TODAY}.jpg`;
 
-    expect(await (await invoke("/")).text()).toBe("IMAGE:original");
     expect(await (await invoke("/sd")).text()).toBe("IMAGE:rendition");
+    expect(await (await invoke("/")).text()).toBe("IMAGE:original");
+    // Each route's first choice served: the param-less 1280px rendition for
+    // /sd (not NASA's full-size hdurl), the original for /.
+    expect(fetchMock.urlsMatching(ASSETS)).toEqual([
+      `${ASSETS}/dynamicimage/assets/${path}`,
+      `${ASSETS}/content/dam/${path}`,
+    ]);
   });
 });
 
@@ -495,14 +512,31 @@ describe("image resolution", () => {
     upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
     fetchMock.when("/content/dam/", () => new Response("nope", { status: 404 }));
     fetchMock.when("/dynamicimage/", () => imageResponse("transformed", "image/webp"));
+    const path = `science/cds/apod/apod/2026/april/${TODAY}.jpg`;
+    const tried = [`${ASSETS}/content/dam/${path}`, `${ASSETS}/dynamicimage/assets/${path}?w=4000&h=3000`];
+    const transforms = () => fetchMock.calls.filter((c) => c.url.startsWith(ASSETS)).map((c) => [c.url, c.cf]);
 
     const optimized = await invoke("/optimized");
     expect(optimized.status).toBe(200);
     expect(await optimized.text()).toBe("IMAGE:transformed");
+    const optimizedOpts = { image: { fit: "scale-down", width: 1200, quality: 85 } };
+    expect(transforms()).toEqual(tried.map((url) => [url, optimizedOpts]));
 
+    fetchMock.calls.length = 0;
     const thumb = await invoke("/thumb");
     expect(thumb.status).toBe(200);
     expect(thumb.headers.get("Content-Type")).toBe("image/webp");
+    const thumbOpts = { image: { fit: "scale-down", width: 32, quality: 30, format: "webp", blur: 5 } };
+    expect(transforms()).toEqual(tried.map((url) => [url, thumbOpts]));
+  });
+
+  it("/optimized picks the format from Accept and varies on it", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when(ASSETS, () => imageResponse("avif", "image/avif"));
+
+    const res = await invoke("/optimized", DEV_ENV, { Accept: "image/avif,image/webp,*/*" });
+    expect(res.headers.get("Vary")).toBe("Accept");
+    expect(fetchMock.calls.find((c) => c.cf)?.cf?.image?.format).toBe("avif");
   });
 
   it("takes the real image from basic_html when hdurl is the placeholder thumbnail", async () => {
@@ -531,9 +565,100 @@ describe("image resolution", () => {
     };
     await cache.put(new Request(apodCacheUrl(TODAY)), jsonResponse(poisoned));
 
-    const res = await invoke("/");
-    expect(res.status).toBe(502);
+    for (const path of ["/", "/sd", "/optimized", "/thumb", "/info"]) {
+      expect((await invoke(path)).status, path).toBe(502);
+    }
     expect(fetchMock.urlsMatching("evil.example")).toEqual([]);
+  });
+});
+
+/** Cache key for an image's stale copy, built from the same versioned base. */
+function imageStaleKey(url: string): string {
+  return apodCacheUrl("").replace(/apod\/$/, `image/${encodeURIComponent(url)}:stale`);
+}
+
+describe("failure handling", () => {
+  const path = `science/cds/apod/apod/2026/april/${TODAY}.jpg`;
+
+  it("serves today's stale entry when apod-basic can't be reached", async () => {
+    await cache.put(new Request(apodCacheUrl(`${TODAY}:stale`)),
+      jsonResponse(normalizeApod(apodBasic(TODAY, { title: "From Stale Cache" }), TODAY)));
+    upstream(TODAY, () => { throw new TypeError("fetch failed"); });
+    fetchMock.when(ASSETS, () => imageResponse("stale"));
+
+    const body = (await (await invoke("/info")).json()) as Record<string, unknown>;
+    expect(body.title).toBe("From Stale Cache");
+    expect(body.date).toBe(TODAY);
+  });
+
+  it("serves an image's stale copy when the image host can't be reached", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    await cache.put(new Request(imageStaleKey(`${ASSETS}/content/dam/${path}`)), imageResponse("stale-original"));
+    fetchMock.when("/content/dam/", () => { throw new TypeError("connection reset"); });
+    fetchMock.when("/dynamicimage/", () => imageResponse("hdurl-as-given"));
+
+    expect(await (await invoke("/")).text()).toBe("IMAGE:stale-original");
+  });
+
+  it("never caches or serves a 200 that isn't an image, and tries the next candidate", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when("/content/dam/", () => new Response("<html>blocked</html>", { headers: { "Content-Type": "text/html" } }));
+    fetchMock.when("/dynamicimage/", () => imageResponse("hdurl-as-given"));
+
+    const res = await invoke("/");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("IMAGE:hdurl-as-given");
+    const imageKeys = cache._keys().filter((k) => k.includes("/image/"));
+    expect(imageKeys.some((k) => k.includes(encodeURIComponent("/dynamicimage/")))).toBe(true);
+    expect(imageKeys.filter((k) => k.includes(encodeURIComponent("/content/dam/")))).toEqual([]);
+  });
+
+  it("marks 502s no-store so a brief failure isn't cached downstream", async () => {
+    fetchMock.when("/apod-basic/", () => new Response("down", { status: 503 }));
+
+    for (const route of ["/", "/info"]) {
+      const res = await invoke(route);
+      expect(res.status).toBe(502);
+      expect(res.headers.get("Cache-Control")).toBe("no-store");
+    }
+  });
+
+  it("/info reports the original's width and height", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY)));
+    fetchMock.when(ASSETS, (_req, cf) => cf?.image?.format === "json"
+      ? jsonResponse({ original: { width: 5120, height: 3840 } })
+      : imageResponse("image"));
+
+    const body = (await (await invoke("/info")).json()) as Record<string, unknown>;
+    expect([body.width, body.height]).toEqual([5120, 3840]);
+    expect(fetchMock.calls.find((c) => c.cf?.image?.format === "json")?.url).toBe(`${ASSETS}/content/dam/${path}`);
+  });
+});
+
+describe("unusual records", () => {
+  it("serves a Webb image hosted outside the APOD asset tree (2026-08-26)", async () => {
+    const webb = "science/missions/webb/science/2026/08/STScI-01KX6D0XBHSYP7Q1EM5QTC43RP.png";
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, { hdurl: `${ASSETS}/dynamicimage/assets/${webb}?w=4000&h=4000` })));
+    fetchMock.when(ASSETS, () => imageResponse("webb", "image/png"));
+
+    const res = await invoke("/");
+    expect(await res.text()).toBe("IMAGE:webb");
+    expect(fetchMock.urlsMatching(ASSETS)).toEqual([`${ASSETS}/content/dam/${webb}`]);
+  });
+
+  it("caches an iframe day as unresolvable and walks past it without refetching", async () => {
+    upstream(TODAY, () => jsonResponse(apodBasic(TODAY, {
+      media_type: "iframe",
+      hdurl: `${ASSETS}/dynamicimage/assets/science/astro/programs/cosmic-origins/images/misc/news-thumbnail.png`,
+    })));
+    upstream(YESTERDAY, () => jsonResponse(apodBasic(YESTERDAY, { title: "Yesterday" })));
+    fetchMock.when(ASSETS, () => imageResponse("yesterday"));
+
+    for (let i = 0; i < 2; i++) {
+      const body = (await (await invoke("/info")).json()) as Record<string, unknown>;
+      expect(body.date).toBe(YESTERDAY);
+    }
+    expect(fetchMock.urlsMatching(`/apod-basic/${yymmdd(TODAY)}?`)).toHaveLength(1);
   });
 });
 

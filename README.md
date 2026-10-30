@@ -54,7 +54,7 @@ Returns the day's APOD record from NASA's science.nasa.gov feed:
 
 | Path | Response |
 |------|----------|
-| `/` | Today's APOD image (HD, falls back to standard) |
+| `/` | Today's APOD image (full resolution) |
 | `/image.jpg` | Same as `/` with file extension |
 | `/sd` | Standard resolution image |
 | `/image-sd.jpg` | Same as `/sd` with file extension |
@@ -65,7 +65,7 @@ Returns the day's APOD record from NASA's science.nasa.gov feed:
 | `/info` | JSON metadata (title, date, explanation, copyright, image and article URLs, image dimensions) |
 | `/about` | Plain-text description and route listing |
 
-When the APOD of the day is a video, the proxy serves NASA's poster image for it, and `/info` returns the video's URL. If the video has no poster, it walks backwards up to 7 days to find the most recent image.
+When the APOD of the day is a video, the proxy serves NASA's poster image for it, and `/info` returns the video's URL. If there's nothing to show (a video with no poster, or an image in a format browsers can't display), it walks backwards up to 7 days to find the most recent image.
 
 ## How it works
 
