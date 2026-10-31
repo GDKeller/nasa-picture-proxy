@@ -53,7 +53,7 @@ Serving a walked-back day, a stale entry, or a 502 is only logged through buffer
 
 `/info` always reports the derived `content/dam` original as `hdurl`, even if it 404s and `/` falls back to NASA's `hdurl`. Run the dimensions probe through `firstThatServes`. Theoretical so far; do it when a missing original shows up in the logs. From the PR #5 review.
 
-### TASK-0055: Update dev dependencies to clear npm audit findings [P2]
+### ~~TASK-0055: Update dev dependencies to clear npm audit findings~~ [done]
 
 `npm audit` on `dev` reports 12 vulnerabilities (9 high), all in dev and tooling dependencies (`wrangler`, `vitest`, and their transitive deps). Runtime dependencies report 0. Every finding has a non-breaking fix.
 
@@ -67,7 +67,7 @@ Serving a walked-back day, a stale entry, or a 502 is only logged through buffer
 2. **TASK-0021** [P1] — Cron cache warming. Now that scrape is in place, cron warming guarantees stale cache never runs dry.
 3. TASK-0011 — R2 storage layer. Larger effort, unblocks follow-on features (gallery, timezone Phase 2).
 4. TASK-0032 — GitHub Action. Small, can be done anytime.
-5. TASK-0049, TASK-0050, TASK-0055, ~~TASK-0056~~ — small, independent, can be done anytime.
+5. TASK-0049, TASK-0050, ~~TASK-0055~~, ~~TASK-0056~~ — small, independent, can be done anytime.
 6. TASK-0048 — before TASK-0011, which reworks the same image path.
 7. TASK-0051 — only once a missing original shows up in the logs.
 
